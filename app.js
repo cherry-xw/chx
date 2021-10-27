@@ -11,8 +11,15 @@ const blogRouter = require('./routes/blog');
 
 const app = express();
 
-app.all('*', function(req, res, next) {  
-  res.header("Access-Control-Allow-Origin", "http://localhost:8080");  
+CORSOrigins = [
+  "http://localhost:8080",
+  "https://www.xcherry.top"
+]
+
+app.all('*', function(req, res, next) {
+  if (CORSOrigins.indexOf(req.headers.origin) !== -1) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);  
+  }
   res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");  
   res.header("X-Powered-By",' 3.2.1')  
