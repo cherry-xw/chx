@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const CryptoJS = require('crypto-js');
 const {nanoid} = require('nanoid')
 function makePassword(pwd, salt = nanoid(12), iterations = 120000, keylen = 32, digest = 'sha256') {
   const sha = crypto.pbkdf2Sync(pwd, salt, iterations, keylen, digest).toString('base64')
@@ -11,18 +12,17 @@ function checkPassword(password, encode) {
 }
 
 function aesEncrypt(data, key) {
-  const cipher = crypto.createCipheriv('aes192', key);
-  var crypted = cipher.update(data, 'utf8', 'hex');
-  crypted += cipher.final('hex');
-  return crypted;
+  return CryptoJS.AES.encrypt(data, key).toString();;
 }
 
 function aesDecrypt(encrypted, key) {
-  return encrypted
-  const decipher = crypto.createDecipheriv('aes192', key);
-  var decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+  try {
+    const bytes  = CryptoJS.AES.decrypt(encrypted, key);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.warn(error);    
+    return "err"
+  }
 }
 
 module.exports = {

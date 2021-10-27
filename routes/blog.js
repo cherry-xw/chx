@@ -12,11 +12,12 @@ const contentCache = {}
 
 // 获取博客列表
 router.get('/bloglist', async function (req, res) {
+  const page = parseInt(req.query.page) - 1
   if (!isNaN(page)) {
-    const id = req.user_id
+    const id = req.query.user_id || req.user_id
     if (!listCache[id]) listCache[id] = {}
     if (!listCache[id][page]) {
-      const result = req.db.query(`
+      const result = await req.db.query(`
         SELECT note_user.username,note_blogtype.typeName,
         note_blog.uuid,note_blog.title,note_blog.intro,note_blog.subtitle,note_blog.titleImage,note_blog.date
         FROM note_blog
@@ -26,7 +27,7 @@ router.get('/bloglist', async function (req, res) {
         ORDER BY date desc
         LIMIT ${page * 25},${ (page + 1) * 25 }
       `, {
-        user_id: id
+        "note_blog.user_id": id
       })
       listCache[id][page] = result
     }
@@ -43,7 +44,7 @@ router.get('/bloglist', async function (req, res) {
 })
 // 博客内容
 router.get('/blogcontent', async function (req, res) {
-  const id = req.query.id
+  const id = req.query.uuid
   if (id) {
     if (!contentCache[id]) {
       const result = await req.db.query(`

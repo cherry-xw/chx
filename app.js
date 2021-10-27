@@ -11,6 +11,15 @@ const blogRouter = require('./routes/blog');
 
 const app = express();
 
+app.all('*', function(req, res, next) {  
+  res.header("Access-Control-Allow-Origin", "http://localhost:8080");  
+  res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
+  res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");  
+  res.header("X-Powered-By",' 3.2.1')  
+  res.header("Content-Type", "application/json;charset=utf-8");  
+  next();  
+});
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
