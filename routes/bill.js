@@ -55,6 +55,7 @@ router.get('/getbilltypelist', async function(req, res) {
   res.json({
     status: true,
     data: result.map(e => ({
+      id: e.id,
       typename: e.typename,
       intro: e.intro
     }))
