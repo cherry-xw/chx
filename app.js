@@ -8,6 +8,7 @@ const db = require('./db')
 const billRouter = require('./routes/bill');
 const userRouter = require('./routes/users');
 const blogRouter = require('./routes/blog');
+const fundRouter = require('./routes/fund');
 
 const app = express();
 
@@ -24,7 +25,7 @@ app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");  
   res.header("X-Powered-By",' 3.2.1')  
   res.header("Content-Type", "application/json;charset=utf-8");  
-  next();  
+  next();
 });
 
 app.use(logger('dev'));
@@ -36,14 +37,18 @@ app.use(db)
 // 默认从req.headers.authorization获取token值
 app.use(expressJwt({
   secret: 'WU_LIANG_xiao_WAN_CHERY',  // 签名的密钥 或 PublicKey
-  algorithms: ["HS256"]
+  algorithms: ["HS256"],
+  // isRevoked(req, payload, done) {
+    
+  // }
 }).unless({
-  path: ['/api/login', '/api/verifycode', '/api/regist', '/api/bloglist', '/api/blogcontent']  // 指定路径不经过 Token 解析
+  path: ['/api/login', '/api/verifycode', '/api/regist', '/api/bloglist', '/api/blogcontent', '/api/fundGroup']  // 指定路径不经过 Token 解析
 }))
 
 app.use('/api', userRouter);
 app.use('/api', billRouter);
 app.use('/api', blogRouter);
+app.use('/api', fundRouter);
 
 // error handler
 app.use(function(err, req, res, next) {
