@@ -42,7 +42,7 @@ app.use(expressJwt({
     
   // }
 }).unless({
-  path: ['/api/login', '/api/verifycode', '/api/regist', '/api/bloglist', '/api/blogcontent', '/api/fundGroup']  // 指定路径不经过 Token 解析
+  path: ['/api/login', '/api/verifycode', '/api/regist', '/api/bloglist', '/api/blogcontent', '/api/fundGroup', "/api/fundNetWorth"]  // 指定路径不经过 Token 解析
 }))
 
 app.use('/api', userRouter);
