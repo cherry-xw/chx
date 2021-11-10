@@ -36,7 +36,7 @@ router.get('/fundNetWorth', function(req, res) {
         { "name": "mDataProp_4", "value": "valuationDate" },
         { "name": "fundType", "value": "all" },
         { "name": "fundCompanyShortName", "value": "" },
-        { "name": "fundCode", "value": code.toString()+",590009" },
+        { "name": "fundCode", "value": code.toString() },
         { "name": "fundName", "value": "" },
         { "name": "startDate", "value": beginDate },
         { "name": "endDate", "value": endDate }
