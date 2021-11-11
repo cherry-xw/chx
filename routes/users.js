@@ -13,7 +13,7 @@ router.post('/login', async function(req, res) {
     delete verifyCache[req.body.verifyCodeKey]
     const username = aesDecrypt(req.body.username, code)
     console.log(username);
-    const result = await req.db.query('SELECT * FROM note_user where ?', {
+    const result = await req.mysql.query('SELECT * FROM note_user where ?', {
       username
     })
     if (result.length) {
@@ -55,7 +55,7 @@ router.post('/regist', async (req, res) => {
         which: "用户名或密码长度不足"
       })
     } else {
-      await req.db.query.query("INSERT INTO note_user SET ?", {
+      await req.mysql.query.query("INSERT INTO note_user SET ?", {
         username,
         password: makePassword(password),
         createtime: formatTime()

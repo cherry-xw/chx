@@ -17,7 +17,7 @@ router.get('/bloglist', async function (req, res) {
     const id = req.query.user_id || req.user_id
     if (!listCache[id]) listCache[id] = {}
     if (!listCache[id][page]) {
-      const result = await req.db.query(`
+      const result = await req.mysql.query(`
         SELECT note_user.username,note_blogtype.typeName,
         note_blog.uuid,note_blog.title,note_blog.intro,note_blog.subtitle,note_blog.titleImage,note_blog.date
         FROM note_blog
@@ -47,7 +47,7 @@ router.get('/blogcontent', async function (req, res) {
   const id = req.query.uuid
   if (id) {
     if (!contentCache[id]) {
-      const result = await req.db.query(`
+      const result = await req.mysql.query(`
         SELECT note_user.username,note_blogtype.typeName,
         note_blog.uuid,note_blog.title,note_blog.intro,note_blog.subtitle,note_blog.titleImage,note_blog.date,note_blog.content
         FROM note_blog
@@ -85,7 +85,7 @@ router.get('/blogcontent', async function (req, res) {
 router.get('/postblog', function (req, res) {})
 // 创建博客类型
 router.get('/addnotetype', async function (req, res) {
-  await req.db.query("INSERT INTO note_blogtype SET ?", {
+  await req.mysql.query("INSERT INTO note_blogtype SET ?", {
     typeName: req.body.typeName,
     createtime: formatTime(),
     updatetime: formatTime(),
@@ -94,7 +94,7 @@ router.get('/addnotetype', async function (req, res) {
 })
 // 获取博客类型列表
 router.get('/blogtypelist', async function (req, res) {
-  const result = await req.db.query("SELECT * FROM note_blogtype WHERE ?", {
+  const result = await req.mysql.query("SELECT * FROM note_blogtype WHERE ?", {
     user_id: req.user.id
   })
   res.json({
@@ -110,7 +110,7 @@ router.get('/modifynotetype', async function (req, res) {
   const {typeName, id} = req.body
   if (id !== undefined && typeName) {
     // listCache[req.user.id]
-    await req.db.query('UPDATE note_blogtype SET ? WHERE ? AND ?', [
+    await req.mysql.query('UPDATE note_blogtype SET ? WHERE ? AND ?', [
       {typeName, updatetime: formatTime()},
       {user_id: req.user.id},
       {id: id}

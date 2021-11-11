@@ -4,7 +4,7 @@ var router = express.Router();
 
 router.post('/addbilltype',async function(req, res) {
   if (req.body.typename) {
-    await req.db.query('INSERT INTO note_billtype SET ?', {
+    await req.mysql.query('INSERT INTO note_billtype SET ?', {
       createtime: formatTime(),
       updatetime: formatTime(),
       typename: req.body.typename,
@@ -31,7 +31,7 @@ router.post('/editbilltype', async (req, res) => {
     }
     if (typename) updateData.typename = typename
     if (intro) updateData.intro = intro
-    await req.db.query('UPDATE note_billtype SET ? WHERE ? AND ?', [
+    await req.mysql.query('UPDATE note_billtype SET ? WHERE ? AND ?', [
       updateData,
       {user_id: req.user.id},
       {id: id}
@@ -49,7 +49,7 @@ router.post('/editbilltype', async (req, res) => {
 })
 
 router.get('/getbilltypelist', async function(req, res) {
-  const result = await req.db.query('SELECT * FROM note_billtype WHERE ?', {
+  const result = await req.mysql.query('SELECT * FROM note_billtype WHERE ?', {
     user_id: req.user.id
   })
   res.json({
@@ -65,7 +65,7 @@ router.get('/getbilltypelist', async function(req, res) {
 router.get('/getbilllist',async function(req, res) {
   const page = parseInt(req.query.page)
   if (!isNaN(page)) {
-    const result = await req.db.query(`
+    const result = await req.mysql.query(`
       SELECT *
       FROM note_bill
       WHERE ?
@@ -95,7 +95,7 @@ router.get('/getbilllist',async function(req, res) {
 router.post('/addbillcontent', async function(req, res) {
   const {billtypeid, consumetime, price, intro} = req.body
   if (billtypeid && consumetime && price && intro) {
-    await req.db.query("INSERT INTO note_bill SET `uuid` = REPLACE ( UUID( ), '-', '' ), ?", {
+    await req.mysql.query("INSERT INTO note_bill SET `uuid` = REPLACE ( UUID( ), '-', '' ), ?", {
       updatetime: formatTime(),
       date: formatTime(),
       consumetime: formatTime(consumetime),
@@ -126,12 +126,12 @@ router.post('/editbillcontent',async function(req, res) {
     if (intro) updateObj.intro = intro
     updateObj.updatetime = formatTime()
     if (Object.keys(updateObj).length) {
-      const result = await req.db.query('SELECT * FROM note_billtype WHERE ? AND ?', [
+      const result = await req.mysql.query('SELECT * FROM note_billtype WHERE ? AND ?', [
         {user_id: req.user.id},
         {id: billtypeid}
       ], "请求账单类型出错")
       if (result.length) {
-        await req.db.query('UPDATE note_bill SET ? WHERE ? AND ?', [
+        await req.mysql.query('UPDATE note_bill SET ? WHERE ? AND ?', [
           updateObj,
           {user_id: req.user.id},
           {uuid: id}

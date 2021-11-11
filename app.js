@@ -2,7 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const expressJwt = require('express-jwt')
-const db = require('./db')
+const mysql = require('./db/mysql')
 // const errorhandler = require('errorhandler')
 
 const billRouter = require('./routes/bill');
@@ -32,7 +32,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(db)
+app.use(mysql)
 
 // 默认从req.headers.authorization获取token值
 app.use(expressJwt({
