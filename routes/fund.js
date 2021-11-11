@@ -4,32 +4,32 @@ const moment = require('moment');
 const request = require('request');
 
 router.get('/fundGroup', function (req, res) {
-  const id = req.query.id
+  const id = req.query.id;
   if (id === "VevWh3vxVVtJLb") {
     res.json({
       status: true,
       data: require("../static/hkl")
-    })
+    });
   } else {
     res.json({
       status: false,
       data: []
-    })
+    });
   }
-})
+});
 
-const cache = {}
+const cache = {};
 
 router.get('/fundNetWorth', function (req, res) {
-  const code = req.query.code
-  const date = req.query.date || moment().format("YYYY-MM-DD")
+  const code = req.query.code;
+  const date = req.query.date || moment().format("YYYY-MM-DD");
   if ((code + "").length === 6) {
-    const codeDateStr = `${code}_${date}`
+    const codeDateStr = `${code}_${date}`;
     if (cache[codeDateStr]) {
       res.json({
         status: true,
         data: cache[codeDateStr]
-      })
+      });
     } else {
       request({
         url: `http://eid.csrc.gov.cn/fund/disclose/getPublicFundJZInfoMore.do?_=${Date.now()}&aoData=${encodeURIComponent(JSON.stringify([
@@ -59,33 +59,33 @@ router.get('/fundNetWorth', function (req, res) {
             res.json({
               status: false,
               data: null
-            })
+            });
           } else {
-            const val = rrr.body.aaData.filter(e => e.totalNetValue)
+            const val = rrr.body.aaData.filter(e => e.totalNetValue);
             if (val.length && val[0].valuationDate === date) {
               cache[codeDateStr] = val;
             }
             res.json({
               status: true,
               data: val
-            })
+            });
           }
         } catch (error) {
           console.error(error);
           res.json({
             status: false,
             data: null
-          })
+          });
         }
-      })
+      });
     }
   } else {
     res.json({
       status: false,
       data: null
-    })
+    });
   }
 
-})
+});
 
 module.exports = router;

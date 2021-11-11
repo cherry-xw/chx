@@ -4,4 +4,4 @@ module.exports = {
   password: '1176587427',
   database: 'blog',
   useConnectionPooling: true
-}
+};

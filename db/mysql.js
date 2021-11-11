@@ -1,26 +1,24 @@
-const config = require('./config')
+const config = require('./config');
 const mysql = require('mysql');
-const connection = mysql.createConnection(config)
+const connection = mysql.createConnection(config);
 
 connection.connect();
 console.log('mysql connected');
 
-function mysql(req, res, next) {
-  req.mysql = {}
-  req.mysql.query = (option, value, errMsg = "请求数据库出错") => new Promise((resolve) => {
+module.exports = function (req, res, next) {
+  req.mysql = {};
+  req.mysql.query = (option, value, errMsg = "请求数据库出错") => new Promise(resolve => {
     connection.query(option, value, (err, result) => {
       if (err) {
         res.json({
           status: false,
           which: errMsg
-        })
+        });
         console.log(err);
       } else {
-        resolve(result)
+        resolve(result);
       }
-    })
-  })
-  next()
-}
-
-module.exports = mysql
+    });
+  });
+  next();
+};
