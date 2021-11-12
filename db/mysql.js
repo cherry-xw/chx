@@ -1,5 +1,5 @@
 const mysql = require('mysql');
-const config = require('./config').mysql;
+const config = require('../config').mysql;
 const connection = mysql.createConnection(config);
 
 connection.connect(function (err) {
@@ -11,19 +11,20 @@ connection.connect(function (err) {
 });
 
 module.exports = function (req, res, next) {
-  req.mysql = {};
-  req.mysql.query = (option, value, errMsg = "请求数据库出错") => new Promise(resolve => {
-    connection.query(option, value, (err, result) => {
-      if (err) {
-        res.json({
-          status: false,
-          which: errMsg
-        });
-        console.log(err);
-      } else {
-        resolve(result);
-      }
-    });
-  });
+  req.mysql = {
+    query: (option, value, errMsg = "请求数据库出错") => new Promise(resolve => {
+      connection.query(option, value, (err, result) => {
+        if (err) {
+          res.json({
+            status: false,
+            which: errMsg
+          });
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    })
+  };
   next();
 };

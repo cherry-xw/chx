@@ -24,7 +24,8 @@
     "mysql": "^2.18.1",
     "nanoid": "^3.1.23",
     "nodemon": "^2.0.9",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "require-directory": "^2.1.1"
   },
   "devDependencies": {
     "eslint": "^8.2.0"
