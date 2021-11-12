@@ -1,20 +1,25 @@
 const mongoose = require('mongoose');
+const uri = require("./config").mongo;
 
-const uri = 'mongodb://chery:GA6sqpJ3ei@localhost:27017/chery';
 mongoose.connect(uri);
+// connect() 返回一个状态待定（pending）的连接，可以用来判断连接成功或失败
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log("mongo connected");
+});
+
+const mongodb = {
+  // 插入，
+  insert() {},
+  // 查询，模块名称，查询参数
+  model (modelName) {
+    return mongoose.model(modelName);
+  }
+};
 
 module.exports = function (req, res, next) {
-  req.mongo = {};
-  const cacheModel = {};
-  // 模块名称，查询参数
-  req.mongo.model = modelName => {
-    let mod = cacheModel[modelName];
-    if (mod) {
-      return mod;
-    } else {
-      return cacheModel[modelName] = mongoose.model(modelName);
-    }
-  };
+  req.mongo = mongodb;
   next();
 };
 

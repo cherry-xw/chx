@@ -1,9 +1,14 @@
-const config = require('./config');
 const mysql = require('mysql');
+const config = require('./config').mysql;
 const connection = mysql.createConnection(config);
 
-connection.connect();
-console.log('mysql connected');
+connection.connect(function (err) {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log('mysql connected');
+  }
+});
 
 module.exports = function (req, res, next) {
   req.mysql = {};
