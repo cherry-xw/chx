@@ -1,12 +1,8 @@
-const path = require("path");
 const mongoose = require('mongoose');
 const uri = require("../config").mongo;
-const requireDirectory = require('require-directory');
+const requireContext = require("../utils/requireContext");
 
-const modelsPath = path.join(__dirname, "./models");
-const models = requireDirectory(module, {include(rpath){
-  return rpath.startsWith(modelsPath) && rpath.endsWith(".mod.js");
-}}).models;
+const models = requireContext(module, "./models", /\.mod\.js/);
 
 mongoose.connect(uri);
 // connect() 返回一个状态待定（pending）的连接，可以用来判断连接成功或失败

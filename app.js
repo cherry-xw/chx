@@ -4,13 +4,14 @@ const logger = require('morgan');
 const config = require("./config");
 const expressJwt = require('express-jwt');
 const mysql = require('./db/mysql');
+const requireContext = require("./utils/requireContext");
 // const errorhandler = require('errorhandler')
 
-const billRouter = require('./routes/bill');
-const userRouter = require('./routes/users');
-const blogRouter = require('./routes/blog');
-const fundRouter = require('./routes/fund');
+const routes = requireContext(module, "./routes", /\.js/);
+
 const mongo = require('./db/mongo');
+
+// console.log(module);
 
 const app = express();
 
@@ -46,13 +47,12 @@ app.use(expressJwt({
   // }
 }).unless({ path: config.notcheckpath }));
 
-app.use(config.prefix, userRouter);
-app.use(config.prefix, billRouter);
-app.use(config.prefix, blogRouter);
-app.use(config.prefix, fundRouter);
+Object.values(routes).forEach(route => {
+  app.use(config.prefix, route);
+});
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
   console.error(err);
   if (err.name === 'UnauthorizedError') {
     res.status(401);
