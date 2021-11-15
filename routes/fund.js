@@ -4,16 +4,82 @@ const moment = require('moment');
 const request = require('request');
 
 router.get('/fundGroup', function (req, res) {
-  const id = req.query.id;
-  if (id === "VevWh3vxVVtJLb") {
-    res.json({
-      status: true,
-      data: require("../static/hkl")
+  const name = req.query.name;
+  if (name) {
+    req.mongo`FundStore`.findOne({name}, (err, ret)=> {
+      if (err) {
+        console.log(err.message);
+        res.json({
+          status: false,
+          which: `查询失败：${err.message}`
+        });
+      } else {
+        res.json({
+          status: true,
+          data: {
+            name: ret.name,
+            message: ret.message
+          }
+        });
+      }
     });
   } else {
     res.json({
       status: false,
-      data: []
+      which: "name字段缺失"
+    });
+  }
+});
+router.post('/fundGroup', function (req, res) {
+  const name = req.body.name;
+  const message = req.body.message;
+  if (name && message) {
+    const store = new req.mongo`FundStore`();
+    store.save(err => {
+      console.log('save status:', err ? 'failed' : 'success');
+      if (err) {
+        console.log(err.message);
+        res.json({
+          status: false,
+          which: `添加失败：${err.message}`
+        });
+      }
+      else {
+        res.json({
+          status: true,
+          which: "添加成功"
+        });
+      }
+    });
+  } else {
+    res.json({
+      status: false,
+      which: "name或message不能为空"
+    });
+  }
+});
+router.patch('/fundGroup', function (req, res) {
+  const name = req.body.name;
+  const message = req.body.message;
+  if (name && message) {
+    req.mongo`FundStore`.update({name}, {$set: {message, editTime: Date.now()}}, err => {
+      if (err) {
+        console.log(err.message);
+        res.json({
+          status: false,
+          which: `添加失败：${err.message}`
+        });
+      } else {
+        res.json({
+          status: true,
+          which: "更新成功"
+        });
+      }
+    });
+  } else {
+    res.json({
+      status: false,
+      which: "name或message不能为空"
     });
   }
 });

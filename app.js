@@ -25,7 +25,7 @@ app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
   }
   res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
-  res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS,PATCH");
   res.header("X-Powered-By",' 3.2.1');
   res.header("Content-Type", "application/json;charset=utf-8");
   next();
@@ -52,25 +52,36 @@ Object.values(routes).forEach(route => {
 });
 
 // error handler
-app.use(function(err, req, res) {
-  console.error(err);
+app.use(function(err, req, res, next) {
   if (err.name === 'UnauthorizedError') {
     res.status(401);
     res.json({
       status: false,
       which: "UnauthorizedError"
     });
-  } else if (err) {
+  } else if (err.name) {
     res.status(err.status || 500);
+    console.log(err);
     res.json({
       status: false,
-      which: "serverError"
+      which: err.name
     });
   } else {
     res.status(500);
     res.json({
       status: false,
       which: "unknowError"
+    });
+  }
+  next();
+});
+
+app.use(config.prefix, (err, req, res) => {
+  if (!err) {
+    res.status(404);
+    res.json({
+      status: false,
+      which: "404 not found"
     });
   }
 });

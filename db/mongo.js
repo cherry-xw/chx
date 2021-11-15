@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const uri = require("../config").mongo;
 const requireContext = require("../utils/requireContext");
 
-const models = requireContext(module, "./models", /\.mod\.js/);
+requireContext(module, "./models", /\.mod\.js/);
 
 mongoose.connect(uri);
 // connect() 返回一个状态待定（pending）的连接，可以用来判断连接成功或失败
@@ -12,19 +12,15 @@ db.once('open', function() {
   console.log("mongo connected");
 });
 
-const mongodb = {
-  // 插入，
-  insert(modelName, data, callback) {
-    const Mod = models[`${modelName}.mod`];
-    if (Mod) {
-      return new Mod(data).save(callback);
-    }
-  },
-  // 查询，模块名称，查询参数
-  model (modelName) {
-    return mongoose.model(modelName);
+function mongodb([modelName]) {
+  // 获取模块
+  const Mod =  mongoose.model(modelName);
+  if (Mod) {
+    return Mod;
+  } else {
+    throw new Error(`不存在Model：${modelName}`);
   }
-};
+}
 
 module.exports = function (req, res, next) {
   req.mongo = mongodb;
