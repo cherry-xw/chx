@@ -4,6 +4,7 @@ const moment = require('moment');
 const request = require('request');
 
 router.get('/fundGroup', function (req, res) {
+  console.log("get");
   const name = req.query.name;
   if (name) {
     req.mongo`FundStore`.findOne({name}, (err, ret)=> {
@@ -13,13 +14,15 @@ router.get('/fundGroup', function (req, res) {
           status: false,
           which: `查询失败：${err.message}`
         });
-      } else {
+      } else if (ret) {
         res.json({
           status: true,
-          data: {
-            name: ret.name,
-            message: ret.message
-          }
+          data: ret.message
+        });
+      } else {
+        res.json({
+          status: false,
+          which: "查询用户失败"
         });
       }
     });
@@ -34,7 +37,10 @@ router.post('/fundGroup', function (req, res) {
   const name = req.body.name;
   const message = req.body.message;
   if (name && message) {
-    const store = new req.mongo`FundStore`();
+    const store = new req.mongo`FundStore`({
+      name,
+      message
+    });
     store.save(err => {
       console.log('save status:', err ? 'failed' : 'success');
       if (err) {
