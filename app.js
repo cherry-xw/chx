@@ -17,7 +17,10 @@ const app = express();
 
 const CORSOrigins = [
   "http://localhost:8080",
-  "https://www.xcherry.top"
+  "https://www.xcherry.top",
+  "http://www.xcherry.top",
+  "https://xcherry.top",
+  "http://xcherry.top"
 ];
 
 app.all('*', function(req, res, next) {
