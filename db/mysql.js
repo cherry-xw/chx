@@ -1,27 +1,45 @@
 const mysql = require('mysql');
 const config = require('../config').mysql;
-const connection = mysql.createConnection(config);
+const pool = mysql.createPool(config);
 
-connection.connect(function (err) {
-  if (err) {
-    console.error(err);
-  } else {
-    console.log('mysql connected');
-  }
-});
+// function getConnection() {
+//   return new Promise((resolve, reject) => {
+//     pool.getConnection(function (err, connection) {
+//       if (err) {
+//         reject(err);
+//       } else {
+//         resolve(connection);
+//         connection.release();
+//       }
+//     });
+//   });
+// }
 
 module.exports = function (req, res, next) {
   req.mysql = {
     query: (option, value, errMsg = "请求数据库出错") => new Promise(resolve => {
-      connection.query(option, value, (err, result) => {
+      pool.getConnection(function (err, connection) {
         if (err) {
+          connection.release();
+          console.error(err);
           res.json({
             status: false,
-            which: errMsg
+            which: "连接数据库错误"
           });
-          console.log(err);
         } else {
-          resolve(result);
+          console.log('mysql connected');
+          connection.query(option, value, (err, result) => {
+            connection.release();
+            if (err) {
+              res.json({
+                status: false,
+                which: errMsg
+              });
+              console.log(err);
+            } else {
+              resolve(result);
+            }
+          });
         }
       });
     })

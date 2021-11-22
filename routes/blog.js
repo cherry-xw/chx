@@ -14,7 +14,7 @@ const contentCache = {};
 router.get('/bloglist', async function (req, res) {
   const page = parseInt(req.query.page) - 1;
   if (!isNaN(page)) {
-    const id = req.query.user_id || req.user_id;
+    const id = req.query.user_id || req.user_id || 2;
     if (!listCache[id]) listCache[id] = {};
     if (!listCache[id][page]) {
       const result = await req.mysql.query(`
