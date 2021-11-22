@@ -37,23 +37,50 @@ router.post('/fundGroup', function (req, res) {
   const name = req.body.name;
   const message = req.body.message;
   if (name && message) {
-    const store = new req.mongo`FundStore`({
-      name,
-      message
-    });
-    store.save(err => {
-      console.log('save status:', err ? 'failed' : 'success');
+    req.mongo`FundStore`.findOne({name}, (err, ret)=> {
       if (err) {
         console.log(err.message);
         res.json({
           status: false,
-          which: `添加失败：${err.message}`
+          which: `查询失败：${err.message}`
         });
-      }
-      else {
-        res.json({
-          status: true,
-          which: "添加成功"
+      } else if (ret) {
+        // 查到了就更新
+        req.mongo`FundStore`.update({name}, {$set: {message, editTime: Date.now()}}, err => {
+          if (err) {
+            console.log(err.message);
+            res.json({
+              status: false,
+              which: `添加失败：${err.message}`
+            });
+          } else {
+            res.json({
+              status: true,
+              which: "更新成功"
+            });
+          }
+        });
+      } else {
+        // 查不到就存储
+        const store = new req.mongo`FundStore`({
+          name,
+          message
+        });
+        store.save(err => {
+          console.log('save status:', err ? 'failed' : 'success');
+          if (err) {
+            console.log(err.message);
+            res.json({
+              status: false,
+              which: `添加失败：${err.message}`
+            });
+          }
+          else {
+            res.json({
+              status: true,
+              which: "添加成功"
+            });
+          }
         });
       }
     });
