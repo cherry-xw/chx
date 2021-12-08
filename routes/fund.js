@@ -1,9 +1,8 @@
-// const { getPage, getBrowser } = require('../utils/browser');
 const express = require('express');
-const router = express.Router();
 const moment = require('moment');
 const request = require('request');
 const cheerio = require('cheerio');
+const router = express.Router();
 
 
 router.get('/fundGroup', function (req, res) {
@@ -153,22 +152,9 @@ function getFromZq(code, date) {
     });
   });
 }
-// let page;
-// (async () => {
-//   const browser = await getBrowser();
-//   page = await getPage(browser);
-// })();
+
 // 使用天天基金数据
 async function getFromTtjj(code) {
-  console.log("---------------", code);
-  // try {
-  //   await page.goto(`http://fund.eastmoney.com/${code}.html`);
-  //   const dom = await page.$("dl.dataItem02>dd.dataNums>span.ui-font-large.ui-color-red.ui-num");
-  //   console.log(dom);
-  // } catch (error) {
-  //   console.log("err", error);
-  // }
-  // const txt = await dom.getProperty("innerText");
   return new Promise((resolve, reject) => {
     request({ url: `http://fund.eastmoney.com/${code}.html` }, (err, res, body) => {
       if (err) {
