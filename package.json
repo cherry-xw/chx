@@ -6,6 +6,7 @@
     "serve": "nodemon ./bin/www"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
     "cookie-parser": "~1.4.4",
     "crypto-js": "^4.1.1",
     "debug": "~2.6.9",

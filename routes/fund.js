@@ -1,7 +1,10 @@
+// const { getPage, getBrowser } = require('../utils/browser');
 const express = require('express');
 const router = express.Router();
 const moment = require('moment');
 const request = require('request');
+const cheerio = require('cheerio');
+
 
 router.get('/fundGroup', function (req, res) {
   console.log("get");
@@ -117,11 +120,79 @@ router.patch('/fundGroup', function (req, res) {
   }
 });
 
+// 使用证券网站数据
+function getFromZq(code, date) {
+  return new Promise((resolve, reject) => {
+    request({
+      url: `http://eid.csrc.gov.cn/fund/disclose/getPublicFundJZInfoMore.do?_=${Date.now()}&aoData=${encodeURIComponent(JSON.stringify([
+        { "name": "sEcho", "value": 1 },
+        { "name": "iColumns", "value": 5 },
+        { "name": "sColumns", "value": ",,,," },
+        { "name": "iDisplayStart", "value": 0 },
+        { "name": "iDisplayLength", "value": 20 },
+        { "name": "mDataProp_0", "value": "fund" },
+        { "name": "mDataProp_1", "value": "fund" },
+        { "name": "mDataProp_2", "value": "fund" },
+        { "name": "mDataProp_3", "value": "fund" },
+        { "name": "mDataProp_4", "value": "valuationDate" },
+        { "name": "fundType", "value": "all" },
+        { "name": "fundCompanyShortName", "value": "" },
+        { "name": "fundCode", "value": code.toString() },
+        { "name": "fundName", "value": "" },
+        { "name": "startDate", "value": date },
+        { "name": "endDate", "value": date }
+      ]))}`,
+      json: true,
+      method: 'get'
+    }, (err, rrr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rrr);
+      }
+    });
+  });
+}
+// let page;
+// (async () => {
+//   const browser = await getBrowser();
+//   page = await getPage(browser);
+// })();
+// 使用天天基金数据
+async function getFromTtjj(code) {
+  console.log("---------------", code);
+  // try {
+  //   await page.goto(`http://fund.eastmoney.com/${code}.html`);
+  //   const dom = await page.$("dl.dataItem02>dd.dataNums>span.ui-font-large.ui-color-red.ui-num");
+  //   console.log(dom);
+  // } catch (error) {
+  //   console.log("err", error);
+  // }
+  // const txt = await dom.getProperty("innerText");
+  return new Promise((resolve, reject) => {
+    request({ url: `http://fund.eastmoney.com/${code}.html` }, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        try {
+          const $ = cheerio.load(body);
+          const netValue = $("dl.dataItem02>dd.dataNums>span.ui-font-large.ui-color-red.ui-num").text();
+          const valuationDate = $("dl.dataItem02>dt>p").text().replace(/^.*(\d{4}-\d{2}-\d{2}).*$/, "$1");
+          resolve({ netValue, valuationDate });
+        } catch (error) {
+          reject(error);
+        }
+      }
+    });
+
+  });
+}
 const cache = {};
 
-router.get('/fundNetWorth', function (req, res) {
+// 只能请求当天的数据
+router.get('/fundNetWorth', async function (req, res) {
   const code = req.query.code;
-  const date = req.query.date || moment().format("YYYY-MM-DD");
+  const date = moment().format("YYYY-MM-DD");
   if ((code + "").length === 6) {
     const codeDateStr = `${code}_${date}`;
     if (cache[codeDateStr]) {
@@ -130,53 +201,42 @@ router.get('/fundNetWorth', function (req, res) {
         data: cache[codeDateStr]
       });
     } else {
-      request({
-        url: `http://eid.csrc.gov.cn/fund/disclose/getPublicFundJZInfoMore.do?_=${Date.now()}&aoData=${encodeURIComponent(JSON.stringify([
-          { "name": "sEcho", "value": 1 },
-          { "name": "iColumns", "value": 5 },
-          { "name": "sColumns", "value": ",,,," },
-          { "name": "iDisplayStart", "value": 0 },
-          { "name": "iDisplayLength", "value": 20 },
-          { "name": "mDataProp_0", "value": "fund" },
-          { "name": "mDataProp_1", "value": "fund" },
-          { "name": "mDataProp_2", "value": "fund" },
-          { "name": "mDataProp_3", "value": "fund" },
-          { "name": "mDataProp_4", "value": "valuationDate" },
-          { "name": "fundType", "value": "all" },
-          { "name": "fundCompanyShortName", "value": "" },
-          { "name": "fundCode", "value": code.toString() },
-          { "name": "fundName", "value": "" },
-          { "name": "startDate", "value": date },
-          { "name": "endDate", "value": date }
-        ]))}`,
-        json: true,
-        method: 'get'
-      }, (err, rrr, body) => {
-        try {
-          if (err) {
-            console.log(err);
+      try {
+        const zqRes = await getFromZq(code, date);
+        const val = zqRes.body.aaData.filter(e => e.totalNetValue);
+        const resData = {};
+        if (val.length && val[0].valuationDate === date) {
+          resData.netValue =  val[0].shareNetValue;
+          resData.valuationDate = date;
+          cache[codeDateStr] = resData;
+          res.json({
+            status: true,
+            data: resData
+          });
+        } else {
+          // 没请求到当天的数据,尝试去天天基金获取
+          const ttjjRes = await getFromTtjj(code);
+          if (moment().isSame(ttjjRes.valuationDate, "day") && ttjjRes.netValue) {
+            cache[codeDateStr] = ttjjRes;
+            res.json({
+              status: true,
+              data: ttjjRes
+            });
+          } else {
             res.json({
               status: false,
               data: null
             });
-          } else {
-            const val = rrr.body.aaData.filter(e => e.totalNetValue);
-            if (val.length && val[0].valuationDate === date) {
-              cache[codeDateStr] = val;
-            }
-            res.json({
-              status: true,
-              data: val
-            });
           }
-        } catch (error) {
-          console.error(error);
-          res.json({
-            status: false,
-            data: null
-          });
         }
-      });
+      } catch (error) {
+        console.log(error);
+        res.json({
+          status: false,
+          data: null
+        });
+      }
+
     }
   } else {
     res.json({

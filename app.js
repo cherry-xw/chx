@@ -46,7 +46,6 @@ app.use(expressJwt({
   secret: 'WU_LIANG_xiao_WAN_CHERY',  // 签名的密钥 或 PublicKey
   algorithms: ["HS256"],
   // isRevoked(req, payload, done) {
-
   // }
 }).unless({ path: config.notcheckpath }));
 
