@@ -162,7 +162,7 @@ async function getFromTtjj(code) {
       } else {
         try {
           const $ = cheerio.load(body);
-          const netValue = $("dl.dataItem02>dd.dataNums>span.ui-font-large.ui-color-red.ui-num").text();
+          const netValue = $("dl.dataItem02>dd.dataNums>span.ui-font-large.ui-num").text();
           const valuationDate = $("dl.dataItem02>dt>p").text().replace(/^.*(\d{4}-\d{2}-\d{2}).*$/, "$1");
           resolve({ netValue, valuationDate });
         } catch (error) {
