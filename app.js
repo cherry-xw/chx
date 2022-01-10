@@ -17,6 +17,9 @@ const app = express();
 
 const CORSOrigins = [
   "http://localhost:8080",
+  "http://localhost:3000",
+  "https://ww.xcherry.top",
+  "http://ww.xcherry.top",
   "https://www.xcherry.top",
   "http://www.xcherry.top",
   "https://xcherry.top",
