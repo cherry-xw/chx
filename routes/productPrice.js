@@ -1,7 +1,7 @@
 const express = require('express');
 const cheerio = require('cheerio');
 const syncRequest = require("../utils/syncRequest");
-const { differenceBy, pick } = require('lodash');
+const { differenceBy } = require('lodash');
 const moment = require('moment');
 const router = express.Router();
 
@@ -134,14 +134,19 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
 // 搜索某类列表数据
 router.get('/prdPrice/list', async function(req, res) {
   const name = req.query.name;
-  console.log(name);
-  if (name) {
+  const type = req.query.type;
+  console.log("请求数据的筛选条件", name, type);
+  if (name && type) {
     const Model = req.mongo`productPrice`;
     try {
-      const data = await Model.findOne({ name });
+      const data = await Model.findOne({ name, type });
       res.json({
         status: true,
-        data: pick(data, ["name", "type", "data"])
+        data: {
+          name: data.name,
+          type: data.type,
+          data: data.data.map(e => ({date: e.date, value: e.value}))
+        }
       });
     } catch (error) {
       console.log(error);
@@ -153,7 +158,7 @@ router.get('/prdPrice/list', async function(req, res) {
   } else {
     res.json({
       status: false,
-      which: "name字段缺失"
+      which: "name或type字段缺失"
     });
   }
 });
