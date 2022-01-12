@@ -245,14 +245,23 @@ router.get('/prdPrice/list', async function(req, res) {
       if(type) obj.type = type;
       if(origin) obj.origin = origin;
       const data = await Model.findOne(obj);
-      res.json({
-        status: true,
-        data: {
-          name: data.name,
-          type: data.type,
-          data: data.data.map(e => ({date: e.date, value: e.value}))
-        }
-      });
+      if (data) {
+        res.json({
+          status: true,
+          data: {
+            name: data.name,
+            type: data.type,
+            unit: data.unit,
+            origin: data.origin,
+            data: data.data.map(e => ({date: e.date, value: e.value}))
+          }
+        });
+      } else {
+        res.json({
+          status: false,
+          which: "未找到数据"
+        });
+      }
     } catch (error) {
       console.log(error);
       res.json({
