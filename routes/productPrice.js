@@ -211,16 +211,13 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
                 },
                 editTime: Date.now()
               });
+              console.log(`更新 ${name}, ${type} 结束`);
             }
             // }
           }
         }
       } catch (error) {
         console.log(error);
-        res.json({
-          status: false,
-          which: "迭代爬取数据失败"
-        });
       }
     }
     res.json({

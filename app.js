@@ -5,6 +5,11 @@ const config = require("./config");
 const expressJwt = require('express-jwt');
 const mysql = require('./db/mysql');
 const requireContext = require("./utils/requireContext");
+
+let moment = require('moment-timezone');
+moment.tz.setDefault("Asia/Shanghai");
+
+console.log("启动时间：", moment().format("YYYY-MM-DD HH:mm:ss"))
 // const errorhandler = require('errorhandler')
 
 const routes = requireContext(module, "./routes", /\.js/);
