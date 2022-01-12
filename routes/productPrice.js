@@ -5,20 +5,21 @@ const { differenceBy } = require('lodash');
 const moment = require('moment');
 const router = express.Router();
 
-const names = [
-  {name: "三元材料", specs: "111/动力"},
-  {name: "磷酸铁锂", specs: "动力型"},
-  {name: "三元前驱体", specs: "111"},
-  {name: "电解钴", specs: "≥99.8%"},
-  {name: "氢氧化锂", specs: "电池级"},
-  {name: "碳酸锂", specs: "工业级"},
-  {name: "隔膜", specs: "7+2μm陶瓷涂覆隔膜"},
-  {name: "电解液", specs: "三元/圆柱/2600mAh"},
-  {name: "电解液", specs: "磷酸铁锂"},
-  {name: "六氟磷酸锂", specs: "六氟磷酸锂 国产"},
-  {name: "EMC", specs: "电池级"},
-  {name: "DMC", specs: "电池级"},
-  {name: "铜箔", specs: "6um电池"},
+// 产品列表
+const prods = [
+  {name: "三元材料", specs: "111/动力", origin: "国产", unit: "万元/吨"},
+  {name: "磷酸铁锂", specs: "动力型", origin: "国产", unit: "万元/吨"},
+  {name: "三元前驱体", specs: "111", origin: "国产", unit: "万元/吨"},
+  {name: "电解钴", specs: "≥99.8%", origin: "国产", unit: "万元/吨"},
+  {name: "氢氧化锂", specs: "电池级", origin: "国产", unit: "万元/吨"},
+  {name: "碳酸锂", specs: "工业级", origin: "国产", unit: "万元/吨"},
+  {name: "隔膜", specs: "7+2μm陶瓷涂覆隔膜", origin: "国产中端", unit: "元/平方米"},
+  {name: "电解液", specs: "三元/圆柱/2600mAh", unit: "万元/吨"},
+  {name: "电解液", specs: "磷酸铁锂", unit: "万元/吨"},
+  {name: "六氟磷酸锂", specs: "六氟磷酸锂", origin: "国产", unit: "万元/吨"},
+  {name: "EMC", specs: "电池级", origin: "国产", unit: "万元/吨"},
+  {name: "DMC", specs: "电池级", origin: "国产", unit: "万元/吨"},
+  {name: "铜箔", specs: "6um电池级", origin: "国产", unit: "万元/吨"},
 ];
 
 function evalScope(script, returnVariable) {
@@ -30,7 +31,111 @@ function evalScope(script, returnVariable) {
   return eval(returnVariable);
 }
 // 匹配需要抓取页面的正则
-const regexp = new RegExp(names.map(e => `((?=.?${e.name}).+(?=.?${e.specs}).+)`).join("|"));
+const regexp = new RegExp(prods.map(e => e.origin ? `((?=.?${e.name}).+(?=.?${e.specs.replace("+", "\\+")}).+(?=.?${e.origin}).*)` : `((?=.?${e.name}).+(?=.?${e.specs.replace("+", "\\+")}).+)`).join("|"));
+
+// 数据库新增字段，更新表结构及其数据，不作为客户端接口使用
+router.get("/prdPrice/initial", async function (req, res) {
+  try {
+    const [_, body] = await syncRequest({ url: `http://www.icbattery.com/quote/todaymainprice.php` });
+    const $ = cheerio.load(body);
+    const links = [];
+    $(`#content`).find("a").each(function () {
+      links.push($(this).attr("href"));
+    });
+    console.log(links.map(e=>decodeURIComponent(e)));
+    const usefulLinks = links.filter(e => regexp.test(decodeURIComponent(e)));
+    const fullLinks = usefulLinks.map(e => `http://www.icbattery.com${encodeURI(e)}`);
+    for (let index = 0; index < fullLinks.length; index++) {
+      const fullurl = fullLinks[index];
+      const url = usefulLinks[index];
+      try {
+        const Model = req.mongo`productPrice`;
+        const durl = decodeURIComponent(url);
+        // 过滤字段
+        const name = durl.replace(/^.+&kname=(.*)&specs.+$/, "$1");
+        const type = durl.replace(/^.+&specs=(.*)&origi.+$/, "$1");
+        // 请求详细数据列表
+        const [_, mainBody] = await syncRequest({ url: fullurl });
+        const scripts = cheerio.load(mainBody)('script');
+        // 过滤出包含echarts的脚本
+        const chartScript = scripts.get().filter(e => e.children.length).map(e => e.children[0].data).filter(e => /echarts\.init\(/.test(e));
+        if (chartScript.length) {
+          const option = evalScope(chartScript[0], "option");
+          // console.log(modRes);
+          // 取出网页上的日期列表
+          let dates = option.xAxis[0].data;
+          const year = new Date().getFullYear();
+          // 是否发生了跨年，在月-日 前面拼上 年-
+          if (dates.indexOf("12-31") !== -1) {
+            let flag = false;
+            dates = dates.map(e => {
+              if (flag) {
+                return `${year}-${e}`;
+              } else {
+                flag = e === "12-31";
+                return `${year-1}-${e}`;
+              }
+            });
+          } else {
+            dates = dates.map(e => `${year}-${e}`);
+          }
+          // 取出所有数据
+          const val = option.series.data;
+          // 将年月日和数据映射为一个对象
+          const data = dates.map((date, index) => ({date, value: val[index]}));
+          const modRes = await Model.findOne({ name, type });
+          // 根据是否存在该条数据创建或更新数据条;
+          if (!modRes) {
+            const model = new Model({
+              name,
+              type,
+              data
+            });
+            await model.save();
+          }
+        }
+      } catch (error) {
+        console.log(error);
+        res.json({
+          status: false,
+          which: "迭代爬取数据失败"
+        });
+      }
+    }
+    res.json({
+      status: true,
+      which: "添加数据库新数据成功"
+    });
+  } catch (error) {
+    res.json({
+      status: false,
+      which: "爬取数据失败"
+    });
+  }
+});
+
+// 数据库增加字段，更新表结构及其数据，不作为客户端接口使用
+router.get("/prdPrice/update", async function (req, res) {
+  try {
+    const Model = req.mongo`productPrice`;
+    for (let index = 0; index < prods.length; index++) {
+      const item = prods[index];
+      await Model.findOneAndUpdate({name: item.name, type: item.specs}, {
+        origin: item.origin || "",
+        unit: item.unit
+      });
+    }
+    res.json({
+      status: true,
+      which: "操作成功"
+    });
+  } catch (error) {
+    res.json({
+      status: false,
+      which: "执行出错"
+    });
+  }
+});
 
 // 网页前置接口，进入网页时自动发起该请求，，网页判断数据更新日期，如果日期不对，则发起更新
 router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
@@ -41,6 +146,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
     $(`#content`).find("a").each(function () {
       links.push($(this).attr("href"));
     });
+    // 过滤出有效条信息
     const usefulLinks = links.filter(e => regexp.test(decodeURIComponent(e)));
     const fullLinks = usefulLinks.map(e => `http://www.icbattery.com${encodeURI(e)}`);
     for (let index = 0; index < fullLinks.length; index++) {
@@ -135,11 +241,12 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
 router.get('/prdPrice/list', async function(req, res) {
   const name = req.query.name;
   const type = req.query.type;
+  const origin = req.query.origin || "";
   console.log("请求数据的筛选条件", name, type);
-  if (name && type) {
+  if (name || type || origin) {
     const Model = req.mongo`productPrice`;
     try {
-      const data = await Model.findOne({ name, type });
+      const data = await Model.findOne({ name, type, origin });
       res.json({
         status: true,
         data: {
@@ -158,7 +265,7 @@ router.get('/prdPrice/list', async function(req, res) {
   } else {
     res.json({
       status: false,
-      which: "name或type字段缺失"
+      which: "name或type或origin字段缺失"
     });
   }
 });

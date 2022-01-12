@@ -8,6 +8,7 @@ const requireContext = require("./utils/requireContext");
 // const errorhandler = require('errorhandler')
 
 const routes = requireContext(module, "./routes", /\.js/);
+// TODO 给所有的路由增加一个配置项，用于收集是否需要验证token
 
 const mongo = require('./db/mongo');
 
