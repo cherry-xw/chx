@@ -1,5 +1,5 @@
 const express = require('express');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const request = require('request');
 const cheerio = require('cheerio');
 const router = express.Router();

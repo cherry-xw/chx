@@ -2,7 +2,7 @@ const express = require('express');
 const cheerio = require('cheerio');
 const syncRequest = require("../utils/syncRequest");
 const { differenceBy } = require('lodash');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const router = express.Router();
 
 // 产品列表
@@ -139,6 +139,7 @@ router.get("/prdPrice/update", async function (req, res) {
 
 // 网页前置接口，进入网页时自动发起该请求，，网页判断数据更新日期，如果日期不对，则发起更新
 router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
+  console.log("time: ", moment().format("YYYY-MM-DD HH:mm:ss.ssssss"));
   try {
     const [_, body] = await syncRequest({ url: `http://www.icbattery.com/quote/todaymainprice.php` });
     const $ = cheerio.load(body);
@@ -152,72 +153,68 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
     for (let index = 0; index < fullLinks.length; index++) {
       const fullurl = fullLinks[index];
       const url = usefulLinks[index];
-      try {
-        const Model = req.mongo`productPrice`;
-        const durl = decodeURIComponent(url);
-        // 过滤字段
-        const name = durl.replace(/^.+&kname=(.*)&specs.+$/, "$1");
-        const type = durl.replace(/^.+&specs=(.*)&origi.+$/, "$1");
-        // 根据类型和更新时间查询是否需要更新改条数据
-        const modRes = await Model.findOne({ name, type, editTime: { $lt: new Date(`${moment().format("YYYY-MM-DD")}T00:00:00`).getTime() } });
-        if (modRes) {
-          // 请求详细数据列表
-          const [_, mainBody] = await syncRequest({ url: fullurl });
-          const scripts = cheerio.load(mainBody)('script');
-          // 过滤出包含echarts的脚本
-          const chartScript = scripts.get().filter(e => e.children.length).map(e => e.children[0].data).filter(e => /echarts\.init\(/.test(e));
-          if (chartScript.length) {
-            const option = evalScope(chartScript[0], "option");
-            // console.log(modRes);
-            // 取出网页上的日期列表
-            let dates = option.xAxis[0].data;
-            const year = new Date().getFullYear();
-            // 是否发生了跨年，在月-日 前面拼上 年-
-            if (dates.indexOf("12-31") !== -1) {
-              let flag = false;
-              dates = dates.map(e => {
-                if (flag) {
-                  return `${year}-${e}`;
-                } else {
-                  flag = e === "12-31";
-                  return `${year-1}-${e}`;
-                }
-              });
-            } else {
-              dates = dates.map(e => `${year}-${e}`);
-            }
-            // 取出所有数据
-            const val = option.series.data;
-            // 将年月日和数据映射为一个对象
-            const data = dates.map((date, index) => ({date, value: val[index]}));
-            // 根据是否存在该条数据创建或更新数据条
-            // if (!modRes) {
-            //   const model = new Model({
-            //     name,
-            //     type,
-            //     data
-            //   });
-            //   await model.save();
-            // } else {
-            const diffDateData = differenceBy(data, modRes.data, "date");
-            console.log(diffDateData);
-            if (diffDateData.length) {
-              await modRes.updateOne({
-                $push: {
-                  data: {
-                    $each: diffDateData,
-                    $sort: {date: -1}
-                  }
-                },
-                editTime: Date.now()
-              });
-              console.log(`更新 ${name}, ${type} 结束`);
-            }
-            // }
+      const Model = req.mongo`productPrice`;
+      const durl = decodeURIComponent(url);
+      // 过滤字段
+      const name = durl.replace(/^.+&kname=(.*)&specs.+$/, "$1");
+      const type = durl.replace(/^.+&specs=(.*)&origi.+$/, "$1");
+      // 根据类型和更新时间查询是否需要更新改条数据
+      const modRes = await Model.findOne({ name, type, editTime: { $lt: new Date(`${moment().format("YYYY-MM-DD")}T00:00:00`).getTime() } });
+      if (modRes) {
+        // 请求详细数据列表
+        const [_, mainBody] = await syncRequest({ url: fullurl });
+        const scripts = cheerio.load(mainBody)('script');
+        // 过滤出包含echarts的脚本
+        const chartScript = scripts.get().filter(e => e.children.length).map(e => e.children[0].data).filter(e => /echarts\.init\(/.test(e));
+        if (chartScript.length) {
+          const option = evalScope(chartScript[0], "option");
+          // console.log(modRes);
+          // 取出网页上的日期列表
+          let dates = option.xAxis[0].data;
+          const year = new Date().getFullYear();
+          // 是否发生了跨年，在月-日 前面拼上 年-
+          if (dates.indexOf("12-31") !== -1) {
+            let flag = false;
+            dates = dates.map(e => {
+              if (flag) {
+                return `${year}-${e}`;
+              } else {
+                flag = e === "12-31";
+                return `${year-1}-${e}`;
+              }
+            });
+          } else {
+            dates = dates.map(e => `${year}-${e}`);
           }
+          // 取出所有数据
+          const val = option.series.data;
+          // 将年月日和数据映射为一个对象
+          const data = dates.map((date, index) => ({date, value: val[index]}));
+          // 根据是否存在该条数据创建或更新数据条
+          // if (!modRes) {
+          //   const model = new Model({
+          //     name,
+          //     type,
+          //     data
+          //   });
+          //   await model.save();
+          // } else {
+          const diffDateData = differenceBy(data, modRes.data, "date");
+          console.log(diffDateData);
+          if (diffDateData.length) {
+            await modRes.updateOne({
+              $push: {
+                data: {
+                  $each: diffDateData,
+                  $sort: {date: -1}
+                }
+              },
+              editTime: Date.now()
+            });
+            console.log(`更新 ${name}, ${type} 结束`);
+          }
+          // }
         }
-      } catch (error) {
-        console.log(error);
       }
     }
     res.json({
@@ -227,6 +224,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
     });
     return;
   } catch (error) {
+    console.log(error);
     res.json({
       status: false,
       which: "爬取数据失败"
@@ -243,7 +241,10 @@ router.get('/prdPrice/list', async function(req, res) {
   if (name || type || origin) {
     const Model = req.mongo`productPrice`;
     try {
-      const data = await Model.findOne({ name, type, origin });
+      const obj = {name};
+      if(type) obj.type = type;
+      if(origin) obj.origin = origin;
+      const data = await Model.findOne(obj);
       res.json({
         status: true,
         data: {

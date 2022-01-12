@@ -19,7 +19,6 @@
     "jsdom": "^19.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
-    "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",
     "mongodb": "^4.1.4",
     "mongoose": "^6.0.12",
