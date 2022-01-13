@@ -143,6 +143,7 @@ router.get("/prdPrice/update", async function (req, res) {
 router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
   console.log("time: ", moment().format("YYYY-MM-DD HH:mm:ss.ssssss"));
   try {
+    console.log("开始访问全列表");
     const [_, body] = await syncRequest({ url: `http://www.icbattery.com/quote/todaymainprice.php` });
     const $ = cheerio.load(body);
     const links = [];
@@ -152,6 +153,8 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
     // 过滤出有效条信息
     const usefulLinks = links.filter(e => regexp.test(decodeURIComponent(e)));
     const fullLinks = usefulLinks.map(e => `http://www.icbattery.com${encodeURI(e)}`);
+    console.log("全列表访问成功，过滤有效信息 ", fullLinks.length, "条");
+    let isPartSuccess = false;
     for (let index = 0; index < fullLinks.length; index++) {
       const fullurl = fullLinks[index];
       const url = usefulLinks[index];
@@ -210,6 +213,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
             }
           }
         } catch (error) {
+          isPartSuccess = true;
           console.log(`请求${name}-${type}时发生错误`);
           console.error(error);
         }
@@ -217,8 +221,8 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
     }
     res.json({
       status: true,
-      data: "更新成功",
-      which: "更新成功"
+      data: isPartSuccess ? "部分更新成功" : "更新成功",
+      which: isPartSuccess ? "部分更新成功" : "更新成功"
     });
     return;
   } catch (error) {
