@@ -7,5 +7,13 @@ module.exports = {
     database: 'blog'
   },
   mongo: 'mongodb://chery-node:GA6sqpJ3ei-node@main.xcherry.top:27017/chery-node?authSource=admin',
-  notcheckpath: ["/", '/api/login', '/api/verifycode', '/api/regist', '/api/bloglist', '/api/blogcontent', '/api/fundGroup', "/api/fundNetWorth", '/api/test', "/api/prdPrice/getSpotGoodsHistoryPrice", "/api/prdPrice/list"]  // 指定路径不经过 Token 解析
+  notcheckpath: [
+    "/",
+    '/api/test',
+    '/api/login', '/api/verifycode', '/api/regist',
+    '/api/bloglist', '/api/blogcontent',
+    '/api/fundGroup', "/api/fundNetWorth",
+    "/api/prdPrice/getSpotGoodsHistoryPrice", "/api/prdPrice/list",
+    '/api/socialFinancing/upload', '/api/socialFinancing/list'
+  ]  // 指定路径不经过 Token 解析
 };
