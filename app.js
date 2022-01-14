@@ -1,6 +1,7 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const cors = require("cors");
 const config = require("./config");
 const expressJwt = require('express-jwt');
 const mysql = require('./db/mysql');
@@ -20,11 +21,10 @@ const mongo = require('./db/mongo');
 
 // console.log(module);
 
-const app = express();
-
 const CORSOrigins = [
-  "http://localhost:8080",
+  "http://192.168.0.109:3000",
   "http://localhost:3000",
+  "http://localhost:8080",
   "https://ww.xcherry.top",
   "http://ww.xcherry.top",
   "https://www.xcherry.top",
@@ -33,16 +33,31 @@ const CORSOrigins = [
   "http://xcherry.top"
 ];
 
-app.all('*', function(req, res, next) {
-  if (CORSOrigins.indexOf(req.headers.origin) !== -1) {
-    res.header("Access-Control-Allow-Origin", req.headers.origin);
+const app = express();
+
+// https://github.com/expressjs/cors
+app.all('*', cors(function (req, callback) {
+  let corsOptions;
+  if (CORSOrigins.indexOf(req.header('Origin')) !== -1) {
+    corsOptions = { origin: true, optionsSuccessStatus: 200 }; // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false }; // disable CORS for this request
   }
-  res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
-  res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS,PATCH");
-  res.header("X-Powered-By",' 3.2.1');
-  res.header("Content-Type", "application/json;charset=utf-8");
-  next();
-});
+  callback(null, corsOptions); // callback expects two parameters: error and options
+}));
+
+// app.all('*', function(req, res, next) {
+//   const index = CORSOrigins.indexOf(req.headers.origin);
+//   console.log(`request from origin: ${req.headers.origin}, cors check: ${index === -1 ? "forbid" : "pass"}`);
+//   if (index !== -1) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//   }
+//   res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
+//   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS,PATCH");
+//   res.header("X-Powered-By",' 3.2.1');
+//   res.header("Content-Type", "application/json;charset=utf-8");
+//   next();
+// });
 
 app.use(logger('dev'));
 app.use(express.json());
