@@ -164,8 +164,9 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
       const name = durl.replace(/^.+&kname=(.*)&specs.+$/, "$1");
       const type = durl.replace(/^.+&specs=(.*)&origi.+$/, "$1");
       // 根据类型和更新时间查询是否需要更新改条数据
-      const modRes = await Model.findOne({ name, type, editTime: { $lt: new Date(`${moment().format("YYYY-MM-DD")}T00:00:00`).getTime() } });
+      const modRes = await Model.findOne({ name, type, editTime: { $lt: new Date(moment().format("YYYY-MM-DD")) } });
       if (modRes) {
+        console.log("需要获取"+name+" "+type+"的数据");
         // 为每次请求包一个try catch 这样出错后不会直接停止，而是会继续访问后续
         try {
           // 请求详细数据列表
@@ -217,6 +218,8 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
           console.log(`请求${name}-${type}时发生错误`);
           console.error(error);
         }
+      } else {
+        console.log("不需要获取"+name+" "+type+"的数据");
       }
     }
     res.json({
