@@ -8,12 +8,11 @@ module.exports = {
   },
   mongo: 'mongodb://chery-node:GA6sqpJ3ei-node@main.xcherry.top:27017/chery-node?authSource=admin',
   notcheckpath: [
-    "/",
-    '/api/test',
-    '/api/login', '/api/verifycode', '/api/regist',
-    '/api/bloglist', '/api/blogcontent',
-    '/api/fundGroup', "/api/fundNetWorth",
-    "/api/prdPrice/getSpotGoodsHistoryPrice", "/api/prdPrice/list",
-    '/api/socialFinancing/upload', '/api/socialFinancing/list'
-  ]  // 指定路径不经过 Token 解析
+    'test',
+    'login', 'verifycode', 'regist',
+    'bloglist', 'blogcontent',
+    'fundGroup', "fundNetWorth", "fundNetWorthHistory",
+    "prdPrice/getSpotGoodsHistoryPrice", "prdPrice/list",
+    'socialFinancing/upload', 'socialFinancing/list'
+  ].map(e => '/api/' + e).concat("/")  // 指定路径不经过 Token 解析
 };

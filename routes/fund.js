@@ -6,10 +6,9 @@ const router = express.Router();
 
 
 router.get('/fundGroup', function (req, res) {
-  console.log("get");
   const name = req.query.name;
   if (name) {
-    req.mongo`FundStore`.findOne({name}, (err, ret)=> {
+    req.mongo`FundStore`.findOne({ name }, (err, ret) => {
       if (err) {
         console.log(err.message);
         res.json({
@@ -39,7 +38,7 @@ router.post('/fundGroup', function (req, res) {
   const name = req.body.name;
   const message = req.body.message;
   if (name && message) {
-    req.mongo`FundStore`.findOne({name}, (err, ret)=> {
+    req.mongo`FundStore`.findOne({ name }, (err, ret) => {
       if (err) {
         console.log(err.message);
         res.json({
@@ -48,7 +47,7 @@ router.post('/fundGroup', function (req, res) {
         });
       } else if (ret) {
         // 查到了就更新
-        req.mongo`FundStore`.update({name}, {$set: {message, editTime: Date.now()}}, err => {
+        req.mongo`FundStore`.update({ name }, { $set: { message, editTime: Date.now() } }, err => {
           if (err) {
             console.log(err.message);
             res.json({
@@ -97,7 +96,7 @@ router.patch('/fundGroup', function (req, res) {
   const name = req.body.name;
   const message = req.body.message;
   if (name && message) {
-    req.mongo`FundStore`.update({name}, {$set: {message, editTime: Date.now()}}, err => {
+    req.mongo`FundStore`.update({ name }, { $set: { message, editTime: Date.now() } }, err => {
       if (err) {
         console.log(err.message);
         res.json({
@@ -173,40 +172,68 @@ async function getFromTtjj(code) {
 
   });
 }
-const cache = {};
+
+router.get('/fundNetWorthHistory', async function (req, res) {
+  const code = req.query.code;
+  const Fundnav = req.mongo`fundnav`;
+  Fundnav.findOne({ code }, (err, ret) => {
+    if (err) {
+      console.log(err.message);
+      res.json({
+        status: false,
+        which: `查询失败：${err.message}`
+      });
+    } else {
+      res.json({
+        status: true,
+        data: ret
+      });
+    }
+  });
+});
 
 // 只能请求当天的数据
 router.get('/fundNetWorth', async function (req, res) {
-  const code = req.query.code;
+  const code = req.query.code + "";
   const date = moment().format("YYYY-MM-DD");
-  if ((code + "").length === 6) {
-    const codeDateStr = `${code}_${date}`;
-    if (cache[codeDateStr]) {
-      res.json({
-        status: true,
-        data: cache[codeDateStr]
-      });
-    } else {
-      try {
-        const zqRes = await getFromZq(code, date);
-        const val = zqRes.body.aaData.filter(e => e.totalNetValue);
-        const resData = {};
-        if (val.length && val[0].valuationDate === date) {
-          resData.netValue =  val[0].shareNetValue;
-          resData.valuationDate = date;
-          cache[codeDateStr] = resData;
-          res.json({
-            status: true,
-            data: resData
-          });
-        } else {
-          // 没请求到当天的数据,尝试去天天基金获取
-          const ttjjRes = await getFromTtjj(code);
-          if (moment().isSame(ttjjRes.valuationDate, "day") && ttjjRes.netValue) {
-            cache[codeDateStr] = ttjjRes;
+  const Fundnav = req.mongo`fundnav`;
+  if (code.length === 6) {
+    Fundnav.findOne({ code, valuationDate: date }, async (err, ret) => {
+      if (err) {
+        console.log(err.message);
+        res.json({
+          status: false,
+          which: `查询失败：${err.message}`
+        });
+      } else if (ret) {
+        res.json({
+          status: true,
+          data: ret
+        });
+      } else {
+        try {
+          const zqRes = await getFromZq(code, date);
+          const val = zqRes.body.aaData.filter(e => e.totalNetValue);
+          const resData = {};
+          if (val.length && val[0].valuationDate === date) {
+            resData.netValue = val[0].shareNetValue;
+            resData.valuationDate = date;
+          } else {
+            // 没请求到当天的数据,尝试去天天基金获取
+            const ttjjRes = await getFromTtjj(code);
+            if (moment().isSame(ttjjRes.valuationDate, "day") && ttjjRes.netValue) {
+              resData.netValue = ttjjRes.netValue;
+              resData.valuationDate = ttjjRes.valuationDate;
+            }
+          }
+          if (resData.valuationDate) {
+            await new Fundnav({
+              code,
+              ...resData
+            }).save();
             res.json({
               status: true,
-              data: ttjjRes
+              data: resData
             });
           } else {
             res.json({
@@ -214,23 +241,21 @@ router.get('/fundNetWorth', async function (req, res) {
               data: null
             });
           }
+        } catch (error) {
+          console.log(error);
+          res.json({
+            status: false,
+            data: null
+          });
         }
-      } catch (error) {
-        console.log(error);
-        res.json({
-          status: false,
-          data: null
-        });
       }
-
-    }
+    });
   } else {
     res.json({
       status: false,
       data: null
     });
   }
-
 });
 
 module.exports = router;
