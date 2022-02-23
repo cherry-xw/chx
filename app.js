@@ -4,7 +4,6 @@ const logger = require('morgan');
 const cors = require("cors");
 const config = require("./config");
 const expressJwt = require('express-jwt');
-const mysql = require('./db/mysql');
 const requireContext = require("./utils/requireContext");
 
 const moment = require('moment-timezone');
@@ -46,24 +45,10 @@ app.all('*', cors(function (req, callback) {
   callback(null, corsOptions); // callback expects two parameters: error and options
 }));
 
-// app.all('*', function(req, res, next) {
-//   const index = CORSOrigins.indexOf(req.headers.origin);
-//   console.log(`request from origin: ${req.headers.origin}, cors check: ${index === -1 ? "forbid" : "pass"}`);
-//   if (index !== -1) {
-//     res.header("Access-Control-Allow-Origin", "*");
-//   }
-//   res.header("Access-Control-Allow-Headers", "X-Requested-With,Content-Type,Authorization");
-//   res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS,PATCH");
-//   res.header("X-Powered-By",' 3.2.1');
-//   res.header("Content-Type", "application/json;charset=utf-8");
-//   next();
-// });
-
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(mysql);
 app.use(mongo);
 
 // 默认从req.headers.authorization获取token值

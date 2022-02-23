@@ -1,20 +1,29 @@
+const moment = require('moment-timezone');
 const express = require('express');
-const { formatTime } = require('../utils/time');
+const { ObjectId } = require('mongodb');
 const router = express.Router();
 
 router.post('/addbilltype', async function (req, res) {
   if (req.body.typename) {
-    await req.mysql.query('INSERT INTO note_billtype SET ?', {
-      createtime: formatTime(),
-      updatetime: formatTime(),
+    const Billtype = req.mongo`billtype`;
+    const count = await Billtype.find().count();
+    const rrr = await new Billtype({
       typename: req.body.typename,
       intro: req.body.intro || "",
-      user_id: req.user.id
-    });
-    res.json({
-      status: true,
-      which: "添加成功"
-    });
+      user_id: req.user.id,
+      id: count + 4
+    }).save();
+    if (rrr) {
+      res.json({
+        status: true,
+        which: "添加成功"
+      });
+    } else {
+      res.json({
+        status: true,
+        which: "添加失败"
+      });
+    }
   } else {
     res.json({
       status: false,
@@ -27,19 +36,23 @@ router.post('/editbilltype', async (req, res) => {
   const { typename, intro, id } = req.body;
   if (id !== undefined && (typename || intro)) {
     const updateData = {
-      updatetime: formatTime()
+      updatetime: new Date()
     };
+    const Billtype = req.mongo`billtype`;
     if (typename) updateData.typename = typename;
     if (intro) updateData.intro = intro;
-    await req.mysql.query('UPDATE note_billtype SET ? WHERE ? AND ?', [
-      updateData,
-      { user_id: req.user.id },
-      { id }
-    ]);
-    res.json({
-      status: true,
-      which: "修改账类型成功"
-    });
+    const ret = await Billtype.findOneAndUpdate({ user_id: req.user.id, id }, updateData);
+    if (ret) {
+      res.json({
+        status: true,
+        which: "修改账类型成功"
+      });
+    } else {
+      res.json({
+        status: false,
+        which: "修改类型失败"
+      });
+    }
   } else {
     res.json({
       status: false,
@@ -49,7 +62,7 @@ router.post('/editbilltype', async (req, res) => {
 });
 
 router.get('/getbilltypelist', async function (req, res) {
-  const result = await req.mysql.query('SELECT * FROM note_billtype WHERE ?', {
+  const result = await req.mongo`billtype`.find({
     user_id: req.user.id
   });
   res.json({
@@ -63,17 +76,12 @@ router.get('/getbilltypelist', async function (req, res) {
 });
 
 router.get('/getbilllist', async function (req, res) {
-  const page = parseInt(req.query.page);
+  const page = parseInt(req.query.page); // 从第0页开始
+  const pageSize = parseInt(req.query.pageSize) || 20;
   if (!isNaN(page)) {
-    const result = await req.mysql.query(`
-      SELECT *
-      FROM note_bill
-      WHERE ?
-      ORDER BY consumetime desc
-      LIMIT ${page * 25},${(page + 1) * 25}
-    `, {
+    const result = await req.mongo`bill`.find({
       user_id: req.user.id
-    });
+    }).limit(pageSize).skip(pageSize * (page + 1));
     res.json({
       status: true,
       data: result.map(e => ({
@@ -95,19 +103,25 @@ router.get('/getbilllist', async function (req, res) {
 router.post('/addbillcontent', async function (req, res) {
   const { billtypeid, consumetime, price, intro } = req.body;
   if (billtypeid && consumetime && price && intro) {
-    await req.mysql.query("INSERT INTO note_bill SET `uuid` = REPLACE ( UUID( ), '-', '' ), ?", {
-      updatetime: formatTime(),
-      date: formatTime(),
-      consumetime: formatTime(consumetime),
+    const rrr = await req.mongo`bill`({
+      consumetime: moment(consumetime),
       price,
       billtype_id: billtypeid,
       user_id: req.user.id,
       intro
-    });
-    res.json({
-      status: true,
-      which: "添加成功"
-    });
+    }).save();
+    console.log(rrr);
+    if (rrr) {
+      res.json({
+        status: true,
+        which: "添加成功"
+      });
+    } else {
+      res.json({
+        status: true,
+        which: "添加失败"
+      });
+    }
   } else {
     res.json({
       status: false,
@@ -121,21 +135,18 @@ router.post('/editbillcontent', async function (req, res) {
   if (id) {
     const updateObj = {};
     if (billtypeid) updateObj.billtype_id = billtypeid;
-    if (consumetime) updateObj.consumetime = formatTime(consumetime);
+    if (consumetime) updateObj.consumetime = new Date();
     if (price) updateObj.price = price;
     if (intro) updateObj.intro = intro;
-    updateObj.updatetime = formatTime();
+    updateObj.updatetime = new Date();
     if (Object.keys(updateObj).length) {
-      const result = await req.mysql.query('SELECT * FROM note_billtype WHERE ? AND ?', [
-        { user_id: req.user.id },
-        { id: billtypeid }
-      ], "请求账单类型出错");
-      if (result.length) {
-        await req.mysql.query('UPDATE note_bill SET ? WHERE ? AND ?', [
-          updateObj,
-          { user_id: req.user.id },
-          { uuid: id }
-        ]);
+      const Bill = req.mongo`bill`;
+      console.log(req.user.id);
+      const result = await Bill.findOneAndUpdate(
+        { user_id: req.user.id, _id: ObjectId(id) },
+        updateObj
+      );
+      if (result) {
         res.json({
           status: true,
           which: "修改账类型成功"
@@ -143,7 +154,7 @@ router.post('/editbillcontent', async function (req, res) {
       } else {
         res.json({
           status: false,
-          which: "无该billtypeid记录"
+          which: "无该id记录"
         });
       }
     } else {

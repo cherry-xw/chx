@@ -4,6 +4,7 @@ const fs = require("fs");
 const { Form } = require('multiparty');
 const images = require("images");
 const { formatTime } = require('../utils/time');
+const { ObjectId } = require('mongodb');
 const router = express.Router();
 
 // 缓存
@@ -12,28 +13,56 @@ const contentCache = {};
 
 // 获取博客列表
 router.get('/bloglist', async function (req, res) {
-  const page = parseInt(req.query.page) - 1;
+  const page = parseInt(req.query.page);
   if (!isNaN(page)) {
     const id = req.query.user_id || req.user_id || 2;
+    const userInfo = await req.mongo`user`.findOne({ id }, { _id: 0, id: 1, username: 1 });
     if (!listCache[id]) listCache[id] = {};
     if (!listCache[id][page]) {
-      const result = await req.mysql.query(`
-        SELECT note_user.username,note_blogtype.typeName,
-        note_blog.uuid,note_blog.title,note_blog.intro,note_blog.subtitle,note_blog.titleImage,note_blog.date
-        FROM note_blog
-        LEFT JOIN note_user ON note_blog.user_id=note_user.id
-        LEFT JOIN note_blogtype ON note_blog.blogtype_id=note_blogtype.id
-        WHERE ?
-        ORDER BY date desc
-        LIMIT ${page * 25},${(page + 1) * 25}
-      `, {
-        "note_blog.user_id": id
-      });
+      const result = await req.mongo`blog`.aggregate([
+        {
+          $match: {
+            user_id: id
+          },
+        },
+        {
+          $lookup: {
+            from: "blogtypes",
+            localField: "blogtype_id",
+            foreignField: "id",
+            as: "blogtype"
+          }
+        },
+        {
+          $unwind: {
+            path: "$blogtype",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            date: 1,
+            intro: 1,
+            subtitle: 1,
+            title: 1,
+            titleImage: 1,
+            blogtype: {
+              id: 1,
+              typeName: 1
+            },
+          }
+        }
+      ]).limit(10).skip(page * 10 - 10);
       listCache[id][page] = result;
     }
     res.json({
       status: true,
-      data: listCache[id][page]
+      data: {
+        userInfo,
+        data: listCache[id][page]
+      }
     });
   } else {
     res.json({
@@ -44,18 +73,58 @@ router.get('/bloglist', async function (req, res) {
 });
 // 博客内容
 router.get('/blogcontent', async function (req, res) {
-  const id = req.query.uuid;
+  const id = req.query.id;
   if (id) {
     if (!contentCache[id]) {
-      const result = await req.mysql.query(`
-        SELECT note_user.username,note_blogtype.typeName,
-        note_blog.uuid,note_blog.title,note_blog.intro,note_blog.subtitle,note_blog.titleImage,note_blog.date,note_blog.content
-        FROM note_blog
-        LEFT JOIN note_user ON note_blog.user_id=note_user.id
-        LEFT JOIN note_blogtype ON note_blog.blogtype_id=note_blogtype.id
-        WHERE ?`, {
-        uuid: id
-      });
+      const result = await req.mongo`blog`.aggregate([
+        {
+          $match: {
+            _id: ObjectId(id)
+          },
+        },
+        {
+          $lookup: {
+            from: "blogtypes",
+            localField: "blogtype_id",
+            foreignField: "id",
+            as: "blogtype"
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "id",
+            as: "user"
+          }
+        },
+        {
+          $unwind: {
+            path: "$blogtype",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            content: 1,
+            date: 1,
+            intro: 1,
+            subtitle: 1,
+            title: 1,
+            titleImage: 1,
+            updatetime: 1,
+            blogtype: {
+              typeName: 1,
+              id: 1
+            },
+            user: {
+              username: 1,
+              id: 1
+            },
+          }
+        }
+      ]);
       if (result.length) {
         contentCache[id] = result[0];
         res.json({
@@ -85,16 +154,28 @@ router.get('/blogcontent', async function (req, res) {
 router.get('/postblog', function (req, res) { });
 // 创建博客类型
 router.get('/addnotetype', async function (req, res) {
-  await req.mysql.query("INSERT INTO note_blogtype SET ?", {
+  const Blogtype = req.mongo`blogtype`;
+  const count = await Blogtype().find().count();
+  const rrr = await new Blogtype({
     typeName: req.body.typeName,
-    createtime: formatTime(),
-    updatetime: formatTime(),
-    user_id: req.user.id
-  });
+    user_id: req.user.id,
+    id: count + 1
+  }).save();
+  if (rrr) {
+    res.json({
+      status: true,
+      which: "添加成功"
+    });
+  } else {
+    res.json({
+      status: false,
+      which: "添加失败"
+    });
+  }
 });
 // 获取博客类型列表
 router.get('/blogtypelist', async function (req, res) {
-  const result = await req.mysql.query("SELECT * FROM note_blogtype WHERE ?", {
+  const result = await req.mongo`blogtype`.find({
     user_id: req.user.id
   });
   res.json({
@@ -110,15 +191,21 @@ router.get('/modifynotetype', async function (req, res) {
   const { typeName, id } = req.body;
   if (id !== undefined && typeName) {
     // listCache[req.user.id]
-    await req.mysql.query('UPDATE note_blogtype SET ? WHERE ? AND ?', [
-      { typeName, updatetime: formatTime() },
-      { user_id: req.user.id },
-      { id: id }
-    ]);
-    res.json({
-      status: true,
-      which: "修改博客类型成功"
-    });
+    const rrr = await req.mongo`blogtype`.findOneAndUpdate(
+      { user_id: req.user.id, id },
+      { typeName, updatetime: formatTime() }
+    );
+    if (rrr) {
+      res.json({
+        status: true,
+        which: "修改博客类型成功"
+      });
+    } else {
+      res.json({
+        status: false,
+        which: "修改博客类型失败"
+      });
+    }
   } else {
     res.json({
       status: false,

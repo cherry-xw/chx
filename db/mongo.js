@@ -13,8 +13,10 @@ db.once('open', function() {
 });
 
 function mongodb([modelName]) {
+  console.log(modelName);
   // 获取模块
   const Mod =  mongoose.model(modelName);
+  console.log(Mod);
   if (Mod) {
     return Mod;
   } else {

@@ -1,28 +1,27 @@
 let express = require('express');
 const { customAlphabet, nanoid } = require('nanoid');
 const { checkPassword, aesDecrypt, makePassword } = require('../utils/hashers');
-const { formatTime } = require('../utils/time');
+const { MD5 } = require('crypto-js');
 const { getToken } = require('../utils/token');
 let router = express.Router();
 const nanoid8 = customAlphabet('abcdefghijklmnopqrstuvwxyz', 8);
 const verifyCache = {};
 
-router.post('/login', async function(req, res) {
+router.post('/login', async function (req, res) {
   const code = verifyCache[req.body.verifyCodeKey];
   if (req.body.username || req.body.password || code) {
     delete verifyCache[req.body.verifyCodeKey];
-    const username = aesDecrypt(req.body.username, code);
-    console.log(username);
-    const result = await req.mysql.query('SELECT * FROM note_user where ?', {
-      username
-    });
-    if (result.length) {
-      const pwd = aesDecrypt(req.body.password, code);
-      if (checkPassword(pwd, result[0].password)) {
+    // const username = aesDecrypt(req.body.username, code);
+    const username = req.body.username;
+    const result = await req.mongo`user`.findOne({ username });
+    if (result) {
+      // const pwd = aesDecrypt(req.body.password, code);
+      const pwd = req.body.password;
+      if (checkPassword(pwd, result.password)) {
         res.json({
           status: true,
           which: "登录成功",
-          data: getToken(result[0].id)
+          data: getToken(result.id)
         });
       } else {
         res.json({
@@ -45,7 +44,7 @@ router.post('/login', async function(req, res) {
 });
 
 router.post('/regist', async (req, res) => {
-  const code = verifyCache[req.body.verifyCode];
+  const code = verifyCache[req.body.verifyCodeKey];
   if (req.body.username || req.body.password || code) {
     const username = req.body.username; // aesDecrypt(req.body.username, code)
     const password = req.body.password; // aesDecrypt(req.body.password, code)
@@ -55,15 +54,35 @@ router.post('/regist', async (req, res) => {
         which: "用户名或密码长度不足"
       });
     } else {
-      await req.mysql.query.query("INSERT INTO note_user SET ?", {
-        username,
-        password: makePassword(password),
-        createtime: formatTime()
-      });
-      res.json({
-        status: true,
-        which: "注册成功"
-      });
+      try {
+        const User = req.mongo`user`;
+        const result = await User.findOne({ username });
+        if (result) {
+          res.json({
+            status: false,
+            which: "用户名已存在"
+          });
+        } else {
+          const count = await User.find().count();
+          const rrr = await new User({
+            username,
+            _id: MD5(username),
+            id: count + 1,
+            password: makePassword(password)
+          }).save();
+          if (rrr) {
+            res.json({
+              status: true,
+              which: "注册成功"
+            });
+          }
+        }
+      } catch (error) {
+        res.json({
+          status: false,
+          which: "操作数据库异常"
+        });
+      }
     }
   } else {
     res.json({
