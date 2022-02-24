@@ -7,10 +7,10 @@ const productPrice = Schema({
   unit: String, // 单位
   createTime: {type: Date, default: Date.now}, // 创建时间
   editTime: {type: Date, default: Date.now}, // 修改时间
-  data: String // 存储信息
-});
-productPrice.virtual('dataJSON').get(function() {
-  return JSON.parse(this.data);
+  data: [{
+    date: String,
+    value: Number,
+  }] // 存储信息
 });
 
 model('productPrice', productPrice);

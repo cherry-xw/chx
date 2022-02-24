@@ -118,14 +118,10 @@ router.get("/prdPrice/initial", async function (req, res) {
 // 数据库增加字段，更新表结构及其数据，不作为客户端接口使用
 router.get("/prdPrice/update", async function (req, res) {
   try {
-    const Model = req.mongo`productPrice`;
-    for (let index = 0; index < prods.length; index++) {
-      const item = prods[index];
-      await Model.findOneAndUpdate({ name: item.name, type: item.specs }, {
-        origin: item.origin || "",
-        unit: item.unit
-      });
-    }
+    // const Model = req.mongo`productPrice`;
+    // const rrr= await Model.findOneAndUpdate({ _id: ObjectId("61dda01766b3b64343a1a3e6") }, {
+    //   data: ""
+    // });
     res.json({
       status: true,
       which: "操作成功"
@@ -239,48 +235,41 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function (req, res) {
 
 // 搜索某类列表数据
 router.get('/prdPrice/list', async function (req, res) {
-  console.log(req.query);
-  // const name = req.query.name;
-  // const type = req.query.type;
-  // const origin = req.query.origin || "";
-  // console.log("请求数据的筛选条件", name, type);
-  // if (name || type || origin) {
-  //   const Model = req.mongo`productPrice`;
-  //   try {
-  //     const obj = { name };
-  //     if (type) obj.type = type;
-  //     if (origin) obj.origin = origin;
-  //     const data = await Model.findOne(obj);
-  //     if (data) {
-  //       res.json({
-  //         status: true,
-  //         data: {
-  //           name: data.name,
-  //           type: data.type,
-  //           unit: data.unit,
-  //           origin: data.origin,
-  //           data: data.dataJSON
-  //         }
-  //       });
-  //     } else {
-  //       res.json({
-  //         status: false,
-  //         which: "未找到数据"
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     res.json({
-  //       status: false,
-  //       which: "获取列表出错"
-  //     });
-  //   }
-  // } else {
-  //   res.json({
-  //     status: false,
-  //     which: "name或type或origin字段缺失"
-  //   });
-  // }
+  const name = req.query.name;
+  const type = req.query.type;
+  const origin = req.query.origin || "";
+  console.log("请求数据的筛选条件", name, type);
+  if (name || type || origin) {
+    const Model = req.mongo`productPrice`;
+    try {
+      const obj = { name };
+      if (type) obj.type = type;
+      if (origin) obj.origin = origin;
+      const data = await Model.findOne(obj, { _id: 0, name: 1, type: 1, unit: 1, origin: 1, data: { date: 1, value: 1 } });
+      if (data) {
+        res.json({
+          status: true,
+          data
+        });
+      } else {
+        res.json({
+          status: false,
+          which: "未找到数据"
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      res.json({
+        status: false,
+        which: "获取列表出错"
+      });
+    }
+  } else {
+    res.json({
+      status: false,
+      which: "name或type或origin字段缺失"
+    });
+  }
 });
 
 module.exports = router;
