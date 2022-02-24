@@ -7,26 +7,26 @@ const router = express.Router();
 
 // 产品列表
 const prods = [
-  {name: "三元材料", specs: "111/动力", origin: "国产", unit: "万元/吨"},
-  {name: "磷酸铁锂", specs: "动力型", origin: "国产", unit: "万元/吨"},
-  {name: "三元前驱体", specs: "111", origin: "国产", unit: "万元/吨"},
-  {name: "电解钴", specs: "≥99.8%", origin: "国产", unit: "万元/吨"},
-  {name: "氢氧化锂", specs: "电池级", origin: "国产", unit: "万元/吨"},
-  {name: "碳酸锂", specs: "工业级", origin: "国产", unit: "万元/吨"},
-  {name: "隔膜", specs: "7+2μm陶瓷涂覆隔膜", origin: "国产中端", unit: "元/平方米"},
-  {name: "电解液", specs: "三元/圆柱/2600mAh", unit: "万元/吨"},
-  {name: "电解液", specs: "磷酸铁锂", unit: "万元/吨"},
-  {name: "六氟磷酸锂", specs: "六氟磷酸锂", origin: "国产", unit: "万元/吨"},
-  {name: "EMC", specs: "电池级", origin: "国产", unit: "万元/吨"},
-  {name: "DMC", specs: "电池级", origin: "国产", unit: "万元/吨"},
-  {name: "铜箔", specs: "6um电池级", origin: "国产", unit: "万元/吨"},
+  { name: "三元材料", specs: "111/动力", origin: "国产", unit: "万元/吨" },
+  { name: "磷酸铁锂", specs: "动力型", origin: "国产", unit: "万元/吨" },
+  { name: "三元前驱体", specs: "111", origin: "国产", unit: "万元/吨" },
+  { name: "电解钴", specs: "≥99.8%", origin: "国产", unit: "万元/吨" },
+  { name: "氢氧化锂", specs: "电池级", origin: "国产", unit: "万元/吨" },
+  { name: "碳酸锂", specs: "工业级", origin: "国产", unit: "万元/吨" },
+  { name: "隔膜", specs: "7+2μm陶瓷涂覆隔膜", origin: "国产中端", unit: "元/平方米" },
+  { name: "电解液", specs: "三元/圆柱/2600mAh", unit: "万元/吨" },
+  { name: "电解液", specs: "磷酸铁锂", unit: "万元/吨" },
+  { name: "六氟磷酸锂", specs: "六氟磷酸锂", origin: "国产", unit: "万元/吨" },
+  { name: "EMC", specs: "电池级", origin: "国产", unit: "万元/吨" },
+  { name: "DMC", specs: "电池级", origin: "国产", unit: "万元/吨" },
+  { name: "铜箔", specs: "6um电池级", origin: "国产", unit: "万元/吨" },
 ];
 
 function evalScope(script, returnVariable) {
   // eslint-disable-next-line no-unused-vars
-  const echarts = {init(){return {setOption(){}};}};
+  const echarts = { init() { return { setOption() { } }; } };
   // eslint-disable-next-line no-unused-vars
-  const document = {getElementById(){}};
+  const document = { getElementById() { } };
   eval(script);
   return eval(returnVariable);
 }
@@ -42,7 +42,7 @@ router.get("/prdPrice/initial", async function (req, res) {
     $(`#content`).find("a").each(function () {
       links.push($(this).attr("href"));
     });
-    console.log(links.map(e=>decodeURIComponent(e)));
+    console.log(links.map(e => decodeURIComponent(e)));
     const usefulLinks = links.filter(e => regexp.test(decodeURIComponent(e)));
     const fullLinks = usefulLinks.map(e => `http://www.icbattery.com${encodeURI(e)}`);
     for (let index = 0; index < fullLinks.length; index++) {
@@ -73,7 +73,7 @@ router.get("/prdPrice/initial", async function (req, res) {
                 return `${year}-${e}`;
               } else {
                 flag = e === "12-31";
-                return `${year-1}-${e}`;
+                return `${year - 1}-${e}`;
               }
             });
           } else {
@@ -82,7 +82,7 @@ router.get("/prdPrice/initial", async function (req, res) {
           // 取出所有数据
           const val = option.series.data;
           // 将年月日和数据映射为一个对象
-          const data = dates.map((date, index) => ({date, value: val[index]}));
+          const data = dates.map((date, index) => ({ date, value: val[index] }));
           const modRes = await Model.findOne({ name, type });
           // 根据是否存在该条数据创建或更新数据条;
           if (!modRes) {
@@ -121,7 +121,7 @@ router.get("/prdPrice/update", async function (req, res) {
     const Model = req.mongo`productPrice`;
     for (let index = 0; index < prods.length; index++) {
       const item = prods[index];
-      await Model.findOneAndUpdate({name: item.name, type: item.specs}, {
+      await Model.findOneAndUpdate({ name: item.name, type: item.specs }, {
         origin: item.origin || "",
         unit: item.unit
       });
@@ -140,7 +140,7 @@ router.get("/prdPrice/update", async function (req, res) {
 });
 
 // 网页前置接口，进入网页时自动发起该请求，，网页判断数据更新日期，如果日期不对，则发起更新
-router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
+router.get('/prdPrice/getSpotGoodsHistoryPrice', async function (req, res) {
   console.log("time: ", moment().format("YYYY-MM-DD HH:mm:ss.ssssss"));
   try {
     console.log("开始访问全列表");
@@ -166,7 +166,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
       // 根据类型和更新时间查询是否需要更新改条数据
       const modRes = await Model.findOne({ name, type, editTime: { $lt: new Date(moment().format("YYYY-MM-DD")) } });
       if (modRes) {
-        console.log("需要获取"+name+" "+type+"的数据");
+        console.log("需要获取" + name + " " + type + "的数据");
         // 为每次请求包一个try catch 这样出错后不会直接停止，而是会继续访问后续
         try {
           // 请求详细数据列表
@@ -188,7 +188,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
                   return `${year}-${e}`;
                 } else {
                   flag = e === "12-31";
-                  return `${year-1}-${e}`;
+                  return `${year - 1}-${e}`;
                 }
               });
             } else {
@@ -197,7 +197,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
             // 取出所有数据
             const val = option.series.data;
             // 将年月日和数据映射为一个对象
-            const data = dates.map((date, index) => ({date, value: val[index]}));
+            const data = dates.map((date, index) => ({ date, value: val[index] }));
             const diffDateData = differenceBy(data, modRes.data, "date");
             console.log(diffDateData);
             if (diffDateData.length) {
@@ -205,7 +205,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
                 $push: {
                   data: {
                     $each: diffDateData,
-                    $sort: {date: -1}
+                    $sort: { date: -1 }
                   }
                 },
                 editTime: Date.now()
@@ -219,7 +219,7 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
           console.error(error);
         }
       } else {
-        console.log("不需要获取"+name+" "+type+"的数据");
+        console.log("不需要获取" + name + " " + type + "的数据");
       }
     }
     res.json({
@@ -238,48 +238,49 @@ router.get('/prdPrice/getSpotGoodsHistoryPrice', async function(req, res) {
 });
 
 // 搜索某类列表数据
-router.get('/prdPrice/list', async function(req, res) {
-  const name = req.query.name;
-  const type = req.query.type;
-  const origin = req.query.origin || "";
-  console.log("请求数据的筛选条件", name, type);
-  if (name || type || origin) {
-    const Model = req.mongo`productPrice`;
-    try {
-      const obj = {name};
-      if(type) obj.type = type;
-      if(origin) obj.origin = origin;
-      const data = await Model.findOne(obj);
-      if (data) {
-        res.json({
-          status: true,
-          data: {
-            name: data.name,
-            type: data.type,
-            unit: data.unit,
-            origin: data.origin,
-            data: data.data.map(e => ({date: e.date, value: e.value}))
-          }
-        });
-      } else {
-        res.json({
-          status: false,
-          which: "未找到数据"
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      res.json({
-        status: false,
-        which: "获取列表出错"
-      });
-    }
-  } else {
-    res.json({
-      status: false,
-      which: "name或type或origin字段缺失"
-    });
-  }
+router.get('/prdPrice/list', async function (req, res) {
+  console.log(req.query);
+  // const name = req.query.name;
+  // const type = req.query.type;
+  // const origin = req.query.origin || "";
+  // console.log("请求数据的筛选条件", name, type);
+  // if (name || type || origin) {
+  //   const Model = req.mongo`productPrice`;
+  //   try {
+  //     const obj = { name };
+  //     if (type) obj.type = type;
+  //     if (origin) obj.origin = origin;
+  //     const data = await Model.findOne(obj);
+  //     if (data) {
+  //       res.json({
+  //         status: true,
+  //         data: {
+  //           name: data.name,
+  //           type: data.type,
+  //           unit: data.unit,
+  //           origin: data.origin,
+  //           data: data.dataJSON
+  //         }
+  //       });
+  //     } else {
+  //       res.json({
+  //         status: false,
+  //         which: "未找到数据"
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     res.json({
+  //       status: false,
+  //       which: "获取列表出错"
+  //     });
+  //   }
+  // } else {
+  //   res.json({
+  //     status: false,
+  //     which: "name或type或origin字段缺失"
+  //   });
+  // }
 });
 
 module.exports = router;
