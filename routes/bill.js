@@ -82,7 +82,7 @@ router.get('/getbilllist', async function (req, res) {
     const result = await req.mongo`bill`.find({
       user_id: req.user.id
     }).sort({ consumetime: -1 }).limit(pageSize).skip(pageSize * page);
-    console.log(result)
+    console.log(result);
     res.json({
       status: true,
       data: result.map(e => ({
@@ -131,7 +131,7 @@ router.post('/addbillcontent', async function (req, res) {
   }
 });
 
-router.post("find", async function (req, res) {
+router.post("/findWithRule", async function (req, res) {
   let { rule, select } = req.body;
   if (rule) {
     const Bill = req.mongo`bill`;
