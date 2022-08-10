@@ -131,6 +131,44 @@ router.post('/addbillcontent', async function (req, res) {
   }
 });
 
+router.post("find", async function (req, res) {
+  let { rule, select } = req.body;
+  if (rule) {
+    const Bill = req.mongo`bill`;
+    try {
+      // "_id"	"billtype_id"	"consumetime"	"date"	"intro"	"price"	"updatetime"	"user_id"	"uuid"
+      if (Object.prototype.toString.call(rule) === "[object Object]") {
+        rule.user_id = req.user.id;
+      } else {
+        rule = {
+          user_id: req.user.id
+        };
+      }
+      if (Object.prototype.toString.call(select) === "[object Object]") {
+        select.updatetime = 0;
+        select.user_id = 0;
+        select.date = 0;
+        select._id = 0;
+      } else {
+        select = {
+          updatetime: 0,
+          user_id: 0,
+          date: 0,
+          _id: 0
+        };
+      }
+      const result = await Bill.find(rule, select);
+      return result;
+    } catch (error) {
+      console.error(error);
+      res.json({
+        status: false,
+        which: "查询操作异常"
+      });
+    }
+  }
+});
+
 router.post('/editbillcontent', async function (req, res) {
   const { id, billtypeid, consumetime, price, intro } = req.body;
   if (id) {
@@ -150,7 +188,7 @@ router.post('/editbillcontent', async function (req, res) {
       if (result) {
         res.json({
           status: true,
-          which: "修改账类型成功"
+          which: "修改账单记录成功"
         });
       } else {
         res.json({

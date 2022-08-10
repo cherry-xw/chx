@@ -1,3 +1,4 @@
+const debug = require('debug')('cheryservice:server');
 const express = require('express');
 const cheerio = require('cheerio');
 const syncRequest = require("../utils/syncRequest");
@@ -118,10 +119,14 @@ router.get("/prdPrice/initial", async function (req, res) {
 // 数据库增加字段，更新表结构及其数据，不作为客户端接口使用
 router.get("/prdPrice/update", async function (req, res) {
   try {
-    // const Model = req.mongo`productPrice`;
-    // const rrr= await Model.findOneAndUpdate({ _id: ObjectId("61dda01766b3b64343a1a3e6") }, {
-    //   data: ""
-    // });
+    const Model = req.mongo`productPrice`;
+    await (new  Model({
+      data: req.body.data,
+      name: req.body.name,
+      origin: req.body.origin,
+      type: req.body.type,
+      unit: req.body.unit
+    })).save();
     res.json({
       status: true,
       which: "操作成功"
@@ -238,7 +243,7 @@ router.get('/prdPrice/list', async function (req, res) {
   const name = req.query.name;
   const type = req.query.type;
   const origin = req.query.origin || "";
-  console.log("请求数据的筛选条件", name, type);
+  debug("请求数据的筛选条件", name, type, "---");
   if (name || type || origin) {
     const Model = req.mongo`productPrice`;
     try {
