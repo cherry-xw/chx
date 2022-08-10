@@ -132,7 +132,7 @@ router.post('/addbillcontent', async function (req, res) {
 });
 
 router.post("/findWithRule", async function (req, res) {
-  let { rule, select } = req.body;
+  let { rule, select, sort, limit, group } = req.body;
   if (rule) {
     const Bill = req.mongo`bill`;
     try {
@@ -157,7 +157,11 @@ router.post("/findWithRule", async function (req, res) {
           _id: 0
         };
       }
-      const result = await Bill.find(rule, select);
+      let operate = Bill.find(rule, select);
+      if (limit) operate = operate.limit(limit);
+      if (group) operate = operate.group(group);
+      if (sort) operate = operate.sort(sort);
+      const result = await operate;
       return result;
     } catch (error) {
       console.error(error);
