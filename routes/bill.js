@@ -82,7 +82,7 @@ router.get('/getbilllist', async function (req, res) {
     const result = await req.mongo`bill`.find({
       user_id: req.user.id
     }).sort({ consumetime: -1 }).limit(pageSize).skip(pageSize * page);
-    console.log(result);
+    console.log(result?.length);
     res.json({
       status: true,
       data: result.map(e => ({
@@ -162,7 +162,10 @@ router.post("/findWithRule", async function (req, res) {
       if (group) operate = operate.group(group);
       if (sort) operate = operate.sort(sort);
       const result = await operate;
-      return result;
+      res.json({
+        status: true,
+        data: result
+      });
     } catch (error) {
       console.error(error);
       res.json({
