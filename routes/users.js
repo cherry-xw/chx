@@ -11,12 +11,12 @@ router.post('/login', async function (req, res) {
   const code = verifyCache[req.body.verifyCodeKey];
   if (req.body.username || req.body.password || code) {
     delete verifyCache[req.body.verifyCodeKey];
-    // const username = aesDecrypt(req.body.username, code);
-    const username = req.body.username;
+    const username = aesDecrypt(req.body.username, code);
+    // const username = req.body.username;
     const result = await req.mongo`user`.findOne({ username });
     if (result) {
-      // const pwd = aesDecrypt(req.body.password, code);
-      const pwd = req.body.password;
+      const pwd = aesDecrypt(req.body.password, code);
+      // const pwd = req.body.password;
       if (checkPassword(pwd, result.password)) {
         res.json({
           status: true,

@@ -1,6 +1,6 @@
 module.exports = {
   prefix: '/api',
-  mongo: 'mongodb://chery-node:GA6sqpJ3ei-node@sql.xcherry.top:27017/chery-node?authSource=admin',
+  mongo: 'mongodb://chery-node:GA6sqpJ3ei-node@sql.xcherry.top:38194/chery-node?authSource=admin',
   notcheckpath: [
     'test',
     'login', 'verifycode', 'regist',

@@ -81,7 +81,8 @@ router.get('/getbilllist', async function (req, res) {
   if (!isNaN(page)) {
     const result = await req.mongo`bill`.find({
       user_id: req.user.id
-    }).limit(pageSize).skip(pageSize * (page + 1));
+    }).sort({ consumetime: -1 }).limit(pageSize).skip(pageSize * page);
+    console.log(result)
     res.json({
       status: true,
       data: result.map(e => ({
