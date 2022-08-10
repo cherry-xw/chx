@@ -59,7 +59,7 @@ router.get('/socialFinancing/list', async function(req, res) {
   const Model = req.mongo`socialFinancing`;
   try {
     const saved = await Model.find();
-    if (saved?.length) {
+    if (saved.length) {
       res.json({
         status: true,
         data: saved.map(e => ({
