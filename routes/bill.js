@@ -132,11 +132,21 @@ router.post('/addbillcontent', async function (req, res) {
 });
 
 router.post("/findWithRule", async function (req, res) {
-  let { rule, select, ...more } = req.body;
-  if (rule) {
-    const Bill = req.mongo`bill`;
-    try {
-      // "_id"	"billtype_id"	"consumetime"	"date"	"intro"	"price"	"updatetime"	"user_id"	"uuid"
+  let { rule, select, aggregate, ...more } = req.body;
+  const Bill = req.mongo`bill`;
+  let operate;
+  console.log(aggregate);
+  try {
+    // "_id"	"billtype_id"	"consumetime"	"date"	"intro"	"price"	"updatetime"	"user_id"	"uuid"
+    if (Array.isArray(aggregate)) {
+      aggregate.unshift({
+        $match: { user_id: req.user.id }
+      });
+      aggregate.unshift({
+        $match: { consumetime: { $gte: new Date("2020-04-01") } }
+      });
+      operate = Bill.aggregate(aggregate);
+    } else {
       if (Object.prototype.toString.call(rule) === "[object Object]") {
         rule.user_id = req.user.id;
       } else {
@@ -157,25 +167,26 @@ router.post("/findWithRule", async function (req, res) {
           _id: 0
         };
       }
-      let operate = Bill.find(rule, select);
+      operate = Bill.find(rule, select);
       const keys = Object.keys(more);
       if (keys.length) {
         keys.forEach(key => {
+          console.log(key);
           operate = operate[key](more[key]);
         });
       }
-      const result = await operate;
-      res.json({
-        status: true,
-        data: result
-      });
-    } catch (error) {
-      console.error(error);
-      res.json({
-        status: false,
-        which: "查询操作异常"
-      });
     }
+    const result = await operate;
+    res.json({
+      status: true,
+      data: result
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({
+      status: false,
+      which: "查询操作异常"
+    });
   }
 });
 

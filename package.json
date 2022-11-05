@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "serve": "nodemon ./bin/www"
+    "serve": "nodemon ./bin/www",
+    "dispose": "pm2 start ./bin/www --name chery"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.10",
