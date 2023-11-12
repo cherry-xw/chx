@@ -516,6 +516,11 @@
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
   integrity sha1-WWoXRyM2lNUPatinhp/Lb1bPWEE=
 
+"@types/lodash@^4.14.201":
+  version "4.14.201"
+  resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@types/lodash/-/lodash-4.14.201.tgz#76f47cb63124e806824b6c18463daf3e1d480239"
+  integrity sha1-dvR8tjEk6AaCS2wYRj2vPh1IAjk=
+
 "@types/node@^18.18.5":
   version "18.18.9"
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@types/node/-/node-18.18.9.tgz#5527ea1832db3bba8eb8023ce8497b7d3f299592"
