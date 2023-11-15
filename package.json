@@ -9,7 +9,9 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "prepare": "husky install",
+    "precommit": "lint-staged"
   },
   "dependencies": {
     "lodash": "^4.17.21",
@@ -19,6 +21,7 @@
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
+    "lint-staged": "^15.1.0",
     "@rushstack/eslint-patch": "^1.3.3",
     "@tsconfig/node18": "^18.2.2",
     "@types/lodash": "^4.14.201",
@@ -36,5 +39,11 @@
     "typescript": "~5.2.0",
     "vite": "^4.4.11",
     "vue-tsc": "^1.8.19"
+  },
+  "lint-staged": {
+    "src/{**|!.hui}/*.{js,jsx,tsx,json,css,vue}": [
+      "eslint --fix --ignore-path .eslintignore --max-warnings 0",
+      "git add"
+    ]
   }
 }

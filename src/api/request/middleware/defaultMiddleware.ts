@@ -126,6 +126,7 @@ export const processFetchInputAndOutput: API.MiddlewareHandle<API.Context<any>> 
   }
 
 declare module '../base' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TOptions<T> {
     /**
      * 请求参数自定义序列化操作(可以截留或修改请求参数)
