@@ -1,5 +1,8 @@
 export default function compose<Context>(middleware: API.MiddlewareHandle<Context>[]) {
-  return async function (context: Context, eachMiddlewareInject?: (ctx: Context, state: "enter" | "exit", functionName?: string) => void) {
+  return async function (
+    context: Context,
+    eachMiddlewareInject?: (ctx: Context, state: "enter" | "exit", functionName?: string) => void
+  ) {
     let index = -1;
     async function dispatch(idx: number, resetIndex?: boolean): Promise<void> {
       // 这里是一个补丁逻辑，如果随意是使用，可能会导致出现死循环问题
@@ -12,6 +15,7 @@ export default function compose<Context>(middleware: API.MiddlewareHandle<Contex
         throw new Error("next() call multiple times");
       }
       index = idx;
+      // eslint-disable-next-line @typescript-eslint/ban-types
       const fn: Function = middleware[idx];
       if (!fn) return;
       // 每个中间件开始执行前

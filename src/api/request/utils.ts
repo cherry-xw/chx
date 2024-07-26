@@ -1,5 +1,11 @@
-import md5 from "js-md5";
-import { fromPairs, isArrayBuffer as isArrayBufferLodash, isObjectLike, toString as toStringLodash } from "lodash";
+import { md5 } from "js-md5";
+import {
+  fromPairs,
+  isArray,
+  isArrayBuffer as isArrayBufferLodash,
+  isPlainObject,
+  toString as toStringLodash
+} from "lodash";
 
 const typeOfTest = (type: string) => (thing: any) => typeof thing === type;
 
@@ -51,14 +57,16 @@ export async function loopWait(checkBreak: () => boolean, loopTimes = 3, timeout
 export function toHash(url: string, params: API.QueryParams) {
   let str = url;
   if (params) {
-    if (isArrayBufferLodash(params)) {
+    if (isPlainObject(params)) {
+      str += JSON.stringify(params);
+    } else if (isArrayBufferLodash(params)) {
       str += String.fromCharCode.apply(null, new Uint16Array(params) as any);
     } else if (isFormData(params)) {
       const obj = fromPairs([...params.entries()]);
       str += JSON.stringify(obj);
     } else if (isBlob(params)) {
       str += params.text();
-    } else if (isObjectLike(params)) {
+    } else if (isArray(params)) {
       str += toStringLodash(params);
     }
   }

@@ -1,7 +1,23 @@
-import { ServeCreator } from "./request";
+import {
+  Middleware,
+  ServeCreator,
+  mergeSame,
+  processCache,
+  processFetchInputAndOutput
+} from './request'
 
-const serverURL = import.meta.env.VITE_SERVER_CONFIG + "/api"
+const middleware = new Middleware<API.Context<any>>([
+  processCache,
+  mergeSame,
+  processFetchInputAndOutput
+])
 
-const serve = ServeCreator(serverURL, "POST");
+const prefixURL = '' // process.env.NODE_ENV === "development" ? "" : process.env.VUE_APP_SERVER_CONFIG;
 
-export default serve;
+export const serveDataOps = ServeCreator<{
+  data: any
+  msg: string
+  code: number
+  datasize: number
+  timestamp: number
+}>(prefixURL + '/dataops', 'POST', { middleware })

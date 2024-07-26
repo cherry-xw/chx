@@ -1,17 +1,34 @@
 import { isUndefined } from "lodash";
-import baseRequest, { type TContext, type TOptions, type TQueryParams, type TRequestReturnType } from "./base";
+import baseRequest, {
+  type TContext,
+  type TOptions,
+  type TQueryParams,
+  type TRequestReturnType
+} from "./base";
 import CMiddleware from "./middleware";
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   export namespace API {
-    export type Method = "GET" | "POST";
+    export type Method =
+      | "GET"
+      | "POST"
+      | "DELETE"
+      | "PUT"
+      | "PATCH"
+      | "OPTIONS"
+      | "HEAD"
+      | "TRACE"
+      | "CONNECT";
     export type Context<T> = TContext<T>;
     export type Options<T> = TOptions<T>;
     export type QueryParams = TQueryParams;
     export type RequestReturnType<T> = TRequestReturnType<T>;
 
     export type Middleware<T> = CMiddleware<T>;
-    export type MiddlewareHandle<T> = (ctx: T, next: (reset?: boolean) => Promise<void>) => Promise<void>;
+    export type MiddlewareHandle<T> = (
+      ctx: T,
+      next: (reset?: boolean) => Promise<void>
+    ) => Promise<void>;
   }
 }
 
@@ -33,7 +50,11 @@ export type TConfig$2<T> = Omit<API.Options<T>, "method" | "params" | "middlewar
  * 添加默认中间件
  * 创建中间件实例，后添加的先执行，缓存逻辑必须放在请求逻辑之前执行，如果不调用next，那么所有后续的逻辑都会被跳过而不会执行
  */
-const middleware = new CMiddleware<API.Context<any>>([processCache, mergeSame, processFetchInputAndOutput]);
+const middleware = new CMiddleware<API.Context<any>>([
+  processCache,
+  mergeSame,
+  processFetchInputAndOutput
+]);
 
 // 直接请求函数重载
 /**
@@ -44,7 +65,12 @@ const middleware = new CMiddleware<API.Context<any>>([processCache, mergeSame, p
  * @param config 配置项
  * @returns 请求函数，中断请求，加载状态
  */
-export function request<T = any>(url: string, method: API.Method, params?: API.QueryParams, config?: TConfig$1<T>): API.RequestReturnType<T>;
+export function request<T = any>(
+  url: string,
+  method: API.Method,
+  params?: API.QueryParams,
+  config?: TConfig$1<T>
+): API.RequestReturnType<T>;
 /**
  * 无包装函数版本，直接发起请求
  * @param requestParam 全量请求参数object
@@ -54,7 +80,11 @@ export function request<T>(requestParam: TConfig$2<T>): API.RequestReturnType<T>
 
 export function request<T = any>(url: string, params?: API.QueryParams): API.RequestReturnType<T>;
 
-export function request<T = any>(url: string, params?: API.QueryParams, config?: TConfig$1<T>): API.RequestReturnType<T>;
+export function request<T = any>(
+  url: string,
+  params?: API.QueryParams,
+  config?: TConfig$1<T>
+): API.RequestReturnType<T>;
 
 export function request<T>(
   urlOrAll: string | TConfig$2<T>,
@@ -64,7 +94,13 @@ export function request<T>(
 ) {
   if (typeof urlOrAll === "string") {
     if (typeof method === "string") {
-      return baseRequest<T>({ url: urlOrAll, method: method as API.Method, params, middleware, ...config });
+      return baseRequest<T>({
+        url: urlOrAll,
+        method: method as API.Method,
+        params,
+        middleware,
+        ...config
+      });
     } else if (!isUndefined(params)) {
       return baseRequest<T>({
         url: urlOrAll,
@@ -91,7 +127,12 @@ export interface RequestOverload<T> {
    * @param config 请求参数
    * @returns promise abort loadingRef可以解构使用，sync和loading只能通过返回值调用或者直接调用
    */
-  <G extends (Partial<T> & {[key in string]: any}), R = Omit<T, keyof G> & G>(url: string, method: API.Method, params?: API.QueryParams, config?: TConfig$1<R>): API.RequestReturnType<R>;
+  <G extends Partial<T> & { [_key in string]: any }, R = Omit<T, keyof G> & G>(
+    url: string,
+    method: API.Method,
+    params?: API.QueryParams,
+    config?: TConfig$1<R>
+  ): API.RequestReturnType<R>;
   /**
    * 请求接口获取返回值
    * @param url 请求url路径
@@ -99,7 +140,11 @@ export interface RequestOverload<T> {
    * @param config 请求参数
    * @returns promise abort loadingRef可以解构使用，sync和loading只能通过返回值调用或者直接调用
    */
-  <G extends Partial<T> & {[key in string]: any}, R = Omit<T, keyof G> & G>(url: string, params?: API.QueryParams, config?: TConfig$1<R>): API.RequestReturnType<R>;
+  <G extends Partial<T> & { [_key in string]: any }, R = Omit<T, keyof G> & G>(
+    url: string,
+    params?: API.QueryParams,
+    config?: TConfig$1<R>
+  ): API.RequestReturnType<R>;
 }
 
 // 包装函数重载
@@ -114,7 +159,11 @@ export function ServeCreator<T = any>(prefixURL: string): RequestOverload<T>;
  * @param method 配置默认请求类型
  * @param config 配置默认参数(可选)
  */
-export function ServeCreator<T = any>(prefixURL: string, method: API.Method, config?: TConfig$1<T>): RequestOverload<T>;
+export function ServeCreator<T = any>(
+  prefixURL: string,
+  method: API.Method,
+  config?: TConfig$1<T>
+): RequestOverload<T>;
 /**
  * 注册服务（注册请求前缀，注入内置参数）
  * @param prefixURL 服务器url部分
@@ -130,7 +179,11 @@ export function ServeCreator<T = any>(prefixURL: string, config: TConfig$1<T>): 
  * @param defaultConfig 默认的配置项
  * @returns promise返回值
  */
-export function ServeCreator<T = any>(prefixURL: string, methodOrConfig: API.Method | TConfig$1<T> = "GET", defaultConfig?: TConfig$1<T>) {
+export function ServeCreator<T = any>(
+  prefixURL: string,
+  methodOrConfig: API.Method | TConfig$1<T> = "GET",
+  defaultConfig?: TConfig$1<T>
+) {
   // 构建请求参数
   const options: API.Options<T> = { url: "", middleware, method: "GET", params: {} };
   if (methodOrConfig && typeof methodOrConfig === "string") {
@@ -151,7 +204,7 @@ export function ServeCreator<T = any>(prefixURL: string, methodOrConfig: API.Met
     // 如果第二个参数是字符串，说明没有传入默认类型
     const rOptions = Object.assign({}, options);
     if (typeof methodOrParams === "string") {
-      if (methodOrParams === "GET" || methodOrParams === "POST") {
+      if (methodOrParams === "GET" || methodOrParams === "POST" || methodOrParams === "DELETE") {
         rOptions.method = methodOrParams;
         // 先合并后面的
         if (config) {

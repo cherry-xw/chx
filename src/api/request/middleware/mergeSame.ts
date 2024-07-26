@@ -1,9 +1,15 @@
 import { toHash } from "../utils";
 
-const cacheRequest: Record<string, { resolve: (res: any) => void; reject: (res: any) => void }[] | undefined> = {};
+const cacheRequest: Record<
+  string,
+  { resolve: (res: any) => void; reject: (res: any) => void }[] | undefined
+> = {};
 const cacheState: Record<string, boolean> = {};
 
-export const mergeSame: API.MiddlewareHandle<API.Context<any>> = async function mergeSameRequest(ctx, next) {
+export const mergeSame: API.MiddlewareHandle<API.Context<any>> = async function mergeSameRequest(
+  ctx,
+  next
+) {
   const options = ctx.request.options;
   const hash = toHash(options.url, options.params);
   const useMergeSameRequest = options.useMergeSameRequest;
