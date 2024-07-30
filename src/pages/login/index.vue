@@ -1,5 +1,5 @@
 <script lang="ts">
-export default { name: 'HomeView' }
+export default { name: 'loginView' }
 </script>
 
 <script setup lang="ts">
@@ -13,9 +13,9 @@ export default { name: 'HomeView' }
 </script>
 
 <template>
-  <div class="Home-container py-2">2</div>
+  <div class="login-container">Login</div>
 </template>
 
 <style lang="less" scoped>
-//.Home-container {}
+//.login-container {}
 </style>

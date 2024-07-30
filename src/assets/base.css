@@ -1,39 +1,20 @@
-/* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
-
-  --vt-c-black: #181818;
+  --vt-c-white-soft: #f5f7fa;
   --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  --color-base-fill: var(--el-color-primary-light-9);
+  --color-scroll-background: rgba(192, 196, 204, 0.8);
+  --color-background-soft: var(--vt-c-white-soft);
+  --color-scroll-background-hover: #c0c4cc;
+  --color-tab-button-split: #d8d8d8;
 }
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
-
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
+:root.dark {
+  --color-base-fill: #1c1c35;
+  --color-scroll-background: rgba(96, 102, 102, 0.8);
+  --color-scroll-background-hover: #606666;
+  --color-background-soft: var(--vt-c-black-soft);
+  --el-fill-color-blank: #111111;
+  --color-tab-button-split: #6c6e72;
 }
 
 @media (prefers-color-scheme: dark) {

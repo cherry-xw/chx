@@ -14,10 +14,12 @@ const middleware = new Middleware<API.Context<any>>([
 
 const prefixURL = '' // process.env.NODE_ENV === "development" ? "" : process.env.VUE_APP_SERVER_CONFIG;
 
-export const serveDataOps = ServeCreator<{
+const serve = ServeCreator<{
   data: any
   msg: string
   code: number
   datasize: number
   timestamp: number
-}>(prefixURL + '/dataops', 'POST', { middleware })
+}>(prefixURL + '/', 'POST', { middleware })
+
+export default serve

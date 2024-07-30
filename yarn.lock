@@ -727,6 +727,11 @@
   dependencies:
     undici-types "~5.26.4"
 
+"@types/nprogress@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.npmmirror.com/@types/nprogress/-/nprogress-0.2.3.tgz#b2150b054a13622fabcba12cf6f0b54c48b14287"
+  integrity sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA==
+
 "@types/web-bluetooth@^0.0.16":
   version "0.0.16"
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@types/web-bluetooth/-/web-bluetooth-0.0.16.tgz#1d12873a8e49567371f2a75fe3e7f7edca6662d8"
@@ -2342,6 +2347,11 @@ npm-run-path@^5.1.0:
   dependencies:
     path-key "^4.0.0"
 
+nprogress@^0.2.0:
+  version "0.2.0"
+  resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/nprogress/-/nprogress-0.2.0.tgz#cb8f34c53213d895723fcbab907e9422adbcafb1"
+  integrity sha1-y480xTIT2JVyP8urkH6UIq28r7E=
+
 nth-check@^2.1.1:
   version "2.1.1"
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/nth-check/-/nth-check-2.1.1.tgz#c9eab428effce36cd6b92c924bdb000ef1f1ed1d"
@@ -3092,6 +3102,11 @@ vue-router@^4.3.3:
   integrity sha1-Eo4/wMhEIQNam9JgJyRea9aPaas=
   dependencies:
     "@vue/devtools-api" "^6.5.1"
+
+vue-slicksort@^2.0.5:
+  version "2.0.5"
+  resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/vue-slicksort/-/vue-slicksort-2.0.5.tgz#d080829de9d04b16e8d194ed8b4e219a501091a2"
+  integrity sha1-0ICCnenQSxbo0ZTti04hmlAQkaI=
 
 vue-tsc@^2.0.21:
   version "2.0.29"

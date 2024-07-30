@@ -1,15 +1,60 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/pages/home/index.vue'
+import Layer from '@/components/layer/container.vue'
+import Nav from '@/components/layer/nav.vue'
+import TabManage from '@/components/layer/TabManage.vue'
+import { useNavStore } from '@/stores/nav'
+import { close, start } from '@/components/layer/progress'
+import main from './main'
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView
+function createRouterIns() {
+  const { nav, name2Nav } = useNavStore()
+  const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: [
+      {
+        path: '/',
+        name: 'home',
+        redirect: '/main/navigation'
+      },
+      {
+        path: '/login',
+        component: () => import('@/pages/login/index.vue')
+      },
+      {
+        path: '/layer',
+        component: Layer,
+        children: [
+          {
+            path: 'blank',
+            props: {
+              nav: () => ({ data: nav })
+            },
+            components: {
+              default: TabManage,
+              nav: Nav,
+              header: () => import('@/components/layer/Header.vue')
+            },
+            children: [main]
+          }
+        ]
+      }
+    ]
+  })
+  router.beforeEach((to) => {
+    start()
+    if (typeof to.name === 'string') {
+      const nav = name2Nav[to.name]
+      if (nav) {
+        document.title = `${nav.label} - 無良小萬`
+      }
     }
-  ]
-})
+    return
+  })
 
-export default router
+  router.afterEach(() => {
+    close()
+  })
+  return router
+}
+
+export default createRouterIns
