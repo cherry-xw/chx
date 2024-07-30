@@ -49,19 +49,12 @@ const handleNodeClick = (data: NavTreeSingleNode) => {
     router.push({ name: data.name })
   }
 }
-function ev(node: NavTreeSingleNode, data: any) {
-  // console.log(node, data);
-}
-function goHome() {
-  router.push({ name: 'home' })
-}
 watch(
   () => route.path,
   () => {
     if (typeof route.name === 'string') {
       // 导航树判定路由变化与树节点展示
       const nav = navLeavesNode.value[route.name]
-      // console.log('xxxxxxxxx', nav)
       if (nav) {
         handleNodeClick(nav)
         treeRef.value?.setCurrentKey(nav.key)
@@ -70,10 +63,8 @@ watch(
   }
 )
 onMounted(() => {
-  // console.log("treeRef", treeRef);
   if (typeof route.name === 'string') {
     const nav = navLeavesNode.value[route.name]
-    // console.log('xxxxxxxxx', nav)
     if (nav) {
       handleNodeClick(nav)
       treeRef.value?.setCurrentKey(nav.key)
@@ -83,7 +74,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="base-logo px-[12px]" @click="goHome">chery</div>
+  <!-- https://segmentfault.com/a/1190000039916159 修改ui -->
+  <div class="base-logo px-[12px]">chery</div>
   <el-tree
     class="flex-1 scrollbar-hover-toggle"
     :data="navTree"
@@ -100,7 +92,7 @@ onMounted(() => {
       >
         <component :is="data.icon" />
       </el-icon>
-      <div class="leading-[18px]" @click="ev(node, data)" :class="{ 'lable-active': data.focus }">
+      <div class="leading-[18px]" :class="{ 'lable-active': data.focus }">
         {{ node.label }}
       </div>
       <div style="flex: 1"></div>
@@ -120,27 +112,26 @@ onMounted(() => {
 :deep(.el-tree-node__content) {
   height: 36px;
 }
-
+@keyframes move {
+  0% {
+    offset-rotate: 0deg;
+    offset-distance: 0%;
+  }
+  100% {
+    offset-rotate: 180deg;
+    offset-distance: 100%;
+  }
+}
 .base-logo {
   cursor: pointer;
   line-height: 60px;
   font-size: 16px;
   position: relative;
   color: var(--el-text-color-primary);
-  &::after {
-    content: 'chery';
-    transition: all 0.3s ease;
-    font-size: 16px;
-    position: absolute;
-    left: 11px;
-    font-weight: 600;
-    color: #12c2e963;
-    filter: blur(2px);
-  }
+  text-shadow: 0 0 6px #12c2e963;
+  transition: all 0.3s ease;
   &:hover {
-    &::after {
-      color: #c471ed;
-    }
+    text-shadow: 0 0 6px #c471ed;
   }
 }
 .lable-active {

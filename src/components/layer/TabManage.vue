@@ -10,6 +10,7 @@ import { nanoid } from 'nanoid'
 import { watch } from 'vue'
 import { findIndex } from 'lodash'
 import { removePageCahce } from './keepAliveRouteView.vue'
+import config from './progress'
 type Tab = {
   key: string
   label: string
@@ -126,11 +127,12 @@ onMounted(() => {
       }
     ]
   }
+  config('#conteintBox')
 })
 </script>
 
 <template>
-  <div class="tab-manage-container flex flex-col">
+  <div id="conteintBox" class="tab-manage-container flex flex-col">
     <SlickList
       class="tab-button-list-wrapper"
       axis="x"
@@ -174,7 +176,7 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .tab-manage-container {
-  margin: 8px 0 0 12px;
+  padding: 8px 0 0 12px;
   height: 100%;
   .content {
     position: relative;
