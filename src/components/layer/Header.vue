@@ -124,10 +124,9 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .ttl-view-container {
-  background: var(--el-fill-color-blank);
   height: 64px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--el-border-color);
+  border-bottom: 1px dashed var(--el-border-color);
 
   .last-item {
     :deep(.el-breadcrumb__inner) {

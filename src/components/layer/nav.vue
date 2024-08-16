@@ -1,29 +1,19 @@
 <!-- 左侧目录树 -->
-<script lang="ts">
+<script setup lang="ts">
 import { type NavTreeSingleNode } from '@/stores/nav'
 import { recursion } from '@/utils/common'
-import { ref } from 'vue'
-import { onMounted } from 'vue'
-import { computed } from 'vue'
-import { watch } from 'vue'
-import { reactive } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-export default { name: 'NavView' }
-</script>
 
-<script setup lang="ts">
+defineOptions({ name: 'NavView' })
+
 const router = useRouter()
 const route = useRoute()
-const defaultProps = {
-  children: 'children',
-  label: 'label'
-}
 const treeRef = ref()
-const props = defineProps<{ data: NavTreeSingleNode[] }>()
-const navTree = reactive<NavTreeSingleNode[]>(props.data)
+const props = defineProps<{ data: NavTreeSingleNode[]; collapse: boolean }>()
 const navLeavesNode = computed(() => {
   const list: Record<string, NavTreeSingleNode> = {}
-  recursion(navTree, 'children', (node) => {
+  recursion(props.data, 'children', (node) => {
     if (!node.children?.length) {
       list[node.name] = node
     }
@@ -40,12 +30,19 @@ function reverseIteration(data: NavTreeSingleNode, state: boolean) {
 }
 const handleNodeClick = (data: NavTreeSingleNode) => {
   // console.log(data)
+  if (data.dir) return
+  if (data.blank) {
+    window.open(data.name)
+    return
+  }
   if (lastReverse) {
     reverseIteration(lastReverse, false)
   }
-  reverseIteration(data, true)
+  // reverseIteration(data, true)
   lastReverse = data
+  data.focus = true
   if (data.name && data.name !== route.name) {
+    console.log(data.name)
     router.push({ name: data.name })
   }
 }
@@ -78,8 +75,7 @@ onMounted(() => {
   <div class="base-logo px-[12px]">chery</div>
   <el-tree
     class="flex-1 scrollbar-hover-toggle"
-    :data="navTree"
-    :props="defaultProps"
+    :data="data"
     ref="treeRef"
     node-key="key"
     @node-click="handleNodeClick"
@@ -93,7 +89,7 @@ onMounted(() => {
         <component :is="data.icon" />
       </el-icon>
       <div class="leading-[18px]" :class="{ 'lable-active': data.focus }">
-        {{ node.label }}
+        <span v-if="!collapse">{{ node.label }}</span>
       </div>
       <div style="flex: 1"></div>
       <el-icon
@@ -162,5 +158,13 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   margin: 0 6px;
+}
+:deep(.el-tree-node) {
+  &.is-current {
+    position: relative;
+    &::before {
+      content: '';
+    }
+  }
 }
 </style>

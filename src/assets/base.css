@@ -1,6 +1,6 @@
 :root {
   --vt-c-white-soft: #f5f7fa;
-  --vt-c-black-soft: #222222;
+  --vt-c-black-soft: #333;
   --color-base-fill: var(--el-color-primary-light-9);
   --color-scroll-background: rgba(192, 196, 204, 0.8);
   --color-background-soft: var(--vt-c-white-soft);
@@ -13,7 +13,7 @@
   --color-scroll-background: rgba(96, 102, 102, 0.8);
   --color-scroll-background-hover: #606666;
   --color-background-soft: var(--vt-c-black-soft);
-  --el-fill-color-blank: #111111;
+  --color-background: #151e29;
   --color-tab-button-split: #6c6e72;
 }
 
@@ -64,4 +64,11 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.frosted-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }

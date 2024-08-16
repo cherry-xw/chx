@@ -737,6 +737,11 @@
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@types/web-bluetooth/-/web-bluetooth-0.0.16.tgz#1d12873a8e49567371f2a75fe3e7f7edca6662d8"
   integrity sha1-HRKHOo5JVnNx8qdf4+f37cpmYtg=
 
+"@types/webgl-ext@^0.0.37":
+  version "0.0.37"
+  resolved "https://registry.npmmirror.com/@types/webgl-ext/-/webgl-ext-0.0.37.tgz#2b433830f72a072a9c3382ea0691810281fa3d6d"
+  integrity sha512-QsoD3t64d7hUuiJTZNfBW8Pyc7v5pcV9Rc3OhRtN7E7ITciPQs8Ffp+zD47jSIakdJiXlDzYzV1+b/oHlW6KLQ==
+
 "@typescript-eslint/eslint-plugin@^7.1.1":
   version "7.17.0"
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/@typescript-eslint/eslint-plugin/-/eslint-plugin-7.17.0.tgz#c8ed1af1ad2928ede5cdd207f7e3090499e1f77b"

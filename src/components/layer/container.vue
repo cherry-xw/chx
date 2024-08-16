@@ -1,18 +1,53 @@
-<script lang="ts">
+<script setup lang="ts">
+import { ref } from 'vue'
 import { RouterView } from 'vue-router'
-export default { name: 'BasicLayer', components: { RouterView } }
+import { useNavStore } from '@/stores/nav'
+const { nav } = useNavStore()
+
+defineOptions({ name: 'BasicLayer' })
+const collapseState = ref(true)
 </script>
 
 <template>
   <div id="layer" class="flex absolute inset-0 min-w-[1280px]">
     <div
-      class="flex flex-col w-[200px] min-w-[200px] h-full overflow-hidden border-r border-solid border-[var(--el-border-color)]"
+      class="nav flex flex-col h-full overflow-hidden border-r border-dashed border-[var(--el-border-color)]"
+      :class="{ collapse: collapseState }"
     >
-      <RouterView name="nav"></RouterView>
+      <RouterView name="nav" :data="nav" :collapse="collapseState"></RouterView>
+    </div>
+    <div
+      class="collpase-btn"
+      :class="{ rotate: collapseState }"
+      @click="collapseState = !collapseState"
+    >
+      <el-icon><CaretLeft /></el-icon>
     </div>
     <div class="flex-1 flex flex-col">
-      <RouterView name="header"></RouterView>
+      <RouterView v-show="!collapseState" name="header"></RouterView>
       <RouterView />
     </div>
   </div>
 </template>
+
+<style lang="less" scoped>
+#layer {
+  .nav {
+    width: 160px;
+    &.collapse {
+      width: 0;
+    }
+  }
+  .collpase-btn {
+    position: absolute;
+    left: 5px;
+    bottom: 5px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    &.rotate {
+      transform: rotate(180deg);
+    }
+  }
+}
+</style>

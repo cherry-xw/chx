@@ -5,9 +5,10 @@ import TabManage from '@/components/layer/TabManage.vue'
 import { useNavStore } from '@/stores/nav'
 import { close, start } from '@/components/layer/progress'
 import main from './main'
+import practice from './practice'
 
 function createRouterIns() {
-  const { nav, name2Nav } = useNavStore()
+  const { name2Nav } = useNavStore()
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -26,15 +27,12 @@ function createRouterIns() {
         children: [
           {
             path: 'blank',
-            props: {
-              nav: () => ({ data: nav })
-            },
             components: {
               default: TabManage,
               nav: Nav,
               header: () => import('@/components/layer/Header.vue')
             },
-            children: [main]
+            children: [main, practice]
           }
         ]
       }

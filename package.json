@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@types/webgl-ext": "^0.0.37",
     "element-plus": "^2.7.7",
     "js-md5": "^0.8.3",
     "lodash": "^4.17.21",
