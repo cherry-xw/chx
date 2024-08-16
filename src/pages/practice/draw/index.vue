@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import start from './draw'
 
 // --------------------------- config -------------------------------
 defineOptions({ name: 'DrawView' })
@@ -10,12 +11,7 @@ const canvasRef = ref<HTMLCanvasElement>()
 // ---------------------------- watch -------------------------------
 // ---------------------------- life --------------------------------
 onMounted(() => {
-  const canvas = canvasRef.value as HTMLCanvasElement
-  const ctx = canvas.getContext('webgl')
-  if (ctx) {
-    ctx.clearColor(0.0, 0.0, 0.0, 1.0)
-    ctx.clear(ctx.COLOR_BUFFER_BIT)
-  }
+  if (canvasRef.value) start(canvasRef.value)
 })
 // --------------------------- other --------------------------------
 </script>

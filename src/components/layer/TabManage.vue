@@ -185,7 +185,6 @@ onMounted(() => {
       position: absolute;
       overflow-y: overlay;
       inset: 0;
-      padding: 0 20px;
       .h12 {
         height: 12px;
       }

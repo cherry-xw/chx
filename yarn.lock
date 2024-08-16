@@ -1079,6 +1079,11 @@
   dependencies:
     vue-demi "*"
 
+"@webgpu/types@^0.1.44":
+  version "0.1.44"
+  resolved "https://registry.npmmirror.com/@webgpu/types/-/types-0.1.44.tgz#1b264c0bfcb298df59d0943dad8ef02b4ff98d14"
+  integrity sha512-JDpYJN5E/asw84LTYhKyvPpxGnD+bAKPtpW9Ilurf7cZpxaTbxkQcGwOd7jgB9BPBrTYQ+32ufo4HiuomTjHNQ==
+
 acorn-jsx@^5.3.2:
   version "5.3.2"
   resolved "https://repo.gildata.com:443/artifactory/api/npm/npmhundsun/acorn-jsx/-/acorn-jsx-5.3.2.tgz#7ed5bb55908b3b2f1bc55c6af1653bada7f07937"

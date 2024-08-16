@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import FrostedGlass from '@/components/FrostedGlass.vue'
 import { onMounted, ref } from 'vue'
-
+import Draw from './draw/index'
 // --------------------------- config -------------------------------
 defineOptions({ name: 'navigationView' })
 // ---------------------------- data --------------------------------
+const canvasRef = ref<HTMLCanvasElement>()
 // -------------------------- computed ------------------------------
 // --------------------------- methods ------------------------------
 // ---------------------------- watch -------------------------------
 // ---------------------------- life --------------------------------
-onMounted(() => {})
+onMounted(() => {
+  if (canvasRef.value) {
+    new Draw(canvasRef.value)
+  }
+})
 // --------------------------- other --------------------------------
 </script>
 
 <template>
   <div class="navigation-container">
-    <FrostedGlass style="width: 100px; height: 100px">111</FrostedGlass>
+    <canvas ref="canvasRef" />
   </div>
 </template>
 

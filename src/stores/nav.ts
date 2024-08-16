@@ -22,7 +22,7 @@ export type NavTreeSingleNode = Omit<noKeyNav, 'parent' | 'children'> & {
 
 const navOrigin: noKeyNav[] = [
   {
-    label: '主页',
+    label: 'chx',
     name: 'navigation',
     icon: 'HomeFilled',
     focus: false
