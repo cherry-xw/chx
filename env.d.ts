@@ -2,3 +2,6 @@
 /// <reference types="@webgpu/types" />
 
 declare module 'element-plus/dist/locale/zh-cn.min.mjs'
+
+type DeepPartial<T> = Partial<{ [K in keyof T]: DeepPartial<T[K]> }>
+type DeepRequired<T> = Required<{ [K in keyof T]: DeepRequired<T[K]> }>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import Draw from './draw/index'
+import Draw from './draw'
 // --------------------------- config -------------------------------
 defineOptions({ name: 'navigationView' })
 // ---------------------------- data --------------------------------
@@ -11,15 +11,16 @@ const canvasRef = ref<HTMLCanvasElement>()
 // ---------------------------- life --------------------------------
 onMounted(() => {
   if (canvasRef.value) {
-    new Draw(canvasRef.value)
+    const draw = new Draw(canvasRef.value)
+    draw.run()
   }
 })
 // --------------------------- other --------------------------------
 </script>
 
 <template>
-  <div class="navigation-container">
-    <canvas ref="canvasRef" />
+  <div class="navigation-container w-full h-full">
+    <canvas ref="canvasRef" class="w-full h-full" />
   </div>
 </template>
 
