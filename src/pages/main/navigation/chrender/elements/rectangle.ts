@@ -8,11 +8,15 @@ export default class Rectangle extends Element<{
     height: number
   }
 }> {
+  hover() {}
+  click() {}
+  mousedown() {}
+  mouseup() {}
   draw(ctx: CanvasRenderingContext2D) {
     ctx.beginPath()
     const { shape, position, style } = this.option
-    ctx.strokeStyle = style.borderColor
-    ctx.fillStyle = style.backgroundColor
+    ctx.strokeStyle = style.borderColor!
+    ctx.fillStyle = style.backgroundColor!
     ctx.rect(position.x + shape.x, position.y + shape.y, shape.width, shape.height)
     ctx.lineWidth = style.borderWidth
     ctx.fill()
