@@ -4,11 +4,12 @@ const mainRouterConfig: Readonly<RouteRecordRaw> = {
   path: '/main',
   name: 'main',
   component: () => import('@/components/layer/keepAliveRouteView.vue'),
+  redirect: '/main/entrance',
   children: [
     {
-      path: 'navigation',
-      name: 'navigation',
-      component: () => import('@/pages/main/navigation/index.vue')
+      path: 'entrance',
+      name: 'entrance',
+      component: () => import('@/pages/main/entrance/index.vue')
     },
     {
       path: 'blog',

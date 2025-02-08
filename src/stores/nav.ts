@@ -23,7 +23,7 @@ export type NavTreeSingleNode = Omit<noKeyNav, 'parent' | 'children'> & {
 const navOrigin: noKeyNav[] = [
   {
     label: 'chx',
-    name: 'navigation',
+    name: 'entrance',
     icon: 'HomeFilled',
     focus: false
   },
@@ -57,8 +57,14 @@ const navOrigin: noKeyNav[] = [
     focus: false,
     children: [
       {
-        label: '绘图',
+        label: '绘图1',
         name: 'draw',
+        icon: 'Picture',
+        focus: false
+      },
+      {
+        label: '绘图2',
+        name: 'navigation',
         icon: 'Picture',
         focus: false
       }

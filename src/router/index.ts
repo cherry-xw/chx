@@ -15,7 +15,7 @@ function createRouterIns() {
       {
         path: '/',
         name: 'home',
-        redirect: '/main/navigation'
+        redirect: '/main/entrance'
       },
       {
         path: '/login',

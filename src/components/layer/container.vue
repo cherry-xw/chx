@@ -5,7 +5,7 @@ import { useNavStore } from '@/stores/nav'
 const { nav } = useNavStore()
 
 defineOptions({ name: 'BasicLayer' })
-const collapseState = ref(true)
+const collapseState = ref(false)
 </script>
 
 <template>
@@ -24,7 +24,9 @@ const collapseState = ref(true)
       <el-icon><CaretLeft /></el-icon>
     </div>
     <div class="flex-1 flex flex-col">
-      <RouterView v-show="!collapseState" name="header"></RouterView>
+      <el-collapse-transition>
+        <RouterView v-show="!collapseState" name="header"></RouterView>
+      </el-collapse-transition>
       <RouterView />
     </div>
   </div>
@@ -34,8 +36,9 @@ const collapseState = ref(true)
 #layer {
   .nav {
     width: 160px;
+    transition: all 0.3s ease;
     &.collapse {
-      width: 0;
+      width: 0px;
     }
   }
   .collpase-btn {
