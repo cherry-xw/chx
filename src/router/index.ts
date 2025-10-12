@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import Layer from '@/components/layer/container.vue'
 import Nav from '@/components/layer/nav.vue'
 import TabManage from '@/components/layer/TabManage.vue'
@@ -10,7 +10,7 @@ import practice from './practice'
 function createRouterIns() {
   const { name2Nav } = useNavStore()
   const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(),
     routes: [
       {
         path: '/',

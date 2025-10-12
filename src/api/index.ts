@@ -12,14 +12,12 @@ const middleware = new Middleware<API.Context<any>>([
   processFetchInputAndOutput
 ])
 
-const prefixURL = '' // process.env.NODE_ENV === "development" ? "" : process.env.VUE_APP_SERVER_CONFIG;
+const prefixURL = '/api' // process.env.NODE_ENV === "development" ? "" : process.env.VUE_APP_SERVER_CONFIG;
 
 const serve = ServeCreator<{
   data: any
+  status: boolean
   msg: string
-  code: number
-  datasize: number
-  timestamp: number
-}>(prefixURL + '/', 'POST', { middleware })
+}>(prefixURL, 'POST', { middleware })
 
 export default serve
