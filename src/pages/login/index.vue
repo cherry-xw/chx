@@ -3,12 +3,15 @@ import serve from '@/api'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { aesEncrypt } from '@/utils/hashers'
+import { useRouter } from 'vue-router'
+import { resetToken } from '@/api/middleware/token'
 // --------------------------- config -------------------------------
 defineOptions({ name: 'loginView' })
 // ---------------------------- data --------------------------------
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const router = useRouter()
 // -------------------------- computed ------------------------------
 // --------------------------- methods ------------------------------
 async function toLogin() {
@@ -30,6 +33,10 @@ async function toLogin() {
     }).sync
     if (res.status) {
       ElMessage.success('登录成功')
+      localStorage.setItem('accessToken', res.data.accessToken)
+      localStorage.setItem('refreshToken', res.data.accessToken)
+      resetToken()
+      router.push({ name: 'home' })
     }
   } catch (error) {
     ElMessage.error('登录失败')
@@ -44,7 +51,13 @@ async function toLogin() {
 <template>
   <div class="login-container">
     <el-input v-model="username" style="width: 240px" placeholder="用户名" />
-    <el-input v-model="password" style="width: 240px" placeholder="密码" type="password" show-password />
+    <el-input
+      v-model="password"
+      style="width: 240px"
+      placeholder="密码"
+      type="password"
+      show-password
+    />
     <el-button type="primary" @click="toLogin" :loading="loading">登录</el-button>
   </div>
 </template>
