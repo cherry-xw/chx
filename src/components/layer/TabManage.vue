@@ -1,7 +1,7 @@
 <!-- 打开的页签管理 -->
 <script lang="ts">
 export default { name: 'TabManageView' }
-import { onMounted } from 'vue'
+import { onMounted, reactive } from 'vue'
 import SecondConfirmation from './SecondConfirmation.vue'
 import { ref } from 'vue'
 import { useNavStore, type NavTreeSingleNode } from '@/stores/nav'
@@ -25,6 +25,55 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 // ---------------------------- config -------------------------------
 const route = useRoute()
 const router = useRouter()
+const particlesOptions = reactive({
+  fullScreen: { enable: false },
+  background: { color: 'transparent' },
+  particles: {
+    number: { value: 180, density: { enable: true, value_area: 800 } },
+    color: { value: '#ffffff' },
+    shape: {
+      type: 'circle',
+      stroke: { width: 0, color: '#000000' },
+      polygon: { nb_sides: 5 },
+    },
+    opacity: {
+      value: 0.5,
+      random: false,
+      anim: { enable: false, speed: 1, opacity_min: 0.1, sync: false }
+    },
+    size: {
+      value: 1,
+      random: true,
+      anim: { enable: false, speed: 40, size_min: 0.1, sync: false }
+    },
+    line_linked: { enable: true, distance: 550, color: '#ffffff', opacity: 0.5, width: 1 },
+    move: {
+      enable: true,
+      speed: 1,
+      direction: 'none',
+      random: false,
+      straight: false,
+      out_mode: 'out',
+      bounce: false,
+      attract: { enable: false, rotateX: 600, rotateY: 1200 }
+    }
+  },
+  interactivity: {
+    detect_on: 'canvas',
+    events: {
+      onhover: { enable: true, mode: 'grab' },
+      onclick: { enable: true, mode: 'push' },
+    },
+    modes: {
+      grab: { distance: 300, line_linked: { opacity: 1 } },
+      bubble: { distance: 300, size: 40, duration: 2, opacity: 8, speed: 3 },
+      repulse: { distance: 200, duration: 0.4 },
+      push: { particles_nb: 4 },
+      remove: { particles_nb: 2 }
+    }
+  },
+  retina_detect: true
+})
 // ---------------------------- data --------------------------------
 const lastActive = ref('')
 const currentActiveIndex = ref(0)
@@ -166,6 +215,7 @@ onMounted(() => {
       </template>
     </SlickList>
     <div class="content flex-1">
+      <vue-particles id="tsparticles" :line-linked="true" :options="particlesOptions" />
       <div class="fill-content">
         <RouterView />
         <div class="h12"></div>
@@ -181,6 +231,11 @@ onMounted(() => {
   .content {
     position: relative;
     overflow: hidden;
+    #tsparticles {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
     .fill-content {
       position: absolute;
       overflow-y: overlay;

@@ -1,0 +1,44 @@
+{
+  "id": "5044412",
+  "name": "chery-web",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "34824443",
+      "name": "mqtt-ver-neg",
+      "font_class": "mqtt-ver-neg",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "40630138",
+      "name": "icon-llot-mqtt-d",
+      "font_class": "icon-llot-mqtt-d",
+      "unicode": "e64f",
+      "unicode_decimal": 58959
+    },
+    {
+      "icon_id": "42227112",
+      "name": "mqtt@1x",
+      "font_class": "a-mqtt1x",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "42492539",
+      "name": "IOT_MQTT",
+      "font_class": "IOT_MQTT",
+      "unicode": "e6c8",
+      "unicode_decimal": 59080
+    },
+    {
+      "icon_id": "45083225",
+      "name": "icon_数据接入_MQTT",
+      "font_class": "icon_shujujieru_MQTT",
+      "unicode": "e820",
+      "unicode_decimal": 59424
+    }
+  ]
+}
