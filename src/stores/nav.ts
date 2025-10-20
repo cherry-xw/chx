@@ -4,7 +4,7 @@ import { recursion } from '@/utils/common'
 import { nanoid } from 'nanoid'
 
 type noKeyNav = {
-  icon?: string // 目录树图标
+  icon?: string // 目录树图标(https://element-plus.org/zh-CN/component/icon)
   label: string // 名称
   name: string // path name
   focus: boolean // 左侧目录树高亮状态
@@ -26,6 +26,21 @@ const navOrigin: noKeyNav[] = [
     name: 'entrance',
     icon: 'HomeFilled',
     focus: false
+  },
+  {
+    label: 'IOT',
+    name: "iot",
+    icon: "Cpu",
+    dir: true,
+    focus: false,
+    children: [
+      {
+        label: 'MQTT',
+        name: 'mqtt',
+        icon: 'Collection',
+        focus: false
+      }
+    ]
   },
   {
     label: '学习',

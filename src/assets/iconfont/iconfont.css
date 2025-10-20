@@ -1,0 +1,35 @@
+@font-face {
+  font-family: "iconfont"; /* Project id 5044412 */
+  src: url('iconfont.woff2?t=1760923353748') format('woff2'),
+       url('iconfont.woff?t=1760923353748') format('woff'),
+       url('iconfont.ttf?t=1760923353748') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-mqtt-ver-neg:before {
+  content: "\e600";
+}
+
+.icon-icon-llot-mqtt-d:before {
+  content: "\e64f";
+}
+
+.icon-a-mqtt1x:before {
+  content: "\e601";
+}
+
+.icon-IOT_MQTT:before {
+  content: "\e6c8";
+}
+
+.icon-icon_shujujieru_MQTT:before {
+  content: "\e820";
+}
+
