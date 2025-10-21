@@ -28,51 +28,23 @@ const router = useRouter()
 const particlesOptions = reactive({
   fullScreen: { enable: false },
   background: { color: 'transparent' },
-  particles: {
-    number: { value: 180, density: { enable: true, value_area: 800 } },
-    color: { value: '#ffffff' },
-    shape: {
-      type: 'circle',
-      stroke: { width: 0, color: '#000000' },
-      polygon: { nb_sides: 5 },
-    },
-    opacity: {
-      value: 0.5,
-      random: false,
-      anim: { enable: false, speed: 1, opacity_min: 0.1, sync: false }
-    },
-    size: {
-      value: 1,
-      random: true,
-      anim: { enable: false, speed: 40, size_min: 0.1, sync: false }
-    },
-    line_linked: { enable: true, distance: 550, color: '#ffffff', opacity: 0.5, width: 1 },
-    move: {
-      enable: true,
-      speed: 1,
-      direction: 'none',
-      random: false,
-      straight: false,
-      out_mode: 'out',
-      bounce: false,
-      attract: { enable: false, rotateX: 600, rotateY: 1200 }
-    }
-  },
+  fpsLimit: 60,
   interactivity: {
-    detect_on: 'canvas',
     events: {
-      onhover: { enable: true, mode: 'grab' },
-      onclick: { enable: true, mode: 'push' },
-    },
-    modes: {
-      grab: { distance: 300, line_linked: { opacity: 1 } },
-      bubble: { distance: 300, size: 40, duration: 2, opacity: 8, speed: 3 },
-      repulse: { distance: 200, duration: 0.4 },
-      push: { particles_nb: 4 },
-      remove: { particles_nb: 2 }
+      onHover: { enable: false, mode: 'repulse' },
+      onClick: { enable: false, mode: 'push' }
     }
   },
-  retina_detect: true
+  particles: {
+    color: { value: '#ffffff' },
+    links: { enable: true, color: '#ffffff', distance: 100, width: 0.5, opacity: 0.4 },
+    move: { enable: true, speed: 0.5 },
+    number: { value: 75 },
+    opacity: { value: 0.5 },
+    shape: { type: 'circle' },
+    size: { value: 1 }
+  },
+  detectRetina: true
 })
 // ---------------------------- data --------------------------------
 const lastActive = ref('')
@@ -215,7 +187,7 @@ onMounted(() => {
       </template>
     </SlickList>
     <div class="content flex-1">
-      <vue-particles id="tsparticles" :line-linked="true" :options="particlesOptions" />
+      <vue-particles id="tsparticles" :options="particlesOptions" />
       <div class="fill-content">
         <RouterView />
         <div class="h12"></div>
