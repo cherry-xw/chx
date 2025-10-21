@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type Router } from 'vue-router'
 import Layer from '@/components/layer/container.vue'
 import Nav from '@/components/layer/nav.vue'
 import TabManage from '@/components/layer/TabManage.vue'
@@ -7,9 +7,10 @@ import { close, start } from '@/components/layer/progress'
 import main from './main'
 import practice from './practice'
 
+export let router: Router
 function createRouterIns() {
   const { name2Nav } = useNavStore()
-  const router = createRouter({
+  router = createRouter({
     history: createWebHashHistory(),
     routes: [
       {

@@ -4,7 +4,15 @@ import { onMounted, ref } from 'vue'
 import mqtt from 'mqtt'
 import AnimBox from '@/components/AnimBox.vue'
 import { tServe } from '@/api'
-
+import { chain } from 'lodash'
+type Config = {
+  url: string
+  clientId: string
+  username: string
+  password: string
+  intro: string
+  type: string
+}
 // --------------------------- config -------------------------------
 defineOptions({ name: 'ConnectMQTTView' })
 const config = defineModel<{
@@ -16,37 +24,48 @@ const config = defineModel<{
 // ---------------------------- data --------------------------------
 const client = ref<Awaited<ReturnType<typeof mqtt.connectAsync>>>()
 const state = ref(false)
-const list = ref<
-  {
-    url: string
-    clientId: string
-    username: string
-    password: string
-  }[]
->([])
+const list = ref<Config[]>([])
 // -------------------------- computed ------------------------------
 // --------------------------- methods ------------------------------
 async function handleConnect() {
-  if (!config.value.url ||
+  if (
+    !config.value.url ||
     !config.value.clientId ||
     !config.value.username ||
     !config.value.password
-  ) return
+  )
+    return
   client.value = await mqtt.connectAsync('mqtt://' + config.value.url, {})
+}
+function changeCurrent(item: Config) {
+  config.value.clientId = item.clientId
+  config.value.url = item.url
+  config.value.username = item.username
+  config.value.password = item.password
 }
 // ---------------------------- watch -------------------------------
 // ---------------------------- life --------------------------------
 onMounted(async () => {
   try {
-    // const res = await tServe<{
-    //   data: {
-    //     url: string
-    //     clientId: string
-    //     username: string
-    //     password: string
-    //   }[]
-    // }>('getMQTTUser').sync
-    // list.value = res.data
+    const res = await tServe<{
+      data: {
+        _id: string
+        type: string
+        intro: string
+        name: string
+      }[]
+    }>('/device/list', 'GET').sync
+    list.value = chain(res.data)
+      .map((item) => ({
+        url: '',
+        clientId: item._id,
+        username: item.name,
+        password: '',
+        intro: item.intro,
+        type: item.type
+      }))
+      .sortBy('type')
+      .value()
   } catch (error) {
     console.error(error)
   }
@@ -63,6 +82,20 @@ onMounted(async () => {
       <div class="ttl-row">
         <span>设置</span>
         <el-button size="small" class="close-btn" text :icon="Close" @click="state = false" />
+      </div>
+      <div class="device-list">
+        <el-tooltip
+          v-for="value in list"
+          :key="value.clientId"
+          class="box-item"
+          effect="dark"
+          :content="value.intro"
+          placement="top-start"
+        >
+          <el-button :disabled="value.type === 'device'" @click="changeCurrent">{{
+            value.username
+          }}</el-button>
+        </el-tooltip>
       </div>
       <el-input v-model="config.url" placeholder="Server">
         <template #prepend><div style="width: 40px; text-align: center">mqtt://</div></template>
@@ -82,6 +115,9 @@ onMounted(async () => {
   .connected-info {
     margin-bottom: 12px;
     display: inline-block;
+  }
+  .device-list {
+    display: flex;
   }
   .anim-box {
     position: relative;

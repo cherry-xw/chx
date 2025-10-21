@@ -3,6 +3,7 @@
  */
 
 import { core, Middleware, ServeCreator } from 'chery-fetch'
+import { router } from "@/router"
 
 // 存储token
 let aToken = localStorage.getItem('accessToken')
@@ -34,6 +35,7 @@ const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async fun
   // 如果token不存在，则直接返回
   if (!aToken || !rToken) {
     ctx.response.error = 'token is not exist'
+    router.push('/login')
     return
   }
   // 如果请求头不存在，则创建一个空对象
@@ -41,7 +43,7 @@ const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async fun
     ctx.request.options.headers = {}
   }
   // 将token添加到请求头中
-  ctx.request.options.headers['Authorization'] = `Bearer ${aToken}`
+  ctx.request.options.headers['Authorization'] = aToken
 
   // 执行下一个中间件
   await next()
@@ -61,9 +63,11 @@ const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async fun
         await next(true)
       } else {
         ctx.response.error = 'token refresh failed'
+        router.push('/login')
       }
     } catch (error) {
       ctx.response.error = 'token refresh failed'
+      router.push('/login')
       console.warn(error)
     }
   }
