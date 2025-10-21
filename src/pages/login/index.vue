@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { aesEncrypt } from '@/utils/hashers'
 import { useRouter } from 'vue-router'
 import { resetToken } from '@/api/middleware/token'
+import { decode } from '@/utils/common'
 // --------------------------- config -------------------------------
 defineOptions({ name: 'loginView' })
 // ---------------------------- data --------------------------------
@@ -36,7 +37,13 @@ async function toLogin() {
       localStorage.setItem('accessToken', res.data.accessToken)
       localStorage.setItem('refreshToken', res.data.accessToken)
       resetToken()
-      router.push({ name: 'home' })
+      const str = router.currentRoute.value.query.from
+      let from = '/'
+      if (str && typeof str === 'string') {
+        from = decode(str)
+      }
+      console.log('from', from)
+      router.push({ path: from })
     }
   } catch (error) {
     ElMessage.error('登录失败')
@@ -50,13 +57,14 @@ async function toLogin() {
 
 <template>
   <div class="login-container">
-    <el-input v-model="username" style="width: 240px" placeholder="用户名" />
+    <el-input v-model="username" style="width: 240px" placeholder="用户名" @keydown.enter="toLogin" />
     <el-input
       v-model="password"
       style="width: 240px"
       placeholder="密码"
       type="password"
       show-password
+      @keydown.enter="toLogin"
     />
     <el-button type="primary" @click="toLogin" :loading="loading">登录</el-button>
   </div>

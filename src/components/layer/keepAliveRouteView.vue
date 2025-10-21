@@ -1,5 +1,5 @@
 <script lang="ts">
-export class KeepAliveHandler {
+class KeepAliveHandler {
   _: Record<string, any> = {}
   constructor() {}
   //绑定keepAlive信息

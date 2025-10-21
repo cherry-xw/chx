@@ -3,7 +3,7 @@ import Layer from '@/components/layer/container.vue'
 import Nav from '@/components/layer/nav.vue'
 import TabManage from '@/components/layer/TabManage.vue'
 import { useNavStore } from '@/stores/nav'
-import { close, start } from '@/components/layer/progress'
+import { npClose, npStart } from '@/components/layer/progress'
 import main from './main'
 import practice from './practice'
 
@@ -20,6 +20,8 @@ function createRouterIns() {
       },
       {
         path: '/login',
+        name: 'login',
+        meta: { hideProgress: true },
         component: () => import('@/pages/login/index.vue')
       },
       {
@@ -39,8 +41,14 @@ function createRouterIns() {
       }
     ]
   })
-  router.beforeEach((to) => {
-    start()
+  router.beforeEach((to, from) => {
+    if (!to.meta?.hideProgress && from.name !== 'login') {
+      try {
+        npStart()
+      } catch (error) {
+        console.error(error);
+      }
+    }
     if (typeof to.name === 'string') {
       const nav = name2Nav[to.name]
       if (nav) {
@@ -51,7 +59,7 @@ function createRouterIns() {
   })
 
   router.afterEach(() => {
-    close()
+    npClose()
   })
   return router
 }

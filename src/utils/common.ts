@@ -24,11 +24,19 @@ const ctx = document.createElement('canvas').getContext('2d')
 export function calcTextSize(
   text: string,
   fontSize = 12,
-  fontWeight: '400' | '500' | '600' | "bold" = '400'
+  fontWeight: '400' | '500' | '600' | 'bold' = '400'
 ) {
   if (ctx) {
     ctx.font = `${fontWeight} ${fontSize}px sans-serif`
     return ctx.measureText(text).width
   }
   return text.length * fontSize
+}
+
+export function encode(str: string) {
+  return btoa(new TextEncoder().encode(str).reduce((a, b) => a + String.fromCharCode(b), ''))
+}
+
+export function decode(str: string) {
+  return new TextDecoder().decode(Uint8Array.from(atob(str), c => c.charCodeAt(0)));
 }

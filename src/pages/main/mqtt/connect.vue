@@ -37,7 +37,10 @@ async function handleConnect() {
     return
   client.value = await mqtt.connectAsync('mqtt://' + config.value.url, {})
 }
+function handleDisconnect() {}
 function changeCurrent(item: Config) {
+  console.log(item)
+
   config.value.clientId = item.clientId
   config.value.url = item.url
   config.value.username = item.username
@@ -76,7 +79,7 @@ onMounted(async () => {
 <template>
   <div class="connect-mqtt">
     <div class="connected-info" @mouseover="state = true">
-      当前连接：{{ config.username || '暂无' }}
+      当前连接：{{ client ? config.username : '未连接' }}
     </div>
     <AnimBox v-model="state" which="jack" class="anim-box">
       <div class="ttl-row">
@@ -92,9 +95,12 @@ onMounted(async () => {
           :content="value.intro"
           placement="top-start"
         >
-          <el-button :disabled="value.type === 'device'" @click="changeCurrent">{{
-            value.username
-          }}</el-button>
+          <el-button
+            :disabled="value.type === 'device'"
+            size="small"
+            @click="changeCurrent(value)"
+            >{{ value.username }}</el-button
+          >
         </el-tooltip>
       </div>
       <el-input v-model="config.url" placeholder="Server">
@@ -106,6 +112,7 @@ onMounted(async () => {
       <el-input v-model="config.username" placeholder="Username" />
       <el-input v-model="config.password" placeholder="Password" show-password />
       <el-button type="primary" @click="handleConnect">连接</el-button>
+      <el-button type="danger" @click="handleDisconnect">断开</el-button>
     </AnimBox>
   </div>
 </template>

@@ -13,11 +13,11 @@ export default function config(container = 'body') {
   })
 }
 // 打开进度条
-export const start = () => {
+export const npStart = () => {
   NProgress.start()
 }
 
 // 关闭进度条
-export const close = () => {
+export const npClose = () => {
   NProgress.done()
 }
