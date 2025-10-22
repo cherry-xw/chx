@@ -3,17 +3,17 @@ import Connect from './connect.vue'
 import { onMounted, ref } from 'vue'
 // --------------------------- config -------------------------------
 defineOptions({ name: 'MQTTView' })
+type Config = InstanceType<typeof Connect>["$props"]["modelValue"]
 // ---------------------------- data --------------------------------
-const config = ref<{
-  url: string
-  clientId: string
-  username: string
-  password: string
-}>({
+const config = ref<Config>({
+  protocol: 'wss://',
   url: '',
   clientId: '',
   username: '',
-  password: ''
+  friendName: '',
+  password: '',
+  intro: '',
+  type: ''
 })
 // -------------------------- computed ------------------------------
 // --------------------------- methods ------------------------------

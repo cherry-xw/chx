@@ -1,3 +1,4 @@
+import { customAlphabet } from 'nanoid';
 /**
  * 递归函数
  * @param arr 数组
@@ -33,10 +34,12 @@ export function calcTextSize(
   return text.length * fontSize
 }
 
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const nanoid = customAlphabet(alphabet, 6);
 export function encode(str: string) {
-  return btoa(new TextEncoder().encode(str).reduce((a, b) => a + String.fromCharCode(b), ''))
+  return btoa(new TextEncoder().encode(str).reduce((a, b) => a + String.fromCharCode(b), '')) + nanoid();
 }
 
 export function decode(str: string) {
-  return new TextDecoder().decode(Uint8Array.from(atob(str), c => c.charCodeAt(0)));
+  return new TextDecoder().decode(Uint8Array.from(atob(str.slice(0, -6)), c => c.charCodeAt(0)));
 }

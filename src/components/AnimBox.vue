@@ -1,6 +1,6 @@
 <!-- @AIGC-BEGIN: -->
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 // --------------------------- config -------------------------------
 defineOptions({ name: 'BoxView' })
@@ -23,12 +23,14 @@ type Motion =
   | false
 const props = withDefaults(
   defineProps<{
+    random?: boolean
     which?: keyof typeof animate.value | ''
     in?: Motion
     out?: Motion
     immediate?: boolean
   }>(),
   {
+    random: false,
     immediate: false,
     which: '',
     in: '',
@@ -77,15 +79,40 @@ const animate = ref({
     out: 'animate__animated animate__rollOut'
   }
 })
+const animateInOut = ref({
+  bounce: ['Down', 'Left', 'Right', 'Up', 'TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'],
+  fade: ['Down', 'Left', 'Right', 'Up', 'TopLeft', 'TopRight', 'BottomLeft', 'BottomRight'],
+  flip: ['X', 'Y'],
+  lightspeed: ['Left', 'Right'],
+  rotate: ['DownLeft', 'DownRight', 'UpLeft', 'UpRight'],
+  zoom: ['Down', 'Left', 'Right', 'Up'],
+  roll: [],
+  jack: []
+})
+const randomWhich = ref<keyof typeof animate.value>('bounce')
 // -------------------------- computed ------------------------------
-const enter = computed(() =>
-  props.which && props.in !== false ? animate.value[props.which].in + props.in : ''
-)
-const leave = computed(() =>
-  props.which && props.out !== false ? animate.value[props.which].out + props.out : ''
-)
+const whiches = computed(() => Object.keys(animate.value) as (keyof typeof animate.value)[])
+const enter = computed(() => {
+  if (props.random) {
+    const arr = animateInOut.value[randomWhich.value]
+    return animate.value[randomWhich.value].in + arr[Math.floor(Math.random() * arr.length)]
+  }
+  return props.which && props.in !== false ? animate.value[props.which].in + props.in : ''
+})
+const leave = computed(() => {
+  if (props.random) {
+    const arr = animateInOut.value[randomWhich.value]
+    return animate.value[randomWhich.value].out + arr[Math.floor(Math.random() * arr.length)]
+  }
+  return props.which && props.out !== false ? animate.value[props.which].out + props.out : ''
+})
 // --------------------------- methods ------------------------------
 // ---------------------------- watch -------------------------------
+watch(show, (ss) => {
+  if (!ss) {
+    randomWhich.value = whiches.value[Math.floor(Math.random() * whiches.value.length)]
+  }
+})
 // ---------------------------- life --------------------------------
 // --------------------------- other --------------------------------
 </script>
