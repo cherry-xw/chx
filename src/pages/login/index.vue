@@ -34,9 +34,7 @@ async function toLogin() {
     }).sync
     if (res.status) {
       ElMessage.success('登录成功')
-      localStorage.setItem('accessToken', res.data.accessToken)
-      localStorage.setItem('refreshToken', res.data.refreshToken)
-      resetToken()
+      resetToken(res.data)
       const str = router.currentRoute.value.query.from
       let from = '/'
       if (str && typeof str === 'string') {

@@ -19,10 +19,22 @@ type Config = {
 }
 // --------------------------- config -------------------------------
 defineOptions({ name: 'ConnectMQTTView' })
-const config = defineModel<Config>({ required: true })
+const emit = defineEmits<{
+  (e: 'done', client: mqtt.MqttClient | void): void
+}>()
 // ---------------------------- data --------------------------------
+const config = ref<Config>({
+  protocol: 'wss://',
+  url: '',
+  clientId: '',
+  username: '',
+  friendName: '',
+  password: '',
+  intro: '',
+  type: ''
+})
 const loading = ref(false)
-const client = ref<Awaited<ReturnType<typeof mqtt.connectAsync>>>()
+const client = ref<mqtt.MqttClient>()
 const state = ref(false)
 const list = ref<Config[]>([])
 const activeKey = ref('')
@@ -93,14 +105,22 @@ watch(
   },
   { immediate: true }
 )
-watch(config, (cfg) => {
-  const item = list.value.find((i) => i.clientId === cfg.clientId)
-  if (item) {
-    item.protocol = cfg.protocol
-    item.url = cfg.url
-    item.friendName = cfg.friendName
-    item.password = cfg.password
-  }
+watch(
+  config,
+  (cfg) => {
+    const item = list.value.find((i) => i.clientId === cfg.clientId)
+    console.log(cfg, item, 'xxx')
+    if (item) {
+      item.protocol = cfg.protocol
+      item.url = cfg.url
+      item.friendName = cfg.friendName
+      item.password = cfg.password
+    }
+  },
+  { deep: true }
+)
+watch(client, (c) => {
+  emit('done', c)
 })
 // ---------------------------- life --------------------------------
 onMounted(async () => {
@@ -197,6 +217,7 @@ onMounted(async () => {
 
 <style lang="less" scoped>
 .connect-mqtt {
+  position: relative;
   .connected-info {
     margin-bottom: 12px;
     display: inline-block;
@@ -206,13 +227,15 @@ onMounted(async () => {
     display: flex;
   }
   .anim-box {
-    position: relative;
+    position: absolute;
+    z-index: 2;
     width: 480px;
+    height: 332px;
     display: flex;
     gap: 8px;
     flex-direction: column;
-    background: rgba(25, 25, 25, 0.75);
-    box-shadow: 0 0 8px #38383857;
+    background: var(--el-color-info-light-7);
+    box-shadow: 0 0 8px var(--el-color-info-light-9);
     border-radius: 6px;
     padding: 8px 12px 20px;
     .ttl-row {

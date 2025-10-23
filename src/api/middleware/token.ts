@@ -13,9 +13,17 @@ window.isLoginNotificationShow = false
 let aToken = localStorage.getItem('accessToken')
 let rToken = localStorage.getItem('refreshToken')
 
-export function resetToken() {
-  aToken = localStorage.getItem('accessToken')
-  rToken = localStorage.getItem('refreshToken')
+export function resetToken({
+  accessToken,
+  refreshToken
+}: {
+  accessToken: string
+  refreshToken: string
+}) {
+  aToken = accessToken
+  rToken = refreshToken
+  localStorage.setItem('accessToken', aToken)
+  localStorage.setItem('refreshToken', rToken)
 }
 
 const addHeader: API.MiddlewareHandle<API.Context<any>> = async function (ctx, next) {
@@ -29,46 +37,49 @@ const middleware = new Middleware([addHeader, core])
 // token刷新服务
 const tokenServe = ServeCreator('/api', 'POST', { middleware })
 
-// token刷新中间件
-// 定义一个token刷新中间件
-const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async function (ctx, next) {
-  // 如果token不存在，则直接返回
-  if (!aToken || !rToken) {
-    ctx.response.error = 'token is not exist'
-    if (window.isLoginNotificationShow) return
-    window.isLoginNotificationShow = true
-    const noti = ElNotification({
-      title: '请求失败',
-      type: 'error',
-      duration: 0,
-      onClose() {
-        window.isLoginNotificationShow = false
-      },
-      dangerouslyUseHTMLString: true,
-      message: `<div class="login-notification-content">
+function showLoginNotification() {
+  if (window.isLoginNotificationShow) return
+  window.isLoginNotificationShow = true
+  const noti = ElNotification({
+    title: '请求失败',
+    type: 'error',
+    duration: 0,
+    onClose() {
+      window.isLoginNotificationShow = false
+    },
+    dangerouslyUseHTMLString: true,
+    message: `<div class="login-notification-content">
         <div style="margin-bottom: 8px">当前未登录或登录状态已失效</div>
         <div>
           <button type="button" class="cancel el-button is-plain" onclick="window.isLoginNotificationShow = false">取消</button>
           <button type="button" class="to-login el-button el-button--primary is-plain" onclick="window.isLoginNotificationShow = false">登录</button>
         </div>
       </div>`
-    })
-    setTimeout(() => {
-      document
-        .querySelector('.login-notification-content button.cancel')
-        ?.addEventListener('click', () => {
-          window.isLoginNotificationShow = false
-          noti.close()
-        })
-      document
-        .querySelector('.login-notification-content button.to-login')
-        ?.addEventListener('click', () => {
-          window.isLoginNotificationShow = false
-          noti.close()
-          const from = encode(router.currentRoute.value.fullPath)
-          router.push({ path: '/login', query: { from } })
-        })
-    }, 200)
+  })
+  setTimeout(() => {
+    document
+      .querySelector('.login-notification-content button.cancel')
+      ?.addEventListener('click', () => {
+        window.isLoginNotificationShow = false
+        noti.close()
+      })
+    document
+      .querySelector('.login-notification-content button.to-login')
+      ?.addEventListener('click', () => {
+        window.isLoginNotificationShow = false
+        noti.close()
+        const from = encode(router.currentRoute.value.fullPath)
+        router.push({ path: '/login', query: { from } })
+      })
+  }, 200)
+}
+// token刷新中间件
+// 定义一个token刷新中间件
+const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async function (ctx, next) {
+  // 如果token不存在，则直接返回
+  if (!aToken || !rToken) {
+    ctx.response.error = 'token is not exist'
+    showLoginNotification()
     return
   }
   // 如果请求头不存在，则创建一个空对象
@@ -102,11 +113,11 @@ const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async fun
         await next(true)
       } else {
         ctx.response.error = 'token refresh failed'
-        router.push('/login')
+        showLoginNotification()
       }
     } catch (error) {
       ctx.response.error = 'token refresh failed'
-      router.push('/login')
+      showLoginNotification()
       console.warn(error)
     }
   }
