@@ -20,7 +20,7 @@ type Config = {
 // --------------------------- config -------------------------------
 defineOptions({ name: 'ConnectMQTTView' })
 const emit = defineEmits<{
-  (e: 'done', client: mqtt.MqttClient | void): void
+  done: [client: mqtt.MqttClient | void]
 }>()
 // ---------------------------- data --------------------------------
 const config = ref<Config>({

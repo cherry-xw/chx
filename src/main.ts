@@ -9,8 +9,8 @@ import 'element-plus/theme-chalk/dark/css-vars.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { plugin as Slicksort } from 'vue-slicksort'
 import 'animate.css'
-import VueParticles from '@tsparticles/vue3'
-import { loadSlim } from '@tsparticles/slim'
+// import VueParticles from '@tsparticles/vue3'
+// import { loadSlim } from '@tsparticles/slim'
 
 import App from './App.vue'
 import createRouter from './router'
@@ -21,11 +21,11 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(createRouter())
-app.use(VueParticles as any, {
-  async init(engine: any) {
-    await loadSlim(engine) // 使用轻量级版本，如需更多功能可使用 loadFull
-  }
-})
+// app.use(VueParticles as any, {
+//   async init(engine: any) {
+//     await loadSlim(engine) // 使用轻量级版本，如需更多功能可使用 loadFull
+//   }
+// })
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

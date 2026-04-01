@@ -1,7 +1,7 @@
 <!-- 打开的页签管理 -->
 <script lang="ts">
 export default { name: 'TabManageView' }
-import { onMounted, reactive } from 'vue'
+import { onMounted } from 'vue'
 import SecondConfirmation from './SecondConfirmation.vue'
 import { ref } from 'vue'
 import { useNavStore, type NavTreeSingleNode } from '@/stores/nav'
@@ -25,27 +25,27 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 // ---------------------------- config -------------------------------
 const route = useRoute()
 const router = useRouter()
-const particlesOptions = reactive({
-  fullScreen: { enable: false },
-  background: { color: 'transparent' },
-  fpsLimit: 60,
-  interactivity: {
-    events: {
-      onHover: { enable: false, mode: 'repulse' },
-      onClick: { enable: false, mode: 'push' }
-    }
-  },
-  particles: {
-    color: { value: '#ffffff' },
-    links: { enable: true, color: '#ffffff', distance: 100, width: 0.5, opacity: 0.4 },
-    move: { enable: true, speed: 0.5 },
-    number: { value: 75 },
-    opacity: { value: 0.5 },
-    shape: { type: 'circle' },
-    size: { value: 1 }
-  },
-  detectRetina: true
-})
+// const particlesOptions = reactive({
+//   fullScreen: { enable: false },
+//   background: { color: 'transparent' },
+//   fpsLimit: 60,
+//   interactivity: {
+//     events: {
+//       onHover: { enable: false, mode: 'repulse' },
+//       onClick: { enable: false, mode: 'push' }
+//     }
+//   },
+//   particles: {
+//     color: { value: '#ffffff' },
+//     links: { enable: true, color: '#ffffff', distance: 100, width: 0.5, opacity: 0.4 },
+//     move: { enable: true, speed: 0.5 },
+//     number: { value: 75 },
+//     opacity: { value: 0.5 },
+//     shape: { type: 'circle' },
+//     size: { value: 1 }
+//   },
+//   detectRetina: true
+// })
 // ---------------------------- data --------------------------------
 const lastActive = ref('')
 const currentActiveIndex = ref(0)
@@ -187,7 +187,7 @@ onMounted(() => {
       </template>
     </SlickList>
     <div class="content flex-1">
-      <vue-particles id="tsparticles" :options="particlesOptions" />
+      <!-- <vue-particles id="tsparticles" :options="particlesOptions" /> -->
       <div class="fill-content">
         <RouterView />
         <div class="h12"></div>
