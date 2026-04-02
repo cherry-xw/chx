@@ -22,19 +22,23 @@
     <!-- Default output handle -->
     <Handle
       type="source"
-      :position="Position.Right"
+      :position="Position.Bottom"
       :id="'default'"
       class="output-handle default-handle"
-      style="top: 80%"
+      style="left: 50%; transform: translateX(-50%); bottom: -6px;"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
-import { Switch } from '@element-plus/icons-vue'
+import { Share } from '@element-plus/icons-vue'
 
 interface Props {
+  data: {
+    label: string
+    config: any
+  }
   conditions?: Array<string>
 }
 const props = withDefaults(defineProps<Props>(), {

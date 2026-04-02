@@ -20,10 +20,10 @@
     <!-- Output handle for loop body -->
     <Handle
       type="source"
-      :position="Position.Right"
+      :position="Position.Bottom"
       :id="'loop-body'"
       class="output-handle loop-output"
-      style="top: 70%"
+      style="left: 50%; transform: translateX(-50%); bottom: -6px;"
     />
   </div>
 </template>
@@ -33,7 +33,10 @@ import { Handle, Position } from '@vue-flow/core'
 import { Refresh } from '@element-plus/icons-vue'
 
 interface Props {
-  // Define any props specific to LoopNode
+  data: {
+    label: string
+    config: any
+  }
 }
 defineProps<Props>()
 </script>

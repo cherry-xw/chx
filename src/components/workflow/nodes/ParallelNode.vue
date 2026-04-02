@@ -16,10 +16,13 @@
 
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
-import { Connection } from '@element-plus/icons-vue'
+import { Grid } from '@element-plus/icons-vue'
 
 interface Props {
-  // Define any props specific to ParallelNode
+  data: {
+    label: string
+    config: any
+  }
 }
 defineProps<Props>()
 </script>
