@@ -3,24 +3,28 @@
     <div v-for="(item, index) in modelValue" :key="index" class="array-item">
       <el-input
         v-if="itemSchema.type === 'string'"
-        v-model="modelValue[index]"
+        :model-value="modelValue[index]"
         :placeholder="itemSchema.placeholder || ''"
+        @update:model-value="(val: string) => updateItem(index, val)"
       />
       <el-input-number
         v-else-if="itemSchema.type === 'number'"
-        v-model="modelValue[index]"
+        :model-value="modelValue[index]"
         :min="itemSchema.min"
         :max="itemSchema.max"
+        @update:model-value="(val: number) => updateItem(index, val)"
       />
       <el-switch
         v-else-if="itemSchema.type === 'boolean'"
-        v-model="modelValue[index]"
+        :model-value="modelValue[index]"
+        @update:model-value="(val: boolean) => updateItem(index, val)"
       />
       <component
         v-else-if="itemSchema.component"
         :is="itemSchema.component"
-        v-model="modelValue[index]"
+        :model-value="modelValue[index]"
         v-bind="itemSchema.props"
+        @update:model-value="(val: any) => updateItem(index, val)"
       />
       <el-button
         type="danger"
@@ -62,6 +66,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+const updateItem = (index: number, value: any) => {
+  const newValue = [...props.modelValue]
+  newValue[index] = value
+  emit('update:modelValue', newValue)
+}
 
 const addItem = () => {
   let defaultValue: any
