@@ -85,5 +85,5 @@ export interface ParallelConfig {
  */
 export interface EndConfig {
   /** Output value to return when workflow ends */
-  outputValue?: any
+  outputValue?: unknown
 }
