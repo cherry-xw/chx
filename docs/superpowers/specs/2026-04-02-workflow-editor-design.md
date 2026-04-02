@@ -680,29 +680,29 @@ class DAGScheduler {
 
     switch (node.type) {
       case 'trigger':
-        return this.executeTriggerNode(node, input, params)
+        return this.executeTriggerNode(node, input, params, log)
 
       case 'branch':
-        return this.executeBranchNode(node, input, params)
+        return this.executeBranchNode(node, input, params, log)
 
       case 'loop':
-        return this.executeLoopNode(node, input, params)
+        return this.executeLoopNode(node, input, params, log)
 
       case 'parallel':
-        return this.executeParallelNode(node, input, params)
+        return this.executeParallelNode(node, input, params, log)
 
       case 'end':
-        return this.executeEndNode(node, input, params)
+        return this.executeEndNode(node, input, params, log)
 
       default:
         if (node.type.startsWith('plugin:')) {
-          return this.executePluginNode(node, input, params)
+          return this.executePluginNode(node, input, params, log)
         }
         throw new Error(`Unknown node type: ${node.type}`)
     }
   }
 
-  private async executeTriggerNode(node: WorkflowNode, input: any, params: TriggerConfig): Promise<any> {
+  private async executeTriggerNode(node: WorkflowNode, input: any, params: TriggerConfig, log: ExecutionLog): Promise<any> {
     log.message = `Trigger activated: ${params.type}`
 
     if (params.type === 'manual') {
@@ -716,7 +716,7 @@ class DAGScheduler {
     throw new Error(`Unsupported trigger type: ${params.type}`)
   }
 
-  private async executeBranchNode(node: WorkflowNode, input: any, params: BranchConfig): Promise<any> {
+  private async executeBranchNode(node: WorkflowNode, input: any, params: BranchConfig, log: ExecutionLog): Promise<any> {
     log.message = `Evaluating branch conditions`
 
     for (const condition of params.conditions) {
@@ -739,7 +739,7 @@ class DAGScheduler {
     }
   }
 
-  private async executeLoopNode(node: WorkflowNode, input: any, params: LoopConfig): Promise<any> {
+  private async executeLoopNode(node: WorkflowNode, input: any, params: LoopConfig, log: ExecutionLog): Promise<any> {
     log.message = `Starting loop: ${params.iterations} iterations`
 
     const results = []
@@ -766,7 +766,7 @@ class DAGScheduler {
     return { results, iterations: params.iterations }
   }
 
-  private async executeParallelNode(node: WorkflowNode, input: any, params: ParallelConfig): Promise<any> {
+  private async executeParallelNode(node: WorkflowNode, input: any, params: ParallelConfig, log: ExecutionLog): Promise<any> {
     log.message = `Executing ${params.parallelNodes.length} nodes in parallel`
 
     const promises = params.parallelNodes.map(async (nodeId) => {
@@ -780,7 +780,7 @@ class DAGScheduler {
     return { results }
   }
 
-  private async executeEndNode(node: WorkflowNode, input: any, params: EndConfig): Promise<any> {
+  private async executeEndNode(node: WorkflowNode, input: any, params: EndConfig, log: ExecutionLog): Promise<any> {
     log.message = `Workflow execution completed`
 
     this.executionRecord.context.output = params.outputValue || input
@@ -1685,7 +1685,7 @@ export default {
 - 3-5种基础节点类型(Trigger、Branch、Loop、End)
 - 左侧节点面板 + 右侧配置面板
 - 工具栏(保存、清空、撤销)
-- localStorage 持久化
+- IndexedDB 持久化(工作流存储)
 
 ### 扩展阶段(2-3周)
 
