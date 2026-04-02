@@ -67,7 +67,10 @@ interface WorkflowDatabase extends DBSchema {
 
   extensionConfig: {
     key: string
-    value: any
+    value: {
+      key: string
+      value: any
+    }
   }
 }
 
