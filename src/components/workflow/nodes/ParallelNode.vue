@@ -1,7 +1,7 @@
 <template>
   <div class="parallel-node">
     <div class="node-header">
-      <el-icon><Connection /></el-icon>
+      <el-icon><Grid /></el-icon>
       <span class="node-title">Parallel</span>
     </div>
     <div class="node-content">

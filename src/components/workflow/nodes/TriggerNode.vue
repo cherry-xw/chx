@@ -1,7 +1,7 @@
 <template>
   <div class="trigger-node">
     <div class="node-header">
-      <el-icon><VideoPlay /></el-icon>
+      <el-icon><CaretRight /></el-icon>
       <span class="node-title">Trigger</span>
     </div>
     <div class="node-content">

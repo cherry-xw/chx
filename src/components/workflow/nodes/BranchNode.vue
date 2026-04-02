@@ -1,7 +1,7 @@
 <template>
   <div class="branch-node">
     <div class="node-header">
-      <el-icon><Switch /></el-icon>
+      <el-icon><Share /></el-icon>
       <span class="node-title">Branch</span>
     </div>
     <div class="node-content">
