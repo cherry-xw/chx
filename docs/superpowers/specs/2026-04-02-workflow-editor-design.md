@@ -78,6 +78,7 @@ interface WorkflowNode {
     config: NodeConfig
     inputs: PortDefinition[]
     outputs: PortDefinition[]
+    extensions?: ExtensionConfig[]  // 可选扩展能力
   }
 }
 
@@ -92,6 +93,43 @@ interface PortDefinition {
   required?: boolean
   multiple?: boolean
 }
+```
+
+### 节点扩展机制定义
+
+采用**装饰器模式**,将重试、性能监控、超时等能力作为可选扩展附加到节点,保持核心执行引擎简洁。
+
+```typescript
+interface ExtensionConfig {
+  type: 'retry' | 'monitor' | 'timeout' | 'error-handler'
+  config: ExtensionConfigParams
+}
+
+interface ExtensionConfigParams {
+  // Retry 扩展
+  maxRetries?: number
+  delay?: number
+  backoff?: 'fixed' | 'exponential'
+
+  // Monitor 扩展
+  logLevel?: 'info' | 'warn' | 'error'
+  metrics?: Array<'duration' | 'memory' | 'cpu'>
+
+  // Timeout 扩展
+  duration?: number  // 毫秒
+
+  // Error Handler 扩展
+  fallback?: any
+  continueOnError?: boolean
+}
+```
+
+**设计理念**:
+
+1. **微内核原则**: 核心执行引擎只负责流程编排,扩展能力通过装饰器动态附加
+2. **灵活可选**: 每个节点按需配置扩展,HTTP请求节点可能需要重试,Branch节点不需要
+3. **易于扩展**: 未来可轻松添加新扩展类型(rate-limit、circuit-breaker等)
+4. **统一机制**: 所有扩展通过装饰器链统一处理,执行引擎保持简洁
 ```
 
 ### WorkflowEdge 定义
@@ -648,8 +686,18 @@ class DAGScheduler {
       // Get input from upstream nodes
       const input = this.getNodeInput(nodeId)
 
-      // Execute node logic
-      const output = await this.executeNodeLogic(node, input, nodeLog)
+      // 创建基础执行器
+      let executor = async () => {
+        return this.executeNodeLogic(node, input, nodeLog)
+      }
+
+      // 应用节点扩展(装饰器链)
+      for (const ext of node.data.extensions || []) {
+        executor = this.wrapExtension(executor, ext, nodeLog)
+      }
+
+      // 执行包装后的逻辑
+      const output = await executor()
 
       // Store output
       this.setNodeOutput(nodeId, output)
@@ -672,6 +720,155 @@ class DAGScheduler {
       record.logs.push(nodeLog)
 
       throw error
+    }
+  }
+
+  /**
+   * 扩展装饰器包装器
+   * 根据扩展类型返回包装后的执行器
+   */
+  private wrapExtension(
+    executor: () => Promise<any>,
+    ext: ExtensionConfig,
+    log: ExecutionLog
+  ): () => Promise<any> {
+    switch (ext.type) {
+      case 'retry':
+        return this.wrapRetry(executor, ext.config, log)
+      case 'monitor':
+        return this.wrapMonitor(executor, ext.config, log)
+      case 'timeout':
+        return this.wrapTimeout(executor, ext.config, log)
+      case 'error-handler':
+        return this.wrapErrorHandler(executor, ext.config, log)
+      default:
+        return executor
+    }
+  }
+
+  /**
+   * 重试装饰器
+   * 自动重试失败的节点执行
+   */
+  private wrapRetry(
+    executor: () => Promise<any>,
+    config: ExtensionConfigParams,
+    log: ExecutionLog
+  ): () => Promise<any> {
+    return async () => {
+      const maxRetries = config.maxRetries || 3
+      const delay = config.delay || 1000
+      const backoff = config.backoff || 'fixed'
+
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          log.message = `Attempt ${i + 1}/${maxRetries}`
+          const result = await executor()
+          log.message = `Success on attempt ${i + 1}`
+          return result
+        } catch (error) {
+          if (i < maxRetries - 1) {
+            const waitTime = backoff === 'exponential' ? delay * Math.pow(2, i) : delay
+            log.message = `Failed on attempt ${i + 1}, retrying in ${waitTime}ms`
+            await new Promise(resolve => setTimeout(resolve, waitTime))
+          } else {
+            log.message = `All ${maxRetries} attempts failed`
+            throw error
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * 性能监控装饰器
+   * 记录执行时间和资源消耗
+   */
+  private wrapMonitor(
+    executor: () => Promise<any>,
+    config: ExtensionConfigParams,
+    log: ExecutionLog
+  ): () => Promise<any> {
+    return async () => {
+      const startTime = performance.now()
+      const metrics = config.metrics || ['duration']
+      const logLevel = config.logLevel || 'info'
+
+      log.message = `Starting execution with monitoring`
+
+      const result = await executor()
+
+      const endTime = performance.now()
+      const duration = endTime - startTime
+
+      if (metrics.includes('duration')) {
+        log.message = `Execution completed in ${duration.toFixed(2)}ms`
+        log.duration = duration
+      }
+
+      // 未来可扩展: memory、cpu指标采集
+      // if (metrics.includes('memory')) {
+      //   const memoryUsage = performance.memory?.usedJSHeapSize
+      //   log.message += `, Memory: ${memoryUsage} bytes`
+      // }
+
+      return result
+    }
+  }
+
+  /**
+   * 超时装饰器
+   * 限制节点执行时间
+   */
+  private wrapTimeout(
+    executor: () => Promise<any>,
+    config: ExtensionConfigParams,
+    log: ExecutionLog
+  ): () => Promise<any> {
+    return async () => {
+      const timeout = config.duration || 30000
+
+      log.message = `Execution with timeout ${timeout}ms`
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Execution timeout')), timeout)
+      })
+
+      try {
+        const result = await Promise.race([
+          executor(),
+          timeoutPromise
+        ])
+        return result
+      } catch (error) {
+        log.message = `Execution timed out after ${timeout}ms`
+        throw error
+      }
+    }
+  }
+
+  /**
+   * 错误处理装饰器
+   * 提供降级方案或继续执行选项
+   */
+  private wrapErrorHandler(
+    executor: () => Promise<any>,
+    config: ExtensionConfigParams,
+    log: ExecutionLog
+  ): () => Promise<any> {
+    return async () => {
+      try {
+        return await executor()
+      } catch (error) {
+        if (config.continueOnError) {
+          log.message = `Error occurred but execution continues: ${error.message}`
+          log.level = 'warning'
+          return config.fallback || { error: error.message, fallback: true }
+        } else {
+          log.message = `Error handled with fallback: ${error.message}`
+          return config.fallback || { error: error.message }
+        }
+      }
     }
   }
 
@@ -1368,6 +1565,96 @@ function onDragStart(event: DragEvent, nodeType: string) {
 
       <!-- 无Schema时的默认配置 -->
       <el-empty v-else description="该节点无需配置参数" />
+
+      <!-- 扩展配置(所有节点可选) -->
+      <div class="extensions-section">
+        <el-divider>节点扩展能力</el-divider>
+
+        <el-collapse v-model="activeExtensions">
+          <!-- 重试扩展 -->
+          <el-collapse-item title="重试机制" name="retry">
+            <el-form label-position="top">
+              <el-form-item label="最大重试次数">
+                <el-input-number v-model="extensions.retry.maxRetries" :min="1" :max="10" />
+              </el-form-item>
+
+              <el-form-item label="重试延迟(ms)">
+                <el-input-number v-model="extensions.retry.delay" :min="100" :max="60000" />
+              </el-form-item>
+
+              <el-form-item label="退避策略">
+                <el-select v-model="extensions.retry.backoff">
+                  <el-option label="固定延迟" value="fixed" />
+                  <el-option label="指数退避" value="exponential" />
+                </el-select>
+              </el-form-item>
+
+              <el-button size="small" @click="toggleExtension('retry')">
+                {{ hasExtension('retry') ? '禁用' : '启用' }}重试
+              </el-button>
+            </el-form>
+          </el-collapse-item>
+
+          <!-- 性能监控扩展 -->
+          <el-collapse-item title="性能监控" name="monitor">
+            <el-form label-position="top">
+              <el-form-item label="日志级别">
+                <el-select v-model="extensions.monitor.logLevel">
+                  <el-option label="信息" value="info" />
+                  <el-option label="警告" value="warn" />
+                  <el-option label="错误" value="error" />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="监控指标">
+                <el-checkbox-group v-model="extensions.monitor.metrics">
+                  <el-checkbox label="duration">执行时间</el-checkbox>
+                  <el-checkbox label="memory">内存消耗(实验性)</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+
+              <el-button size="small" @click="toggleExtension('monitor')">
+                {{ hasExtension('monitor') ? '禁用' : '启用' }}监控
+              </el-button>
+            </el-form>
+          </el-collapse-item>
+
+          <!-- 超时扩展 -->
+          <el-collapse-item title="超时控制" name="timeout">
+            <el-form label-position="top">
+              <el-form-item label="超时时间(ms)">
+                <el-input-number v-model="extensions.timeout.duration" :min="1000" :max="300000" />
+              </el-form-item>
+
+              <el-button size="small" @click="toggleExtension('timeout')">
+                {{ hasExtension('timeout') ? '禁用' : '启用' }}超时
+              </el-button>
+            </el-form>
+          </el-collapse-item>
+
+          <!-- 错误处理扩展 -->
+          <el-collapse-item title="错误处理" name="error-handler">
+            <el-form label-position="top">
+              <el-form-item label="降级数据">
+                <el-input
+                  v-model="extensions.errorHandler.fallback"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="JSON格式的降级返回数据"
+                />
+              </el-form-item>
+
+              <el-form-item label="错误后继续">
+                <el-switch v-model="extensions.errorHandler.continueOnError" />
+              </el-form-item>
+
+              <el-button size="small" @click="toggleExtension('error-handler')">
+                {{ hasExtension('error-handler') ? '禁用' : '启用' }}错误处理
+              </el-button>
+            </el-form>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
     </div>
   </div>
 </template>
@@ -1388,6 +1675,53 @@ const emit = defineEmits<{
 
 const config = ref<NodeConfig>(props.node.data.config || {})
 
+// 扩展配置状态
+const activeExtensions = ref<string[]>([])
+const extensions = ref({
+  retry: {
+    maxRetries: 3,
+    delay: 1000,
+    backoff: 'fixed'
+  },
+  monitor: {
+    logLevel: 'info',
+    metrics: ['duration']
+  },
+  timeout: {
+    duration: 30000
+  },
+  errorHandler: {
+    fallback: '',
+    continueOnError: false
+  }
+})
+
+// 检查扩展是否已启用
+function hasExtension(type: string): boolean {
+  return props.node.data.extensions?.some(ext => ext.type === type) || false
+}
+
+// 切换扩展启用/禁用
+function toggleExtension(type: string) {
+  const extensionsList = props.node.data.extensions || []
+
+  if (hasExtension(type)) {
+    // 禁用: 从列表中移除
+    const index = extensionsList.findIndex(ext => ext.type === type)
+    if (index !== -1) {
+      extensionsList.splice(index, 1)
+    }
+  } else {
+    // 启用: 添加到列表
+    extensionsList.push({
+      type,
+      config: extensions.value[type]
+    })
+  }
+
+  props.node.data.extensions = extensionsList
+}
+
 function handleUpdate() {
   emit('update', config.value)
 }
@@ -1403,6 +1737,15 @@ function handleUpdate() {
 
   .content {
     @apply flex-1 p-4 overflow-auto;
+
+    .extensions-section {
+      @apply mt-4;
+
+      .el-collapse {
+        border: 1px solid var(--el-border-color);
+        border-radius: 4px;
+      }
+    }
   }
 }
 </style>
@@ -1806,6 +2149,24 @@ return fn(context) // context是受限的执行上下文
 - 工作流调试器(逐步执行)
 - 性能监控(节点执行时间分析)
 - 变量追踪(数据流可视化)
+
+### 扩展能力扩展
+
+基于装饰器模式,未来可轻松添加更多节点扩展能力:
+
+- **Rate Limit**: 限制节点执行频率
+- **Circuit Breaker**: 短路保护,防止雪崩效应
+- **Cache**: 节点执行结果缓存
+- **Validation**: 输入数据验证
+- **Transformer**: 输入输出数据转换
+- **Logger**: 自定义日志记录策略
+- **Notify**: 节点执行完成通知(Slack、邮件等)
+
+**扩展机制优势**:
+- 核心执行引擎无需修改
+- 扩展之间可组合(多个装饰器叠加)
+- 每个节点按需配置能力
+- 符合微内核架构原则
 
 ---
 
