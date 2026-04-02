@@ -15,7 +15,6 @@
  */
 export interface TriggerConfig {
   type: string
-  [key: string]: any
 }
 
 // ============================================================================

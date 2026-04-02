@@ -65,6 +65,21 @@ const navOrigin: noKeyNav[] = [
     ]
   },
   {
+    label: 'AI',
+    name: 'ai',
+    icon: 'MagicStick',
+    dir: true,
+    focus: false,
+    children: [
+      {
+        label: '工作流',
+        name: 'workflow',
+        icon: 'Connection',
+        focus: false
+      }
+    ]
+  },
+  {
     label: '练习',
     name: 'practice',
     icon: 'EditPen',

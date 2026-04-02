@@ -20,6 +20,11 @@ const mainRouterConfig: Readonly<RouteRecordRaw> = {
       path: 'mqtt',
       name: 'mqtt',
       component: () => import('@/pages/main/mqtt/index.vue')
+    },
+    {
+      path: 'workflow',
+      name: 'workflow',
+      component: () => import('@/pages/main/workflow/index.vue')
     }
   ]
 }
