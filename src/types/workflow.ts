@@ -5,17 +5,7 @@
  * These types are used across the entire workflow module.
  */
 
-// ============================================================================
-// Trigger Configuration (Placeholder - will be fully defined in Task 2)
-// ============================================================================
-
-/**
- * Trigger configuration for workflow execution
- * @see Task 2 for full implementation
- */
-export interface TriggerConfig {
-  type: string
-}
+import type { TriggerConfig } from './node'
 
 // ============================================================================
 // Workflow - Main Interface
