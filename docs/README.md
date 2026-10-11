@@ -4,6 +4,7 @@
 
 | 修改意图 | 领域入口 |
 | --- | --- |
+| 拉取、初始化、日常开发命令 | [Monorepo 使用指南](guides/monorepo.md) |
 | 调整首页与 MQTT 工作台的布局、宽屏适配 | [页面布局](frontend/README.md) |
 | 维护文档结构与内容 | [文档规范](standards/documentation/structure.md) |
 

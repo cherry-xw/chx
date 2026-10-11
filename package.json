@@ -8,7 +8,7 @@
     "setup": "node scripts/setup.mjs",
     "dev": "pnpm --filter ./workspace/frontend dev",
     "build": "pnpm --filter ./workspace/frontend build",
-    "test": "pnpm --filter ./workspace/frontend test",
+    "test": "pnpm --filter ./workspace/frontend test:entrance",
     "dev:backend": "pnpm --filter ./workspace/backend serve"
   }
 }

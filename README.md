@@ -16,6 +16,8 @@ pnpm setup
 
 `pnpm setup` 会拉取 frontend / backend 分支到 `workspace/`，并统一安装依赖。
 
+> 完整操作方式（拉取、初始化、日常命令、分支开发流程）见 [Monorepo 使用指南](docs/guides/monorepo.md)。
+
 ## 常用命令
 
 ```bash
