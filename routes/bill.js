@@ -168,6 +168,7 @@ router.post("/findWithRule", async function (req, res) {
         };
       }
       operate = Bill.find(rule, select);
+      // 附加其他的查询参数
       const keys = Object.keys(more);
       if (keys.length) {
         keys.forEach(key => {

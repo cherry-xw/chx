@@ -21,7 +21,6 @@ const mongo = require('./db/mongo');
 // console.log(module);
 
 const CORSOrigins = [
-  "http://192.168.0.109:3000",
   "http://localhost:3000",
   "http://localhost:8080",
   "https://ww.xcherry.top",
