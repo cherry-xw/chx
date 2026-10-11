@@ -6,6 +6,29 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useModeStore } from '../src/stores/counter.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, featuredSites } from '../src/data/directory.ts'
+import {
+  HEAT_HALF_LIFE_MS,
+  MIN_ACTIVE_SCORE,
+  heatScore,
+  maxHeat,
+  pickTopByHeat,
+  rankByHeat,
+  readHeat,
+  recordHeat,
+  writeHeat
+} from '../src/utils/usage-heat.ts'
+
+function memoryStorage() {
+  const values = new Map()
+  return {
+    getItem(key) {
+      return values.get(key) ?? null
+    },
+    setItem(key, value) {
+      values.set(key, value)
+    }
+  }
+}
 
 function browser(t, { saved = null, dark = false, storageDisabled = false } = {}) {
   const values = new Map(saved ? [['chery-theme', saved]] : [])
@@ -232,4 +255,105 @@ test('body and secondary text maintain 7:1 contrast in both themes, including ho
       }
     }
   }
+})
+
+test('heat accumulates for repeated use and decays over one half-life', () => {
+  const t0 = Date.now()
+  const map = {}
+  recordHeat(map, 'site', t0)
+  recordHeat(map, 'site', t0)
+  recordHeat(map, 'site', t0)
+  assert.equal(heatScore(map, 'site'), 3)
+  const storage = memoryStorage()
+  writeHeat('k', map, storage)
+  const decayed = readHeat('k', storage, t0 + HEAT_HALF_LIFE_MS)
+  assert.ok(Math.abs(heatScore(decayed, 'site') - 1.5) < 1e-9)
+})
+
+test('recent heavy use outranks larger but older history (A → B switch)', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const map = {}
+  // A：连续 30 天每天一次，最后一次在 14 天前
+  for (let i = 0; i < 30; i++) {
+    recordHeat(map, 'A', now - 14 * DAY - (29 - i) * DAY)
+  }
+  // B：最近 7 天每天一次，最后一次在现在
+  for (let i = 0; i < 7; i++) {
+    recordHeat(map, 'B', now - (6 - i) * DAY)
+  }
+  const storage = memoryStorage()
+  writeHeat('k', map, storage)
+  const heat = readHeat('k', storage, now)
+  assert.ok(
+    heatScore(heat, 'B') > heatScore(heat, 'A'),
+    '近期使用应反超累计次数优势：B 热度 ' + heatScore(heat, 'B') + ' ≤ A 热度 ' + heatScore(heat, 'A')
+  )
+  assert.equal(rankByHeat(heat)[0].key, 'B')
+})
+
+test('heat below the active threshold does not count as meaningful usage', () => {
+  const map = {}
+  recordHeat(map, 'x', 0)
+  recordHeat(map, 'x', 0)
+  assert.equal(maxHeat(map), 2)
+  assert.ok(maxHeat(map) < MIN_ACTIVE_SCORE)
+  recordHeat(map, 'x', 0)
+  assert.ok(maxHeat(map) >= MIN_ACTIVE_SCORE)
+})
+
+test('rankByHeat orders descending and breaks ties by key', () => {
+  const map = {}
+  recordHeat(map, 'bing', 0)
+  recordHeat(map, 'bing', 0)
+  recordHeat(map, 'baidu', 0)
+  recordHeat(map, 'google', 0)
+  recordHeat(map, 'google', 0)
+  assert.deepEqual(
+    rankByHeat(map).map((item) => item.key),
+    ['bing', 'google', 'baidu']
+  )
+})
+
+test('pickTopByHeat selects top-heat items and fills the rest in fallback order', () => {
+  const map = {}
+  recordHeat(map, 'https://hot-a.example/', 0)
+  recordHeat(map, 'https://hot-a.example/', 0)
+  recordHeat(map, 'https://hot-b.example/', 0)
+  const candidates = ['default-1', 'hot-b', 'default-2', 'hot-a', 'default-3'].map((name) => ({
+    name,
+    url: 'https://' + name + '.example/'
+  }))
+  const fallbackOrder = new Map(
+    ['default-1', 'default-2', 'default-3'].map((name, index) => [
+      'https://' + name + '.example/',
+      index
+    ])
+  )
+  const picked = pickTopByHeat(candidates, map, 4, (item) => item.url, fallbackOrder)
+  assert.deepEqual(
+    picked.map((item) => item.name),
+    ['hot-a', 'hot-b', 'default-1', 'default-2']
+  )
+})
+
+test('readHeat tolerates missing, malformed and unavailable storage', () => {
+  assert.deepEqual(readHeat('k', memoryStorage()), {})
+  const broken = memoryStorage()
+  broken.setItem('k', '{not-json')
+  assert.deepEqual(readHeat('k', broken), {})
+  const malformed = memoryStorage()
+  malformed.setItem(
+    'k',
+    JSON.stringify({ good: { score: 1, lastAt: 0 }, bad: 'nope', zero: { score: 0, lastAt: 0 } })
+  )
+  assert.deepEqual(Object.keys(readHeat('k', malformed, 0)), ['good'])
+  const now = Date.now()
+  const stale = memoryStorage()
+  stale.setItem('k', JSON.stringify({ old: { score: 5, lastAt: now - 30 * HEAT_HALF_LIFE_MS } }))
+  assert.deepEqual(readHeat('k', stale, now), {})
+  assert.doesNotThrow(() =>
+    writeHeat('k', {}, { getItem: () => null, setItem: () => { throw new Error('full') } })
+  )
+  assert.deepEqual(readHeat('k', { getItem: () => { throw new Error('no storage') } }), {})
 })

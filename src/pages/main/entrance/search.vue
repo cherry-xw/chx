@@ -3,13 +3,20 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { Close, Search } from '@element-plus/icons-vue'
 import { ElOption, ElOptionGroup, ElSelect } from 'element-plus'
 import { buildSearchURL, searchEngines } from '@/data/search-engines'
+import { maxHeat, MIN_ACTIVE_SCORE, rankByHeat, readHeat, recordHeat, writeHeat } from '@/utils/usage-heat'
 
 defineOptions({ name: 'SearchView' })
 const keyword = defineModel<string>({ default: '' })
 const input = ref<HTMLInputElement>()
 const groups = ['综合搜索', '视频平台', '开发工具'] as const
 const storageKey = 'chery-search-engine'
+const engineHeatKey = 'chery-search-engine-heat'
 function readEngine() {
+  const heat = readHeat(engineHeatKey)
+  if (maxHeat(heat) >= MIN_ACTIVE_SCORE) {
+    const top = rankByHeat(heat)[0]?.key
+    if (top && searchEngines.some((engine) => engine.id === top)) return top
+  }
   try {
     const saved = localStorage.getItem(storageKey)
     if (searchEngines.some((engine) => engine.id === saved)) return saved as string
@@ -30,7 +37,9 @@ function saveEngine() {
 }
 function search() {
   const url = buildSearchURL(engineId.value, keyword.value)
-  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+  if (!url) return
+  writeHeat(engineHeatKey, recordHeat(readHeat(engineHeatKey), engineId.value))
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 function onEnter(event: KeyboardEvent) {
   if (event.isComposing || event.keyCode === 229) event.preventDefault()

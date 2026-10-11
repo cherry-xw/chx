@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onActivated, ref } from 'vue'
 import {
   ChatDotRound,
   Collection,
@@ -18,8 +18,9 @@ import {
   Close,
   Connection
 } from '@element-plus/icons-vue'
-import { directory, featuredSites } from '@/data/directory'
+import { directory, featuredSites, type DirectorySite } from '@/data/directory'
 import SiteCard from './SiteCard.vue'
+import { maxHeat, MIN_ACTIVE_SCORE, pickTopByHeat, readHeat, recordHeat, writeHeat } from '@/utils/usage-heat'
 
 defineOptions({ name: 'EntranceView' })
 const selectedCategory = ref('all')
@@ -76,6 +77,26 @@ const categoryIcons = {
   game: Mouse,
   directory: Compass
 }
+
+// 常用入口：按本地使用热度（时间衰减）跨分类取 Top N；热度不足时回退到静态精选。
+const SITE_HEAT_KEY = 'chery-usage-sites'
+const featuredCount = featuredSites.length
+const allSites = directory.flatMap((category) => category.sites)
+function computeFeaturedSites(): DirectorySite[] {
+  const heat = readHeat(SITE_HEAT_KEY)
+  if (maxHeat(heat) < MIN_ACTIVE_SCORE) return featuredSites
+  const defaultOrder = new Map(featuredSites.map((site, index) => [site.url, index]))
+  return pickTopByHeat(allSites, heat, featuredCount, (site) => site.url, defaultOrder)
+}
+const personalizedFeatured = ref<DirectorySite[]>(computeFeaturedSites())
+// 页面被 KeepAlive 缓存，切回页签时按最新热度刷新；交互过程中不即时跳动。
+onActivated(() => {
+  personalizedFeatured.value = computeFeaturedSites()
+})
+function recordVisit(url: string) {
+  writeHeat(SITE_HEAT_KEY, recordHeat(readHeat(SITE_HEAT_KEY), url))
+}
+
 </script>
 
 <template>
@@ -120,7 +141,13 @@ const categoryIcons = {
           <span>熟悉的地方，随时出发</span>
         </div>
         <div class="featured-grid">
-          <SiteCard v-for="site in featuredSites" :key="site.url" :site="site" featured />
+          <SiteCard
+            v-for="site in personalizedFeatured"
+            :key="site.url"
+            :site="site"
+            featured
+            @click="recordVisit(site.url)"
+          />
         </div>
       </section>
     </div>
@@ -189,7 +216,12 @@ const categoryIcons = {
             <span class="category-count">{{ String(category.sites.length).padStart(2, '0') }}</span>
           </div>
           <div class="site-grid">
-            <SiteCard v-for="site in category.sites" :key="site.url" :site="site" />
+            <SiteCard
+              v-for="site in category.sites"
+              :key="site.url"
+              :site="site"
+              @click="recordVisit(site.url)"
+            />
           </div>
         </section>
       </div>
