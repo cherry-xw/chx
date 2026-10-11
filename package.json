@@ -10,8 +10,6 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "test:entrance": "node --test tests/entrance.test.mjs",
-    "plan:lint": "node docs/standards/documentation/tools/lint.mjs --plan-dir=docs/plan",
-    "plan:viewer": "node docs/standards/documentation/tools/plan-viewer.mjs --plan-dir=docs/plan",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },
