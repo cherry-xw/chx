@@ -29,7 +29,7 @@ pnpm test          # 前端测试
 
 ```
 chx/
-├── AGENTS.md / CLAUDE.md / docs/   # 规范与文档（monorepo 分支）
+├── AGENTS.md / docs/               # 规范与文档（monorepo 分支）
 ├── scripts/setup.mjs               # 一键初始化脚本
 ├── workspace/                      # git 忽略；子项目 worktree
 │   ├── frontend/                   # frontend 分支（前端代码）

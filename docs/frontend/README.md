@@ -6,9 +6,10 @@
 
 | 修改意图 | 代码入口与关键符号 | 验证入口 |
 | --- | --- | --- |
-| 调整首页空间利用率、分类密度 | [首页](../../src/pages/main/entrance/index.vue)：`.entrance-overview`、`.category-grid`、`.site-grid` | `npm run build`；宽屏与侧栏切换人工检查 |
-| 调整工作台分栏、报文详情位置 | [工作台样式](../../src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../src/pages/main/mqtt/MessageMonitor.vue) | `npm run build`；连接区、主题列表、消息详情人工检查 |
-| 调整应用可用内容区 | [应用容器](../../src/components/layer/container.vue)：`.main-column`；[标签容器](../../src/components/layer/TabManage.vue)：`.fill-content` | 展开/收起侧栏，检查横向溢出与键盘顺序 |
+| 调整首页空间利用率、分类密度 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.entrance-overview`、`.category-grid`、`.site-grid` | `npm run build`；宽屏与侧栏切换人工检查 |
+| 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:entrance`；使用一段时间后刷新或切回页签人工检查排序 |
+| 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build`；连接区、主题列表、消息详情人工检查 |
+| 调整应用可用内容区 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.main-column`；[标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`.fill-content` | 展开/收起侧栏，检查横向溢出与键盘顺序 |
 
 ## 布局边界
 
@@ -24,4 +25,4 @@
 
 自动检查入口遵循 [项目配置](../../AGENTS.md)。页面交互、深浅主题和最终视觉验收边界也由该配置定义。人工检查至少覆盖 390、1440、1920、2560、3440 像素视口及侧栏两种状态，确认：两侧仅有页边距、列数变化合理、筛选后少量卡片不被拉成超宽按钮、详情可滚动、页面无横向溢出。
 
-独立专题：无；首页和工作台的业务说明仍由 [项目开发指南](../../CLAUDE.md) 维护。
+独立专题：无；首页和工作台的业务说明以 [项目配置](../../AGENTS.md) 的领域路由为准。
