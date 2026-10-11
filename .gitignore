@@ -1,3 +1,6 @@
+# Monorepo workspace (子项目由独立分支管理,通过 worktree 挂载)
+workspace/
+
 # Logs
 logs
 *.log

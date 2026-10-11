@@ -1,0 +1,10 @@
+# 文档导航
+
+项目配置、执行规则和验证边界以 [AGENTS.md](../AGENTS.md) 为准。
+
+| 修改意图 | 领域入口 |
+| --- | --- |
+| 调整首页与 MQTT 工作台的布局、宽屏适配 | [页面布局](frontend/README.md) |
+| 维护文档结构与内容 | [文档规范](standards/documentation/structure.md) |
+
+其他业务领域尚未建立模块文档，从 [项目开发指南](../CLAUDE.md) 的核心功能模块定位。`superpowers/` 是历史设计资料，不作为现行布局规则来源。
