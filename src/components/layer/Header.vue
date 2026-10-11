@@ -1,162 +1,187 @@
-<!-- 管理面包屑和用户设置 -->
-<script lang="ts">
-export default { name: 'HeaderView' }
-import { useNavStore, type NavTreeSingleNode } from '@/stores/nav'
-import { nanoid } from 'nanoid'
-import { onMounted } from 'vue'
-import { watch } from 'vue'
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Sunny, Moon } from '@element-plus/icons-vue'
-import { useModeStore } from '@/stores/counter'
-// import { setToken } from '@/api/tokenManager'
-import serve from '@/api'
-import { ElMessage } from 'element-plus'
-function getPath(data: NavTreeSingleNode): {
-  key: string
-  label: string
-}[] {
-  if (data.parent) {
-    return [
-      ...getPath(data.parent),
-      {
-        key: nanoid(),
-        label: data.label
-      }
-    ]
-  }
-  return [
-    {
-      key: nanoid(),
-      label: data.label
-    }
-  ]
-}
-</script>
-
 <script setup lang="ts">
-import { useUserInfoStore } from '@/stores/counter'
-// ---------------------------- prop --------------------------------
-// ---------------------------- state -------------------------------
+import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
+import { Compass, Monitor, Moon, Sunny, User } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useModeStore, useUserInfoStore, type ThemePreference } from '@/stores/counter'
+import { useNavStore } from '@/stores/nav'
+import HeaderSearch from '@/pages/main/entrance/search.vue'
+import serve from '@/api'
+
+defineOptions({ name: 'HeaderView' })
 const route = useRoute()
 const router = useRouter()
-// ---------------------------- data --------------------------------
-const { userInfo, updateUserInfo } = useUserInfoStore()
+const theme = useModeStore()
+const userStore = useUserInfoStore()
+const { userInfo } = storeToRefs(userStore)
 const { name2Nav } = useNavStore()
-const list = ref<
-  {
-    key: string
-    label: string
-  }[]
->([])
-const styleMode = ref(true)
-const { switchMode } = useModeStore()
-// --------------------------- methods ------------------------------
-async function loginout() {
-  await serve('/logout').sync
-  // setToken('')
-  updateUserInfo()
-  router.push(`/login?from=${route.path}`)
-  ElMessage.success('登出成功')
+const pageName = computed(() => name2Nav[String(route.name)]?.label ?? '探索首页')
+const searchKeyword = ref('')
+const themeOptions: { value: ThemePreference; label: string; icon: typeof Sunny }[] = [
+  { value: 'light', label: '浅色模式', icon: Sunny },
+  { value: 'dark', label: '深色模式', icon: Moon },
+  { value: 'system', label: '跟随系统', icon: Monitor }
+]
+async function logout() {
+  try {
+    await serve('/logout').sync
+    userStore.updateUserInfo()
+    router.push({ path: '/login', query: { from: route.path } })
+    ElMessage.success('登出成功')
+  } catch {
+    ElMessage.error('登出失败，请稍后重试')
+  }
 }
-// ---------------------------- watch -------------------------------
-watch(
-  () => route.path,
-  () => {
-    if (typeof route.name === 'string') {
-      list.value = getPath(name2Nav[route.name])
-    }
-  }
-)
-watch(
-  styleMode,
-  (md) => {
-    switchMode(md ? 'dark' : 'light')
-    document.documentElement.setAttribute('class', md ? 'dark' : 'light')
-  },
-  { immediate: true }
-)
-// -------------------------- computed ------------------------------
-// ---------------------------- life --------------------------------
-onMounted(() => {
-  if (typeof route.name === 'string') {
-    // console.log(name2Nav[route.name], route.name, name2Nav)
-    list.value = getPath(name2Nav[route.name])
-  }
-})
 </script>
 
 <template>
-  <div class="ttl-view-container flex flex-row items-center">
-    <!-- <el-breadcrumb class="flex-1" separator="/">
-      <el-breadcrumb-item
-        v-for="(item, index) in list"
-        :key="item.key"
-        :class="{ 'last-item': index === list.length - 1 }"
-        >{{ item.label }}</el-breadcrumb-item
+  <header class="page-header">
+    <div class="page-location">
+      <Compass /><span>{{ pageName }}</span>
+    </div>
+    <HeaderSearch v-model="searchKeyword" class="toolbar-search" />
+    <div class="theme-picker" role="group" aria-label="外观模式">
+      <button
+        v-for="option in themeOptions"
+        :key="option.value"
+        type="button"
+        :class="{ active: theme.preference === option.value }"
+        :aria-label="option.label"
+        :aria-pressed="theme.preference === option.value"
+        :title="option.label"
+        @click="theme.setPreference(option.value)"
       >
-    </el-breadcrumb> -->
-    <div class="flex-1"></div>
-    <el-switch
-      v-model="styleMode"
-      inline-prompt
-      :active-action-icon="Sunny"
-      :inactive-action-icon="Moon"
-      style="--el-switch-on-color: #444; --el-switch-off-color: #ccc"
-    />
-    <el-popover
-      v-if="userInfo"
-      popper-class="header-popover"
-      placement="bottom-start"
-      :width="100"
-      trigger="hover"
-    >
-      <div class="logout-button" @click="loginout">登出</div>
+        <component :is="option.icon" />
+      </button>
+    </div>
+    <el-popover v-if="userInfo?.name" placement="bottom-end" :width="150" trigger="click">
+      <el-button text class="logout-button" @click="logout">登出</el-button>
       <template #reference>
-        <div class="flex flex-row items-center">
-          <div class="user-avatar"></div>
-          <div class="user-info">{{ userInfo?.name ?? '用户名' }}</div>
-        </div>
+        <button class="user-button" type="button" :aria-label="userInfo.name + '，打开用户菜单'">
+          <User /><span>{{ userInfo.name }}</span>
+        </button>
       </template>
     </el-popover>
-  </div>
+  </header>
 </template>
 
-<style lang="less" scoped>
-.ttl-view-container {
-  height: 64px;
-  padding: 0 16px;
-  border-bottom: 1px dashed var(--el-border-color);
-
-  .last-item {
-    :deep(.el-breadcrumb__inner) {
-      border: none;
-    }
-  }
-  .user-avatar {
-    width: 32px;
-    height: 32px;
-    margin: 0 8px;
-    background: url(./icon/avatar.svg) center / 100% no-repeat;
-    border-radius: 50%;
-  }
-  .user-info {
-    color: var(--el-text-color-primary);
-    font-size: 14px;
-    margin-right: 12px;
-    cursor: pointer;
+<style scoped>
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 72px;
+  flex-shrink: 0;
+  padding: 0 32px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.page-location {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-right: auto;
+  white-space: nowrap;
+}
+.page-location svg {
+  width: 17px;
+  height: 17px;
+  color: var(--color-accent);
+}
+.toolbar-search {
+  flex: 1;
+  max-width: 520px;
+}
+.theme-picker {
+  display: flex;
+  flex-shrink: 0;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-background);
+}
+.theme-picker button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.theme-picker svg {
+  width: 15px;
+  height: 15px;
+}
+.theme-picker button.active {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: 0 1px 4px #0000000d;
+}
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 5px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+}
+.user-button svg {
+  width: 19px;
+  height: 19px;
+}
+.user-button span {
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logout-button {
+  width: 100%;
+}
+@media (hover: hover) and (pointer: fine) {
+  .theme-picker button:hover {
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
   }
 }
-</style>
-
-<style lang="less">
-.header-popover {
-  min-width: 100px !important;
-  .logout-button {
-    color: var(--el-text-color-primary);
-    font-size: 14px;
-    text-align: center;
-    cursor: pointer;
+@media (max-width: 1050px) {
+  .page-header {
+    padding: 0 24px;
+    gap: 14px;
+  }
+  .page-location {
+    display: none;
+  }
+  .toolbar-search {
+    max-width: none;
+  }
+}
+@media (max-width: 600px) {
+  .page-header {
+    padding: 0 12px;
+    height: 64px;
+    gap: 8px;
+  }
+  .theme-picker {
+    padding: 2px;
+    gap: 0;
+  }
+  .theme-picker button {
+    width: 26px;
+    height: 30px;
+  }
+  .user-button span {
+    display: none;
   }
 }
 </style>

@@ -72,7 +72,9 @@ onMounted(() => {
 
 <template>
   <!-- https://segmentfault.com/a/1190000039916159 修改ui -->
-  <div class="base-logo px-[12px]">chery</div>
+  <RouterLink class="base-logo" :to="{ name: 'entrance' }" aria-label="chery 探索首页"
+    ><span class="brand-symbol">c</span>chery<span class="brand-dot">.</span></RouterLink
+  >
   <el-tree
     class="flex-1 scrollbar-hover-toggle"
     :data="data"
@@ -119,16 +121,45 @@ onMounted(() => {
   }
 }
 .base-logo {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  flex-shrink: 0;
+  padding: 0 21px;
+  text-decoration: none;
   cursor: pointer;
-  line-height: 60px;
-  font-size: 16px;
-  position: relative;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -1px;
   color: var(--el-text-color-primary);
-  text-shadow: 0 0 6px #12c2e963;
-  transition: all 0.3s ease;
-  &:hover {
-    text-shadow: 0 0 6px #c471ed;
-  }
+}
+.brand-symbol {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 9px;
+  border-radius: 9px;
+  background: var(--color-accent);
+  color: var(--color-surface);
+  font-size: 24px;
+  font-weight: 700;
+}
+.brand-dot {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+:deep(.el-tree) {
+  padding: 16px 10px;
+  --el-tree-node-hover-bg-color: var(--color-background-soft);
+}
+:deep(.el-tree-node__content) {
+  height: 40px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background: var(--color-accent-soft);
 }
 .lable-active {
   color: var(--el-color-primary);

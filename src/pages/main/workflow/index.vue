@@ -104,12 +104,6 @@ import { useWorkflowStore } from '@/stores/workflow'
 import { useNodeConfig } from '@/composables/useNodeConfig'
 import { useVueFlowHistory } from '@/composables/useVueFlowHistory'
 
-// 引入节点配置组件
-import StartNodeConfig from './components/StartNodeConfig.vue'
-import TaskNodeConfig from './components/TaskNodeConfig.vue'
-import DecisionNodeConfig from './components/DecisionNodeConfig.vue'
-import EndNodeConfig from './components/EndNodeConfig.vue'
-
 defineOptions({ name: 'WorkflowEditor' })
 
 interface NodeType {
@@ -131,7 +125,7 @@ const nodeTypes: NodeType[] = [
 const flowInstance = useVueFlow()
 
 // 解构实例属性
-const { nodes, edges, addNodes, removeNodes, removeEdges, fitView, getNodes, getEdges } = flowInstance
+const { nodes, edges, addNodes, removeNodes, removeEdges } = flowInstance
 
 // 工作流状态管理
 const workflowStore = useWorkflowStore()

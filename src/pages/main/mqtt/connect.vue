@@ -1,248 +1,350 @@
 <script setup lang="ts">
-import { Close } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { onMounted, ref, watch } from 'vue'
-import mqtt from 'mqtt'
-import AnimBox from '@/components/AnimBox.vue'
-import { tServe } from '@/api'
-import { chain } from 'lodash'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Connection, Refresh, ArrowDown, Lock, Cpu } from '@element-plus/icons-vue'
+import { requestDeviceList, type DeviceListResponse } from '@/api/devices'
 import { decode, encode } from '@/utils/common'
-type Config = {
-  protocol: string
-  url: string
-  clientId: string
-  username: string
-  friendName: string
-  password: string
+import type { ConnectionConfig, ConnectionState } from './useMqttSession'
+
+defineOptions({ name: 'MqttConnectionPanel' })
+
+interface Device extends ConnectionConfig {
   intro: string
   type: string
 }
-// --------------------------- config -------------------------------
-defineOptions({ name: 'ConnectMQTTView' })
-const emit = defineEmits<{
-  done: [client: mqtt.MqttClient | void]
-}>()
-// ---------------------------- data --------------------------------
-const config = ref<Config>({
+const props = defineProps<{ state: ConnectionState }>()
+const emit = defineEmits<{ connect: [config: ConnectionConfig]; disconnect: [] }>()
+const devices = ref<Device[]>([])
+const selected = ref('')
+const loading = ref(false)
+const loadError = ref('')
+const formError = ref('')
+const credentialsOpen = ref(true)
+const form = ref<ConnectionConfig>({
   protocol: 'wss://',
   url: '',
   clientId: '',
   username: '',
-  friendName: '',
   password: '',
-  intro: '',
-  type: ''
+  friendName: ''
 })
-const loading = ref(false)
-const client = ref<mqtt.MqttClient>()
-const state = ref(false)
-const list = ref<Config[]>([])
-const activeKey = ref('')
-// -------------------------- computed ------------------------------
-// --------------------------- methods ------------------------------
-async function handleConnect() {
-  if (!activeKey.value) {
-    ElMessage.error('请选择设备后再连接')
-    return
-  }
-  if (
-    !config.value.url ||
-    !config.value.clientId ||
-    !config.value.username ||
-    !config.value.password
-  ) {
-    ElMessage.error('请填写完整连接信息')
-    return
-  }
+const locked = computed(() => ['connecting', 'connected', 'reconnecting'].includes(props.state))
+const selectedDevice = computed(() =>
+  devices.value.find((item) => item.clientId === selected.value)
+)
+const usableCount = computed(() => devices.value.filter((item) => item.type !== 'device').length)
+const formElement = ref<HTMLFormElement>()
+let cancelDeviceRequest: (() => void) | undefined
+let feedbackMotion: Animation | undefined
+const keyboardInteraction = ref(false)
+
+async function loadDevices() {
+  if (loading.value || locked.value) return
+  loading.value = true
+  loadError.value = ''
+  const request = requestDeviceList()
+  let timer: ReturnType<typeof setTimeout> | undefined
   try {
-    loading.value = true
-    client.value = await mqtt.connectAsync(`${config.value.protocol}${config.value.url}`, {
-      clientId: 'chx_' + config.value.clientId,
-      username: config.value.username,
-      password: config.value.password,
-      clean: true,
-      connectTimeout: 8000,
-      reconnectPeriod: 2000,
-      protocolVersion: 4,
-      socksTimeout: 10000
-    })
-    const str = chain(list.value)
-      .map((el) => {
-        return {
-          [el.clientId]: {
-            protocol: el.protocol,
-            url: el.url,
-            friendName: el.friendName,
-            password: encode(el.password)
-          }
+    const response = await Promise.race([
+      request.sync,
+      new Promise<DeviceListResponse>((_, reject) => {
+        cancelDeviceRequest = () => {
+          request.abort()
+          reject(new Error('设备列表请求已取消'))
         }
+        timer = setTimeout(cancelDeviceRequest, 10000)
       })
-      .thru((obj) => Object.assign({}, ...obj))
-      .thru(JSON.stringify)
-      .value()
-    localStorage.setItem('mqttDeviceList', str)
-    ElMessage.success('连接成功')
-  } catch (error) {
-    ElMessage.error('连接失败')
-    console.error(error)
-  }
-  loading.value = false
-}
-async function handleDisconnect() {
-  await client.value?.endAsync()
-  client.value = undefined
-}
-// ---------------------------- watch -------------------------------
-watch(
-  activeKey,
-  (newVal) => {
-    const item = list.value.find((i) => i.clientId === newVal)
-    if (item) {
-      console.log(item)
-
-      Object.assign(config.value, item)
+    ])
+    if (!Array.isArray(response?.data)) throw new Error('未获取到设备列表')
+    let saved: Record<string, Partial<ConnectionConfig>> = {}
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem('mqttDeviceList') || '{}')
+      if (value && typeof value === 'object' && !Array.isArray(value)) saved = value as typeof saved
+    } catch {
+      /* Device discovery remains usable without local storage. */
     }
-  },
-  { immediate: true }
-)
-watch(
-  config,
-  (cfg) => {
-    const item = list.value.find((i) => i.clientId === cfg.clientId)
-    console.log(cfg, item, 'xxx')
-    if (item) {
-      item.protocol = cfg.protocol
-      item.url = cfg.url
-      item.friendName = cfg.friendName
-      item.password = cfg.password
-    }
-  },
-  { deep: true }
-)
-watch(client, (c) => {
-  emit('done', c)
-})
-// ---------------------------- life --------------------------------
-onMounted(async () => {
-  try {
-    const res = await tServe<{
-      data: {
-        _id: string
-        type: string
-        intro: string
-        name: string
-      }[]
-    }>('/device/list', 'GET').sync
-    const storedStr = localStorage.getItem('mqttDeviceList')
-    let storedObj: Record<string, Config> = {}
-    if (storedStr) {
-      try {
-        storedObj = JSON.parse(storedStr)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    list.value = chain(res.data)
+    devices.value = response.data
       .map((item) => {
-        const obj = storedObj[item._id] || {}
-        console.log(obj)
+        const cached = saved[item._id] || {}
+        let password = ''
+        try {
+          if (typeof cached.password === 'string') password = decode(cached.password)
+        } catch {
+          /* Re-enter an invalid saved password. */
+        }
         return {
-          protocol: obj.protocol || 'wss://',
-          url: obj.url,
           clientId: item._id,
           username: item.name,
-          friendName: obj.friendName || item.name,
-          password: obj.password ? decode(obj.password) : '',
           intro: item.intro,
-          type: item.type
+          type: item.type,
+          protocol: cached.protocol === 'ws://' ? 'ws://' : 'wss://',
+          url: typeof cached.url === 'string' ? cached.url : '',
+          friendName: typeof cached.friendName === 'string' ? cached.friendName : item.name,
+          password
         }
       })
-      .sortBy('type')
-      .value()
-    console.log(list.value)
-  } catch (error) {
-    console.error(error)
+      .sort((a, b) => a.type.localeCompare(b.type))
+    if (!devices.value.some((item) => item.clientId === selected.value)) selected.value = ''
+  } catch {
+    loadError.value = '设备列表加载失败，请确认登录状态后重试。'
+  } finally {
+    clearTimeout(timer)
+    cancelDeviceRequest = undefined
+    loading.value = false
   }
+}
+watch(selected, (_, previous) => {
+  const previousDevice = devices.value.find((item) => item.clientId === previous)
+  if (previousDevice) Object.assign(previousDevice, form.value)
+  if (selectedDevice.value) form.value = { ...selectedDevice.value }
+  formError.value = ''
 })
-// --------------------------- other --------------------------------
+watch(
+  () => props.state,
+  (value, previous) => {
+    if (value !== 'connected' || previous === 'connected') return
+    const device = selectedDevice.value
+    if (device) Object.assign(device, form.value)
+    try {
+      localStorage.setItem(
+        'mqttDeviceList',
+        JSON.stringify(
+          Object.fromEntries(
+            devices.value.map((item) => [
+              item.clientId,
+              {
+                protocol: item.protocol,
+                url: item.url,
+                friendName: item.friendName,
+                password: encode(item.password)
+              }
+            ])
+          )
+        )
+      )
+    } catch {
+      formError.value = '已连接，但浏览器无法保存本次配置。'
+    }
+  }
+)
+function submit() {
+  formError.value = ''
+  if (!selected.value) formError.value = '请先选择一个客户端设备'
+  else if (!form.value.url.trim() || !form.value.password)
+    formError.value = '请填写服务地址和访问密码'
+  else {
+    try {
+      const address = new URL(`${form.value.protocol}${form.value.url.trim()}`)
+      if (
+        !address.hostname ||
+        address.username ||
+        address.password ||
+        address.hash ||
+        form.value.url.includes('://')
+      )
+        throw new Error()
+      if (window.location.protocol === 'https:' && address.protocol === 'ws:') {
+        formError.value = '当前页面使用 HTTPS，请选择 WSS 安全连接'
+      }
+    } catch {
+      formError.value = '请输入有效地址，例如 broker.example.com:8084/mqtt'
+    }
+  }
+  if (formError.value) {
+    if (
+      !keyboardInteraction.value &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      feedbackMotion?.cancel()
+      feedbackMotion = formElement.value?.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(3px)' },
+          { transform: 'translateX(0)' }
+        ],
+        { duration: 200, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
+      )
+    }
+    return
+  }
+  emit('connect', { ...form.value, url: form.value.url.trim() })
+}
+onMounted(loadDevices)
+onUnmounted(() => {
+  cancelDeviceRequest?.()
+  feedbackMotion?.cancel()
+})
 </script>
 
 <template>
-  <div class="connect-mqtt">
-    <div class="connected-info" @click="state = true">
-      当前连接：{{ client ? config.friendName : '未连接' }}
-    </div>
-    <AnimBox v-model="state" random class="anim-box">
-      <div class="ttl-row">
-        <span>设置</span>
-        <el-button size="small" class="close-btn" text :icon="Close" @click="state = false" />
+  <section class="mqtt-panel connection-panel" aria-labelledby="connection-title">
+    <header class="panel-heading">
+      <div class="heading-with-icon">
+        <span class="panel-icon"
+          ><el-icon><Connection /></el-icon
+        ></span>
+        <div>
+          <span class="eyebrow">CONNECTION</span>
+          <h2 id="connection-title">连接设备</h2>
+        </div>
       </div>
-      <div class="device-list">
-        <el-select v-model="activeKey" placeholder="选择设备" style="width: 240px">
+      <el-button
+        text
+        circle
+        :icon="Refresh"
+        :loading="loading"
+        :disabled="locked"
+        aria-label="刷新设备列表"
+        title="刷新设备列表"
+        @click="loadDevices"
+      />
+    </header>
+    <form
+      ref="formElement"
+      class="connection-form"
+      @submit.prevent="submit"
+      @keydown.capture="keyboardInteraction = true"
+      @pointerdown.capture="keyboardInteraction = false"
+    >
+      <div class="field">
+        <label for="mqtt-device"
+          >客户端设备 <span>{{ usableCount }} 个可用</span></label
+        >
+        <el-select
+          id="mqtt-device"
+          popper-class="mqtt-device-menu"
+          v-model="selected"
+          filterable
+          placeholder="选择一个客户端"
+          :loading="loading"
+          :disabled="locked || loading"
+          aria-describedby="device-hint"
+        >
           <el-option
-            v-for="item in list"
-            :key="item.clientId"
-            :value="item.clientId"
-            :label="item.friendName"
-            :disabled="item.type === 'device'"
+            v-for="device in devices"
+            :key="device.clientId"
+            :label="device.friendName"
+            :value="device.clientId"
+            :disabled="device.type === 'device'"
           >
-            <el-tooltip :content="`${item.username} - ${item.intro}`" placement="right">
-              <span>{{ item.friendName }}</span>
-            </el-tooltip>
+            <span>{{ device.friendName }}</span
+            ><span class="option-note">{{
+              device.type === 'device' ? '设备端 · 不可选' : '客户端'
+            }}</span>
           </el-option>
         </el-select>
+        <p v-if="loadError" id="device-hint" class="field-error" role="alert">
+          {{ loadError }}
+          <button class="text-action" type="button" @click="loadDevices">重试</button>
+        </p>
+        <p v-else-if="!loading && !usableCount" id="device-hint" class="field-hint">
+          暂无可用客户端，请先在设备管理中配置。
+        </p>
+        <p v-else id="device-hint" class="field-hint">
+          {{ selectedDevice?.intro || '选择已有设备，载入它的连接配置。' }}
+        </p>
       </div>
-      <el-input v-model="config.friendName" placeholder="友好名称" />
-      <el-input v-model="config.url" placeholder="url:port/path">
-        <template #prepend>
-          <el-select v-model="config.protocol" placeholder="Select" style="width: 90px">
-            <el-option label="ws://" value="ws://" />
-            <el-option label="wss://" value="wss://" />
-          </el-select>
-        </template>
-      </el-input>
-      <el-input v-model="config.clientId" placeholder="ClientId" disabled>
-        <template #prepend><div style="width: 50px; text-align: center">chx_</div></template>
-      </el-input>
-      <el-input v-model="config.username" placeholder="Username" disabled />
-      <el-input v-model="config.password" placeholder="Password" show-password />
-      <el-button type="primary" :loading="loading" v-if="!client" @click="handleConnect"
-        >连接</el-button
+      <div class="device-identity" :class="{ selected: !!selected }">
+        <el-icon><Cpu /></el-icon>
+        <div>
+          <strong>{{ form.friendName || '等待选择设备' }}</strong
+          ><span>{{ selected ? `chx_${form.clientId}` : '设备信息将在这里显示' }}</span>
+        </div>
+        <i class="mini-dot" :class="{ online: state === 'connected' }"></i>
+      </div>
+      <div class="field">
+        <label for="mqtt-name">显示名称</label
+        ><el-input
+          id="mqtt-name"
+          v-model="form.friendName"
+          placeholder="为连接起一个容易辨认的名字"
+          :disabled="!selected || locked"
+        />
+      </div>
+      <div class="field">
+        <label for="mqtt-address">服务地址 <span>WebSocket</span></label>
+        <div class="address-input">
+          <el-select v-model="form.protocol" :disabled="locked" aria-label="连接协议"
+            ><el-option label="wss://" value="wss://" /><el-option
+              label="ws://"
+              value="ws://" /></el-select
+          ><el-input
+            id="mqtt-address"
+            v-model="form.url"
+            placeholder="broker.example.com:8084/mqtt"
+            :disabled="!selected || locked"
+          />
+        </div>
+      </div>
+      <button
+        type="button"
+        class="credentials-toggle"
+        :aria-expanded="credentialsOpen"
+        aria-controls="mqtt-credentials"
+        @click="credentialsOpen = !credentialsOpen"
       >
-      <el-button type="danger" v-else @click="handleDisconnect">断开</el-button>
-    </AnimBox>
-  </div>
+        <span
+          ><el-icon><Lock /></el-icon>身份凭据</span
+        ><el-icon :class="{ expanded: credentialsOpen }"><ArrowDown /></el-icon>
+      </button>
+      <el-collapse-transition
+        ><div v-show="credentialsOpen" id="mqtt-credentials" class="credentials-fields">
+          <div class="field">
+            <label for="mqtt-client">Client ID</label
+            ><el-input
+              id="mqtt-client"
+              :model-value="selected ? `chx_${form.clientId}` : ''"
+              placeholder="由设备自动生成"
+              readonly
+            />
+          </div>
+          <div class="field">
+            <label for="mqtt-user">用户名</label
+            ><el-input
+              id="mqtt-user"
+              :model-value="form.username"
+              placeholder="由设备自动填入"
+              readonly
+              autocomplete="username"
+            />
+          </div>
+          <div class="field">
+            <label for="mqtt-password">访问密码</label
+            ><el-input
+              id="mqtt-password"
+              v-model="form.password"
+              placeholder="输入设备访问密码"
+              type="password"
+              show-password
+              :disabled="!selected || locked"
+              autocomplete="current-password"
+            />
+          </div></div
+      ></el-collapse-transition>
+      <Transition name="mqtt-feedback"
+        ><p v-if="formError" class="field-error" role="alert">{{ formError }}</p></Transition
+      >
+      <el-button
+        v-if="!locked"
+        class="connect-action"
+        type="primary"
+        native-type="submit"
+        :icon="Connection"
+        :disabled="loading || !usableCount"
+        >建立连接 <span class="button-arrow">↗</span></el-button
+      >
+      <el-button
+        v-else
+        class="connect-action"
+        :type="state === 'connected' ? 'danger' : 'default'"
+        plain
+        @click="emit('disconnect')"
+        >{{ state === 'connected' ? '断开连接' : '取消连接' }}</el-button
+      >
+      <p class="connection-footnote">
+        <el-icon><Lock /></el-icon>{{ form.protocol === 'wss://' ? 'WSS 加密传输' : 'WS 明文传输'
+        }}<span>MQTT 3.1.1</span>
+      </p>
+    </form>
+  </section>
 </template>
-
-<style lang="less" scoped>
-.connect-mqtt {
-  position: relative;
-  .connected-info {
-    margin-bottom: 12px;
-    display: inline-block;
-    cursor: pointer;
-  }
-  .device-list {
-    display: flex;
-  }
-  .anim-box {
-    position: absolute;
-    z-index: 2;
-    width: 480px;
-    height: 332px;
-    display: flex;
-    gap: 8px;
-    flex-direction: column;
-    background: var(--el-color-info-light-7);
-    box-shadow: 0 0 8px var(--el-color-info-light-9);
-    border-radius: 6px;
-    padding: 8px 12px 20px;
-    .ttl-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-}
-</style>

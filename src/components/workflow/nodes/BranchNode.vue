@@ -41,7 +41,7 @@ interface Props {
   }
   conditions?: Array<string>
 }
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   conditions: () => ['Condition 1', 'Condition 2']
 })
 </script>

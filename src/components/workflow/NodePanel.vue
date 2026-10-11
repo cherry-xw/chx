@@ -46,7 +46,7 @@ interface Emits {
   (e: 'drag-start', event: DragEvent, node: NodeItem): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 const activeNames = ref([])
 

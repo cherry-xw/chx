@@ -13,6 +13,7 @@ type noKeyNav = {
   dir?: boolean // 是否为目录
   children?: noKeyNav[] // 节点子集
   blank?: boolean // 是否新标签页打开
+  hidden?: boolean // 隐藏导航入口，保留已打开页面使用的元信息
 }
 export type NavTreeSingleNode = Omit<noKeyNav, 'parent' | 'children'> & {
   key: string
@@ -22,15 +23,15 @@ export type NavTreeSingleNode = Omit<noKeyNav, 'parent' | 'children'> & {
 
 const navOrigin: noKeyNav[] = [
   {
-    label: 'chx',
+    label: '探索首页',
     name: 'entrance',
     icon: 'HomeFilled',
     focus: false
   },
   {
     label: 'IOT',
-    name: "iot",
-    icon: "Cpu",
+    name: 'iot',
+    icon: 'Cpu',
     dir: true,
     focus: false,
     children: [
@@ -67,6 +68,7 @@ const navOrigin: noKeyNav[] = [
   {
     label: 'AI',
     name: 'ai',
+    hidden: true,
     icon: 'MagicStick',
     dir: true,
     focus: false,
@@ -82,6 +84,7 @@ const navOrigin: noKeyNav[] = [
   {
     label: '练习',
     name: 'practice',
+    hidden: true,
     icon: 'EditPen',
     dir: true,
     focus: false,
@@ -161,9 +164,10 @@ const navOrigin: noKeyNav[] = [
   // }
 ]
 export const useNavStore = defineStore('nav', () => {
-  const nav = reactive(navOrigin)
+  const allNav = reactive(navOrigin)
+  const nav = allNav.filter((node) => !node.hidden)
   const name2Nav = reactive<Record<string, NavTreeSingleNode>>({})
-  recursion(nav as NavTreeSingleNode[], 'children', (node, parent) => {
+  recursion(allNav as NavTreeSingleNode[], 'children', (node, parent) => {
     node.key = nanoid()
     node.parent = parent
     name2Nav[node.name] = node

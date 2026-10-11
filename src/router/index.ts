@@ -6,6 +6,7 @@ import { useNavStore } from '@/stores/nav'
 import { npClose, npStart } from '@/components/layer/progress'
 import main from './main'
 import practice from './practice'
+import { ElMessage } from 'element-plus'
 
 export let router: Router
 function createRouterIns() {
@@ -46,7 +47,7 @@ function createRouterIns() {
       try {
         npStart()
       } catch (error) {
-        console.error(error);
+        console.error(error)
       }
     }
     if (typeof to.name === 'string') {
@@ -60,6 +61,11 @@ function createRouterIns() {
 
   router.afterEach(() => {
     npClose()
+  })
+  router.onError((error) => {
+    npClose()
+    console.error('页面加载失败', error)
+    ElMessage.error('页面加载失败，请刷新页面后重试')
   })
   return router
 }

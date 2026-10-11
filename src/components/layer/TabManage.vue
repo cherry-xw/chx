@@ -199,7 +199,8 @@ onMounted(() => {
 <style lang="less" scoped>
 .tab-manage-container {
   padding: 8px 0 0;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   .content {
     position: relative;
     overflow: hidden;
@@ -210,7 +211,7 @@ onMounted(() => {
     }
     .fill-content {
       position: absolute;
-      overflow-y: overlay;
+      overflow: auto;
       inset: 0;
       .h12 {
         height: 12px;
@@ -219,9 +220,10 @@ onMounted(() => {
   }
   .tab-button-list-wrapper {
     height: 32px;
+    flex-shrink: 0;
     display: flex;
     padding-left: 12px;
-    border-bottom: 1px dashed var(--el-border-color);
+    border-bottom: 1px solid var(--el-border-color);
   }
 }
 </style>

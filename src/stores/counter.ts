@@ -1,16 +1,56 @@
-import { ref } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
+export type ThemePreference = 'light' | 'dark' | 'system'
+
 export const useModeStore = defineStore('counter', () => {
-  const mode = ref<'light' | 'dark'>('light')
-  function switchMode(md?: 'light' | 'dark') {
-    if (md) {
-      mode.value = md
-    } else {
-      mode.value = mode.value === 'light' ? 'dark' : 'light'
+  const storageKey = 'chery-theme'
+  const systemQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const systemDark = ref(systemQuery.matches)
+  function readPreference(): ThemePreference {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      return saved === 'light' || saved === 'dark' ? saved : 'system'
+    } catch {
+      return 'system'
     }
   }
-  return { mode, switchMode }
+  const preference = ref<ThemePreference>(readPreference())
+  const mode = computed<'light' | 'dark'>(() =>
+    preference.value === 'system' ? (systemDark.value ? 'dark' : 'light') : preference.value
+  )
+  function setPreference(value: ThemePreference) {
+    preference.value = value
+    try {
+      localStorage.setItem(storageKey, value)
+    } catch {
+      // Theme changes remain usable when browser storage is unavailable.
+    }
+  }
+  function switchMode(md?: 'light' | 'dark') {
+    setPreference(md ?? (mode.value === 'light' ? 'dark' : 'light'))
+  }
+  function syncSystem(event: MediaQueryListEvent) {
+    systemDark.value = event.matches
+  }
+  function syncStorage(event: StorageEvent) {
+    if (event.key === storageKey || event.key === null) preference.value = readPreference()
+  }
+  systemQuery.addEventListener('change', syncSystem)
+  window.addEventListener('storage', syncStorage)
+  onScopeDispose(() => {
+    systemQuery.removeEventListener('change', syncSystem)
+    window.removeEventListener('storage', syncStorage)
+  })
+  watch(
+    mode,
+    (value) => {
+      document.documentElement.classList.toggle('dark', value === 'dark')
+      document.documentElement.style.colorScheme = value
+    },
+    { immediate: true, flush: 'sync' }
+  )
+  return { mode, preference, setPreference, switchMode }
 })
 
 export const useUserInfoStore = defineStore('userInfo', () => {

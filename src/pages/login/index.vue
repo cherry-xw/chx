@@ -43,7 +43,7 @@ async function toLogin() {
       console.log('from', from)
       router.push({ path: from })
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('登录失败')
   }
   loading.value = false

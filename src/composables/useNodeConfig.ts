@@ -1,5 +1,3 @@
-import { computed } from 'vue'
-
 // 定义节点配置组件映射
 const nodeConfigComponents: Record<string, any> = {
   trigger: () => import('@/pages/main/workflow/components/StartNodeConfig.vue'),

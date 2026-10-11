@@ -5,28 +5,31 @@ import { useNavStore } from '@/stores/nav'
 const { nav } = useNavStore()
 
 defineOptions({ name: 'BasicLayer' })
-const collapseState = ref(false)
+const collapseState = ref(window.matchMedia('(max-width: 760px)').matches)
 </script>
 
 <template>
-  <div id="layer" class="flex absolute inset-0 min-w-[1280px]">
+  <div id="layer" class="flex absolute inset-0">
     <div
-      class="nav flex flex-col h-full overflow-hidden border-r border-dashed border-[var(--el-border-color)]"
+      id="main-navigation"
+      class="nav flex flex-col h-full overflow-hidden"
       :class="{ collapse: collapseState }"
     >
       <RouterView name="nav" :data="nav" :collapse="collapseState"></RouterView>
     </div>
-    <div
+    <button
+      type="button"
       class="collpase-btn"
       :class="{ rotate: collapseState }"
+      :aria-label="collapseState ? '展开导航' : '收起导航'"
+      :aria-expanded="!collapseState"
+      aria-controls="main-navigation"
       @click="collapseState = !collapseState"
     >
       <el-icon><CaretLeft /></el-icon>
-    </div>
-    <div class="flex-1 flex flex-col">
-      <el-collapse-transition>
-        <RouterView v-show="!collapseState" name="header"></RouterView>
-      </el-collapse-transition>
+    </button>
+    <div class="main-column flex-1 flex flex-col">
+      <RouterView name="header"></RouterView>
       <RouterView />
     </div>
   </div>
@@ -34,22 +37,46 @@ const collapseState = ref(false)
 
 <style lang="less" scoped>
 #layer {
+  overflow: hidden;
+  background: var(--color-background);
+  .main-column {
+    min-width: 0;
+    min-height: 0;
+  }
   .nav {
-    width: 160px;
-    transition: all 0.3s ease;
+    width: 176px;
+    flex-shrink: 0;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
     &.collapse {
       width: 0px;
+      border-right: 0;
+      visibility: hidden;
     }
   }
   .collpase-btn {
     position: absolute;
-    left: 5px;
-    bottom: 5px;
+    left: 12px;
+    bottom: 12px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
     cursor: pointer;
-    z-index: 10;
-    transition: all 0.3s ease;
+    z-index: 30;
     &.rotate {
       transform: rotate(180deg);
+    }
+  }
+  @media (max-width: 760px) {
+    .nav {
+      position: absolute;
+      z-index: 20;
+      box-shadow: 8px 0 24px #00000018;
     }
   }
 }

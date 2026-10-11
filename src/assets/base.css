@@ -1,34 +1,74 @@
-:root {
-  --vt-c-white-soft: #f5f7fa;
-  --vt-c-black-soft: #333;
-  --color-base-fill: var(--el-color-primary-light-9);
-  --color-scroll-background: rgba(192, 196, 204, 0.8);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-scroll-background-hover: #c0c4cc;
-  --color-tab-button-split: #d8d8d8;
+:root,
+:root.dark {
+  color-scheme: light;
+  --color-background: #f7f7f9;
+  --color-surface: #ffffff;
+  --color-background-soft: #f0f0f5;
+  --color-background-mute: #eaeaf0;
+  --color-text: #242430;
+  --color-text-secondary: #454553;
+  --color-text-muted: #4b4b59;
+  --color-heading: #20202d;
+  --color-border: #e5e5ed;
+  --color-border-hover: #c8bfdc;
+  --color-accent: #7254b7;
+  --color-accent-soft: #eee8f8;
+  --color-base-fill: var(--color-accent-soft);
+  --color-scroll-background: #c8c8d2;
+  --color-scroll-background-hover: #a9a9b7;
+  --color-tab-button-split: var(--color-border);
+  --color-card-shadow: 0 4px 18px #25203b04;
+  --color-hero: #eeebf7;
+  --color-hero-line: #cbc0e5;
+  --el-color-primary: #7254b7;
+  --el-color-primary-light-3: #9c86cc;
+  --el-color-primary-light-5: #b9a9db;
+  --el-color-primary-light-7: #d5cce9;
+  --el-color-primary-light-8: #e3dcf1;
+  --el-color-primary-light-9: #f1edf8;
+  --el-color-primary-dark-2: #5b4392;
+  --el-bg-color: var(--color-surface);
+  --el-bg-color-page: var(--color-background);
+  --el-bg-color-overlay: var(--color-surface);
+  --el-text-color-primary: var(--color-text);
+  --el-text-color-regular: var(--color-text-secondary);
+  --el-text-color-secondary: var(--color-text-muted);
+  --el-border-color: var(--color-border);
+  --el-border-color-light: var(--color-border);
+  --el-border-color-lighter: var(--color-border);
+  --el-border-color-extra-light: var(--color-background-soft);
+  --el-fill-color-blank: var(--color-surface);
+  --el-fill-color: var(--color-background-soft);
+  --el-fill-color-light: var(--color-background-soft);
+  --el-fill-color-dark: var(--color-background-mute);
 }
 
 :root.dark {
-  --color-base-fill: #1c1c35;
-  --color-scroll-background: rgba(96, 102, 102, 0.8);
-  --color-scroll-background-hover: #606666;
-  --color-background-soft: var(--vt-c-black-soft);
-  --color-background: #151e29;
-  --color-tab-button-split: #6c6e72;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
+  color-scheme: dark;
+  --color-background: #141419;
+  --color-surface: #1d1d24;
+  --color-background-soft: #25252f;
+  --color-background-mute: #2d2d39;
+  --color-text: #e6e4ee;
+  --color-text-secondary: #cfccd9;
+  --color-text-muted: #bfbccb;
+  --color-heading: #f1eff8;
+  --color-border: #30303b;
+  --color-border-hover: #605373;
+  --color-accent: #b79ae9;
+  --color-accent-soft: #31273f;
+  --color-scroll-background: #43434f;
+  --color-scroll-background-hover: #616172;
+  --color-card-shadow: 0 4px 18px #0000000c;
+  --color-hero: #282233;
+  --color-hero-line: #594671;
+  --el-color-primary: #b79ae9;
+  --el-color-primary-light-3: #806ba4;
+  --el-color-primary-light-5: #5e507c;
+  --el-color-primary-light-7: #413750;
+  --el-color-primary-light-8: #352d43;
+  --el-color-primary-light-9: #2b2535;
+  --el-color-primary-dark-2: #c5aeed;
 }
 
 *,
@@ -43,9 +83,6 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
   line-height: 1.6;
   font-family:
     Inter,
@@ -64,6 +101,29 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a, input, select):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scroll-background) transparent;
 }
 
 .frosted-glass {

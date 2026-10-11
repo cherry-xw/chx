@@ -1,70 +1,100 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
-import type { MqttClient } from 'mqtt'
-import { ref, watch } from 'vue'
+import { computed, ref } from 'vue'
+import { Plus, Close, Share } from '@element-plus/icons-vue'
+import { topicError, type Subscription, type QoS } from './useMqttSession'
 
-// --------------------------- config -------------------------------
-defineOptions({ name: 'SubscribeView' })
-const { clinet } = defineProps<{
-  clinet: MqttClient | void
+defineOptions({ name: 'MqttSubscriptionPanel' })
+const props = defineProps<{
+  connected: boolean
+  subscriptions: Subscription[]
+  pending: Set<string>
+  subscribe: (topic: string, qos: QoS) => Promise<boolean>
 }>()
-// ---------------------------- data --------------------------------
-const topic = ref<string>('')
-const isSubscribed = ref<boolean>(false)
-// -------------------------- computed ------------------------------
-// --------------------------- methods ------------------------------
-async function handleSubscribe(auto = false) {
-  if (!topic.value) {
-    if (!auto) {
-      ElMessage.warning('请输入topic')
-    }
+const emit = defineEmits<{ unsubscribe: [topic: string] }>()
+const topic = ref('')
+const qos = ref<QoS>(0)
+const validation = ref('')
+const activeCount = computed(() => props.subscriptions.filter((item) => item.active).length)
+async function submit() {
+  validation.value = topicError(topic.value)
+  if (validation.value) return
+  if (props.subscriptions.some((item) => item.topic === topic.value && item.active)) {
+    validation.value = '该主题已经在订阅列表中'
     return
   }
-  try {
-    const res = await clinet!.subscribeAsync(topic.value)
-    isSubscribed.value = true
-    console.log('订阅结果', res)
-    ElMessage.success('订阅成功')
-  } catch (error) {
-    console.error(error)
-    ElMessage.error('订阅失败')
+  const submitted = topic.value
+  if (await props.subscribe(submitted, qos.value)) {
+    if (topic.value === submitted) topic.value = ''
   }
 }
-// ---------------------------- watch -------------------------------
-watch(
-  () => clinet,
-  (newVal) => {
-    if (!newVal) {
-      isSubscribed.value = false
-    } else {
-      // 自动重新订阅主题
-      handleSubscribe(true)
-    }
-  }
-)
-// ---------------------------- life --------------------------------
-// --------------------------- other --------------------------------
 </script>
-
 <template>
-  <div class="Subscribe-container">
-    <el-row :gutter="8">
-      <el-col :span="24">
-        <el-input v-model="topic" style="max-width: 600px" placeholder="请输入topic">
-          <template #append>
-            <el-button @click="handleSubscribe(false)">{{
-              isSubscribed ? 'UnSubscribe' : 'Subscribe'
-            }}</el-button>
-          </template>
-        </el-input>
-      </el-col>
-    </el-row>
-    <el-row :gutter="8">
-      <el-col :span="24">解析映射：</el-col>
-    </el-row>
-  </div>
+  <section class="mqtt-panel subscriptions-panel" aria-labelledby="subscriptions-title">
+    <header class="panel-heading">
+      <div class="heading-with-icon">
+        <span class="panel-icon"
+          ><el-icon><Share /></el-icon
+        ></span>
+        <div>
+          <span class="eyebrow">SUBSCRIPTIONS</span>
+          <h2 id="subscriptions-title">
+            主题订阅 <span class="count-badge">{{ activeCount }}</span>
+          </h2>
+        </div>
+      </div>
+      <span class="quiet-label">{{ connected ? '支持 + / # 通配符' : '连接后可订阅' }}</span>
+    </header>
+    <form class="subscription-form" @submit.prevent="submit">
+      <div class="topic-input">
+        <label class="sr-only" for="mqtt-topic">订阅主题</label
+        ><el-input
+          id="mqtt-topic"
+          v-model="topic"
+          placeholder="例如 sensors/+/temperature"
+          :disabled="!connected"
+          @input="validation = ''"
+          ><template #prefix><span class="topic-slash">/</span></template></el-input
+        >
+      </div>
+      <el-select v-model="qos" aria-label="订阅 QoS" :disabled="!connected"
+        ><el-option v-for="level in [0, 1, 2]" :key="level" :label="`QoS ${level}`" :value="level"
+      /></el-select>
+      <el-button
+        type="primary"
+        native-type="submit"
+        :icon="Plus"
+        :disabled="!connected"
+        :loading="pending.has(topic)"
+        >订阅</el-button
+      >
+    </form>
+    <p v-if="validation" class="field-error" role="alert">{{ validation }}</p>
+    <TransitionGroup
+      v-if="subscriptions.length"
+      name="mqtt-topic"
+      tag="ul"
+      class="subscription-list"
+    >
+      <li v-for="item in subscriptions" :key="item.topic" class="subscription-row">
+        <i class="mini-dot" :class="{ online: item.active }"></i><code>{{ item.topic }}</code
+        ><span class="qos-label">QoS {{ item.qos }}</span
+        ><span class="quiet-label">{{ item.active ? '已订阅' : '待恢复' }}</span
+        ><el-button
+          text
+          circle
+          :icon="Close"
+          :loading="pending.has(item.topic)"
+          :disabled="!connected"
+          :aria-label="`取消订阅 ${item.topic}`"
+          title="取消订阅"
+          @click="emit('unsubscribe', item.topic)"
+        />
+      </li>
+    </TransitionGroup>
+    <div v-else class="subscription-empty">
+      <span class="empty-line"></span>
+      <p>{{ connected ? '添加一个主题，开始接收设备消息' : '建立连接后，订阅你关心的设备主题' }}</p>
+      <span class="empty-line"></span>
+    </div>
+  </section>
 </template>
-
-<style lang="less" scoped>
-//.Subscribe-container {}
-</style>

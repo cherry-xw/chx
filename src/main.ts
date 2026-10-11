@@ -1,5 +1,3 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
@@ -16,10 +14,13 @@ import App from './App.vue'
 import createRouter from './router'
 
 import './assets/iconfont/iconfont.css'
+import './assets/main.css'
+import { useModeStore } from './stores/counter'
 
 const app = createApp(App)
 
 app.use(createPinia())
+useModeStore()
 app.use(createRouter())
 // app.use(VueParticles as any, {
 //   async init(engine: any) {

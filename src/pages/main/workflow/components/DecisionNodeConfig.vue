@@ -23,7 +23,7 @@
             <el-button
               type="danger"
               size="small"
-              @click="removeOutcome(index)"
+              @click="removeOutcome(Number(index))"
               icon="Delete"
             />
           </div>
@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import type { Node } from '@vue-flow/core'
 
 interface Props {
