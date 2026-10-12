@@ -232,3 +232,30 @@ select {
   backdrop-filter: blur(2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+/* Theme transitions are started only by pointer input in Header.vue. */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(root) {
+  animation: appearance-out 125ms var(--ease-out) both;
+}
+::view-transition-new(root) {
+  animation: appearance-in 200ms var(--ease-out) both;
+}
+@keyframes appearance-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes appearance-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

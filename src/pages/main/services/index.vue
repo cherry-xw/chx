@@ -17,6 +17,7 @@ import {
   Timer,
   Printer
 } from '@element-plus/icons-vue'
+import { usePanelMotion } from '@/composables/usePanelMotion'
 import { LAN_HOST, VPN_HOST, personalServices, serviceLinks } from '@/data/personal-services'
 
 defineOptions({ name: 'PersonalServicesView' })
@@ -40,6 +41,7 @@ const accessFilter = ref<AccessFilter>('all')
 const query = ref('')
 const searchInput = ref<HTMLInputElement>()
 const results = ref<HTMLElement>()
+const { update: updatePanels, cancel: cancelAnimation } = usePanelMotion(results, '.service-card')
 const services = personalServices.map((service) => ({ ...service, links: serviceLinks(service) }))
 const accessOptions: { value: AccessFilter; label: string; count: number }[] = [
   { value: 'all', label: '全部服务', count: services.length },
@@ -75,15 +77,20 @@ const filteredServices = computed(() => {
       return { ...service, primary, alternatives: service.links.filter((link) => link !== primary) }
     })
 })
-function selectAccess(value: AccessFilter) {
-  accessFilter.value = value
+async function selectAccess(value: AccessFilter, event: MouseEvent) {
+  if (accessFilter.value === value) return
+  await updatePanels(() => {
+    accessFilter.value = value
+  }, event)
 }
 function resetFilters() {
+  cancelAnimation()
   query.value = ''
   accessFilter.value = 'all'
   searchInput.value?.focus()
 }
 function clearQuery() {
+  cancelAnimation()
   query.value = ''
   searchInput.value?.focus()
 }
@@ -110,6 +117,7 @@ function clearQuery() {
               type="search"
               placeholder="搜索服务、用途或端口…"
               aria-label="搜索个人服务"
+              @input="cancelAnimation"
               @keydown.esc="clearQuery"
             />
             <button v-if="query" type="button" aria-label="清空搜索" @click="clearQuery">
@@ -123,7 +131,7 @@ function clearQuery() {
               type="button"
               :class="{ selected: accessFilter === option.value }"
               :aria-pressed="accessFilter === option.value"
-              @click="selectAccess(option.value)"
+              @click="selectAccess(option.value, $event)"
             >
               {{ option.label }}<span>{{ option.count }}</span>
             </button>

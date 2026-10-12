@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { Compass, Monitor, Moon, Sunny, User, Setting } from '@element-plus/icons-vue'
@@ -32,6 +32,26 @@ const themeOptions: { value: ThemePreference; label: string; icon: typeof Sunny 
   { value: 'dark', label: '深色模式', icon: Moon },
   { value: 'system', label: '跟随系统', icon: Monitor }
 ]
+let appearanceTransition: ViewTransition | undefined
+function setTheme(value: ThemePreference, event: MouseEvent) {
+  appearanceTransition?.skipTransition()
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (event.detail === 0 || reduce || !document.startViewTransition) {
+    theme.setPreference(value)
+    return
+  }
+  const transition = document.startViewTransition(() => {
+    theme.setPreference(value)
+  })
+  appearanceTransition = transition
+  void transition.ready.catch(() => undefined)
+  void transition.finished
+    .catch(() => undefined)
+    .finally(() => {
+      if (appearanceTransition === transition) appearanceTransition = undefined
+    })
+}
+onBeforeUnmount(() => appearanceTransition?.skipTransition())
 function changePalette(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   if (isColorPalette(value)) theme.setPalette(value)
@@ -79,7 +99,7 @@ async function logout() {
             :aria-label="option.label"
             :aria-pressed="theme.preference === option.value"
             :title="option.label"
-            @click="theme.setPreference(option.value)"
+            @click="setTheme(option.value, $event)"
           >
             <component :is="option.icon" />
           </button>

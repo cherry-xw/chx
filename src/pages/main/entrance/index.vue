@@ -33,6 +33,7 @@ import {
 import { DragHandle, SlickItem, SlickList } from 'vue-slicksort'
 import { useDirectoryLayoutStore } from '@/stores/directory-layout'
 import SiteCard from './SiteCard.vue'
+import { usePanelMotion } from '@/composables/usePanelMotion'
 import {
   maxHeat,
   MIN_ACTIVE_SCORE,
@@ -67,6 +68,10 @@ async function showCategoryDetails(category: DirectoryCategory) {
   detailDialog.value?.showModal()
 }
 const categoryGrid = ref<HTMLElement>()
+const { update: updatePanels, cancel: cancelCategoryAnimation } = usePanelMotion(
+  categoryGrid,
+  '.category-panel'
+)
 const normalizedQuery = computed(() => siteQuery.value.trim().toLocaleLowerCase())
 const siteCount = directory.reduce((count, category) => count + category.sites.length, 0)
 const visibleCategories = computed(() =>
@@ -88,17 +93,21 @@ const visibleCategories = computed(() =>
 const visibleSiteCount = computed(() =>
   visibleCategories.value.reduce((count, category) => count + category.sites.length, 0)
 )
-function selectTopic(id: DirectoryTopicId | 'all') {
+async function selectTopic(id: DirectoryTopicId | 'all', event: MouseEvent) {
   if (selectedTopic.value === id) return
-  selectedTopic.value = id
+  await updatePanels(() => {
+    selectedTopic.value = id
+  }, event)
 }
 function resetFilters() {
+  cancelCategoryAnimation()
   selectedTopic.value = 'all'
   siteQuery.value = ''
   directorySearch.value?.focus()
 }
 function clearSiteQuery() {
   siteQuery.value = ''
+  cancelCategoryAnimation()
   directorySearch.value?.focus()
 }
 const topics = directoryTopics.map((topic) => ({
@@ -112,6 +121,7 @@ const activeTopic = computed(() =>
 )
 let dragVisibleIds: string[] = []
 function startSorting() {
+  cancelCategoryAnimation()
   sorting.value = true
   dragVisibleIds = visibleCategories.value.map((category) => category.id)
 }
@@ -186,11 +196,13 @@ function saveSortedPanels(next: DirectoryCategory[]) {
 }
 async function movePanel(id: string, direction: -1 | 1, event: MouseEvent) {
   const trigger = event.currentTarget as HTMLButtonElement
-  layout.moveBlock(
-    visibleCategories.value.map((category) => category.id),
-    id,
-    direction
-  )
+  await updatePanels(() => {
+    layout.moveBlock(
+      visibleCategories.value.map((category) => category.id),
+      id,
+      direction
+    )
+  }, event)
   await nextTick()
   if (event.detail === 0) {
     const panel = [
@@ -206,8 +218,8 @@ async function movePanel(id: string, direction: -1 | 1, event: MouseEvent) {
   const position = visibleCategories.value.findIndex((category) => category.id === id) + 1
   layoutMessage.value = `${name}已移至当前视图第 ${position} 个位置`
 }
-function restoreOrder() {
-  layout.resetOrder()
+async function restoreOrder(event: MouseEvent) {
+  await updatePanels(() => layout.resetOrder(), event)
   layoutMessage.value = '已恢复全部区块的默认顺序'
 }
 function toggleLayout() {
@@ -302,6 +314,7 @@ function recordVisit(url: string) {
             type="search"
             aria-label="筛选本站收录的网站"
             placeholder="查找站点、内容或网址…"
+            @input="cancelCategoryAnimation"
             @keydown.esc="siteQuery = ''"
           />
           <button v-if="siteQuery" type="button" aria-label="清空站点筛选" @click="clearSiteQuery">
@@ -316,7 +329,7 @@ function recordVisit(url: string) {
               type="button"
               :class="{ selected: selectedTopic === 'all' }"
               :aria-pressed="selectedTopic === 'all'"
-              @click="selectTopic('all')"
+              @click="selectTopic('all', $event)"
               :disabled="sorting"
             >
               <Compass aria-hidden="true" />全部站点 <span>{{ siteCount }}</span>
@@ -328,7 +341,7 @@ function recordVisit(url: string) {
               type="button"
               :class="{ selected: selectedTopic === topic.id }"
               :aria-pressed="selectedTopic === topic.id"
-              @click="selectTopic(topic.id)"
+              @click="selectTopic(topic.id, $event)"
               :disabled="sorting"
             >
               <component :is="categoryIcons[topic.icon]" aria-hidden="true" />{{ topic.name
@@ -353,7 +366,7 @@ function recordVisit(url: string) {
           <span class="topic-stats"
             >{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span
           >
-          <button type="button" :disabled="sorting" @click="selectTopic('all')">
+          <button type="button" :disabled="sorting" @click="selectTopic('all', $event)">
             返回全部
           </button>
         </div>
