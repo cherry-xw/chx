@@ -1,6 +1,6 @@
 # 页面布局
 
-本领域维护首页与 MQTT 工作台的布局和响应式行为，以及首屏依赖加载，不定义 MQTT 协议或设备接口。
+本领域维护首页与 MQTT 工作台的布局和响应式行为，以及主题外观设置与首屏依赖加载，不定义 MQTT 协议或设备接口。
 
 ## 任务定位
 
@@ -11,6 +11,7 @@
 | 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:frontend`；使用一段时间后刷新或切回页签人工检查排序 |
 | 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build:frontend`；连接区、主题列表、消息详情人工检查 |
 | 调整应用可用内容区 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.main-column`；[标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`.fill-content` | 展开/收起侧栏，检查横向溢出与键盘顺序 |
+| 扩展配色、外观偏好与本机恢复 | [外观状态](../../workspace/frontend/src/stores/counter.ts)：`colorPalettes`、`useModeStore`、`setPalette`；[顶部外观弹层](../../workspace/frontend/src/components/layer/Header.vue)：`appearance-panel`；[首屏恢复](../../workspace/frontend/index.html)；[主题令牌](../../workspace/frontend/src/assets/base.css)：`data-palette` | `npm run test:frontend`；刷新、跨标签同步、六组合与窄屏选择人工检查 |
 
 ## 布局边界
 
@@ -29,6 +30,10 @@
 图标由使用方显式导入；导航元数据中的字符串图标通过 `navIcons` 有限映射解析，新增导航图标需同步映射。Slicksort 固定使用 ESM 入口，避免 UMD 的 CommonJS Vue 依赖引入浏览器不需要的模板编译器。首屏体积以入口、Header、首页及其全部静态依赖的去重总量为准，不能只比较入口文件大小。
 
 ## 验证
+
+外观有两个独立维度：配色（EL 荧光黄、青柠绿、霓虹紫，默认 EL 荧光黄）与模式（浅色、深色、跟随系统，默认跟随系统）。`useModeStore` 的 actions 修改设置，分别保存到当前站点的 `localStorage` 键 `chery-palette` 与 `chery-theme`；同源标签页通过 `storage` 事件同步。配色通过根元素 `data-palette` 应用，深色通过 `dark` 类应用；`index.html` 在首次绘制前恢复两者。无效或清除后的配色回退 EL 荧光黄，存储不可用时仍可在当前页面切换。新增配色需同时更新状态注册、CSS 深浅令牌、首屏恢复及六组合对比度测试。
+
+配色使用清透高明度表面与鲜明强调色；`--color-highlight` 用于亮色实心操作和面板标识，`--color-on-highlight` 为对应可读前景，正文与链接使用深色（深色模式使用亮色）令牌。历史持久键 `cobalt`、`terracotta`、`wine` 分别对应 EL 荧光黄、青柠绿、霓虹紫，以兼容已保存偏好；标题、正文、辅助文字和强调色在全部六种深浅组合的实际表面上均需达到 7:1 对比度，实心按钮单独校验前景色。
 
 自动检查入口遵循 [项目配置](../../AGENTS.md)。页面交互、深浅主题和最终视觉验收边界也由该配置定义。人工检查至少覆盖 390、1440、1920、2560、3440 像素视口及侧栏两种状态，确认：两侧仅有页边距、列数变化合理、筛选后少量卡片不被拉成超宽按钮、详情可滚动、页面无横向溢出。
 
