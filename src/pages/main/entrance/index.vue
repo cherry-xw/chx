@@ -30,6 +30,8 @@ import {
   type DirectoryCategory,
   type DirectoryTopicId
 } from '@/data/directory'
+import { DragHandle, SlickItem, SlickList } from 'vue-slicksort'
+import { useDirectoryLayoutStore } from '@/stores/directory-layout'
 import SiteCard from './SiteCard.vue'
 import {
   maxHeat,
@@ -42,6 +44,17 @@ import {
 
 defineOptions({ name: 'EntranceView' })
 const selectedTopic = ref<DirectoryTopicId | 'all'>('all')
+const layout = useDirectoryLayoutStore()
+const editingLayout = ref(false)
+const sorting = ref(false)
+const layoutMessage = ref('')
+const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+const reducedMotion = ref(motionQuery.matches)
+function syncMotion(event: MediaQueryListEvent) {
+  reducedMotion.value = event.matches
+}
+motionQuery.addEventListener('change', syncMotion)
+onBeforeUnmount(() => motionQuery.removeEventListener('change', syncMotion))
 const siteQuery = ref('')
 const directorySearch = ref<HTMLInputElement>()
 const previewCount = 6
@@ -57,7 +70,7 @@ const categoryGrid = ref<HTMLElement>()
 const normalizedQuery = computed(() => siteQuery.value.trim().toLocaleLowerCase())
 const siteCount = directory.reduce((count, category) => count + category.sites.length, 0)
 const visibleCategories = computed(() =>
-  directory
+  layout.orderedCategories
     .filter((category) => selectedTopic.value === 'all' || category.topic === selectedTopic.value)
     .map((category) => ({
       ...category,
@@ -94,6 +107,56 @@ const topics = directoryTopics.map((topic) => ({
 const activeTopic = computed(() =>
   directoryTopics.find((topic) => topic.id === selectedTopic.value)
 )
+let dragVisibleIds: string[] = []
+function startSorting() {
+  sorting.value = true
+  dragVisibleIds = visibleCategories.value.map((category) => category.id)
+}
+function finishSorting() {
+  sorting.value = false
+}
+function saveSortedPanels(next: DirectoryCategory[]) {
+  const currentIds = visibleCategories.value.map((category) => category.id)
+  if (dragVisibleIds.length && dragVisibleIds.join('|') !== currentIds.join('|')) return
+  layout.reorderVisible(
+    currentIds,
+    next.map((category) => category.id)
+  )
+  layoutMessage.value = layout.storageAvailable
+    ? '区块顺序已保存'
+    : '顺序已调整，浏览器存储不可用，仅在当前页面生效'
+  dragVisibleIds = []
+}
+async function movePanel(id: string, direction: -1 | 1, event: MouseEvent) {
+  const trigger = event.currentTarget as HTMLButtonElement
+  layout.moveBlock(
+    visibleCategories.value.map((category) => category.id),
+    id,
+    direction
+  )
+  await nextTick()
+  if (event.detail === 0) {
+    const panel = [
+      ...(categoryGrid.value?.querySelectorAll<HTMLElement>('.category-panel') ?? [])
+    ].find((element) => element.dataset.panelKey === id)
+    const focusTarget = trigger.disabled
+      ? panel?.querySelector<HTMLButtonElement>('.move-controls button:not(:disabled)')
+      : trigger
+    focusTarget?.focus({ preventScroll: true })
+    panel?.scrollIntoView({ block: 'nearest' })
+  }
+  const name = directory.find((category) => category.id === id)?.name
+  const position = visibleCategories.value.findIndex((category) => category.id === id) + 1
+  layoutMessage.value = `${name}已移至当前视图第 ${position} 个位置`
+}
+function restoreOrder() {
+  layout.resetOrder()
+  layoutMessage.value = '已恢复全部区块的默认顺序'
+}
+function toggleLayout() {
+  editingLayout.value = !editingLayout.value
+  layoutMessage.value = ''
+}
 const categoryIcons = {
   community: ChatDotRound,
   anime: Film,
@@ -163,10 +226,21 @@ function recordVisit(url: string) {
     <section class="directory-section" aria-label="分类站点导航">
       <div class="directory-heading">
         <h2>站点目录</h2>
+        <button
+          type="button"
+          class="layout-toggle"
+          :class="{ selected: editingLayout }"
+          :aria-pressed="editingLayout"
+          :disabled="sorting"
+          @click="toggleLayout"
+        >
+          <Setting aria-hidden="true" />{{ editingLayout ? '完成调整' : '调整布局' }}
+        </button>
         <div class="directory-search">
           <Search aria-hidden="true" />
           <input
             ref="directorySearch"
+            :disabled="sorting"
             v-model="siteQuery"
             type="search"
             aria-label="筛选本站收录的网站"
@@ -186,7 +260,8 @@ function recordVisit(url: string) {
               :class="{ selected: selectedTopic === 'all' }"
               :aria-pressed="selectedTopic === 'all'"
               @click="selectTopic('all')"
-              >
+              :disabled="sorting"
+            >
               <Compass aria-hidden="true" />全部站点 <span>{{ siteCount }}</span>
             </button>
             <button
@@ -197,34 +272,71 @@ function recordVisit(url: string) {
               :class="{ selected: selectedTopic === topic.id }"
               :aria-pressed="selectedTopic === topic.id"
               @click="selectTopic(topic.id)"
-              >
+              :disabled="sorting"
+            >
               <component :is="categoryIcons[topic.icon]" aria-hidden="true" />{{ topic.name
               }}<span>{{ topic.count }}</span>
             </button>
           </div>
           <span class="directory-note" role="status">{{ visibleSiteCount }} 个站点</span>
         </aside>
+        <div v-if="editingLayout" class="layout-toolbar">
+          <span>拖动区块，也可使用前移 / 后移按钮；调整时显示全部站点，顺序自动保存。</span>
+          <button type="button" :disabled="sorting" @click="restoreOrder">
+            <RefreshLeft aria-hidden="true" />恢复全部默认顺序
+          </button>
+        </div>
+        <p v-if="!layout.storageAvailable" class="storage-notice" role="status">
+          浏览器存储不可用，布局调整仅在当前页面生效。
+        </p>
+        <p class="sort-announcement" role="status" aria-live="polite">{{ layoutMessage }}</p>
         <div v-if="activeTopic" class="topic-summary">
           <h2>{{ activeTopic.name }}</h2>
           <span>{{ activeTopic.caption }}</span>
           <span class="topic-stats"
             >{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span
           >
-          <button type="button" @click="selectTopic('all')">
+          <button type="button" :disabled="sorting" @click="selectTopic('all')">
             返回全部
           </button>
         </div>
         <div id="directory-results" ref="categoryGrid" class="directory-results">
-          <div class="category-grid" :class="{ 'is-topic': selectedTopic !== 'all' }">
-            <section
-              v-for="category in visibleCategories"
+          <SlickList
+            class="category-grid"
+            :class="{ 'is-topic': selectedTopic !== 'all', 'is-editing': editingLayout }"
+            :list="visibleCategories"
+            axis="xy"
+            :use-drag-handle="true"
+            :distance="6"
+            :transition-duration="reducedMotion ? 0 : 200"
+            :dragged-settling-duration="0"
+            append-to="#directory-results"
+            helper-class="directory-sort-helper"
+            @update:list="saveSortedPanels"
+            @sort-start="startSorting"
+            @sort-end="finishSorting"
+            @sort-cancel="finishSorting"
+          >
+            <SlickItem
+              v-for="(category, index) in visibleCategories"
               :key="category.id"
+              :index="index"
+              :disabled="!editingLayout"
+              tag="section"
               class="category-panel"
               :data-panel-key="category.id"
               :aria-labelledby="'category-' + category.id"
             >
               <div class="category-heading">
-                <span class="category-icon"
+                <DragHandle
+                  v-if="editingLayout"
+                  tag="span"
+                  class="drag-handle"
+                  title="拖动调整区块位置"
+                  aria-hidden="true"
+                  ><Rank
+                /></DragHandle>
+                <span v-else class="category-icon"
                   ><component :is="categoryIcons[category.icon]"
                 /></span>
                 <div class="category-title">
@@ -233,7 +345,26 @@ function recordVisit(url: string) {
                     }}<span class="category-count">{{ category.sites.length }}</span>
                   </h2>
                 </div>
+                <div v-if="editingLayout" class="move-controls">
+                  <button
+                    type="button"
+                    :disabled="index === 0 || sorting"
+                    :aria-label="'前移' + category.name"
+                    @click="movePanel(category.id, -1, $event)"
+                  >
+                    <ArrowUp />
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="index === visibleCategories.length - 1 || sorting"
+                    :aria-label="'后移' + category.name"
+                    @click="movePanel(category.id, 1, $event)"
+                  >
+                    <ArrowDown />
+                  </button>
+                </div>
                 <button
+                  v-else
                   type="button"
                   class="category-more"
                   :aria-label="'查看' + category.name + '全部站点'"
@@ -245,15 +376,15 @@ function recordVisit(url: string) {
               <p v-if="selectedTopic !== 'all'" class="category-caption">{{ category.caption }}</p>
               <div class="site-grid">
                 <SiteCard
-                  v-for="site in category.sites.slice(0, previewCount)"
+                  v-for="site in editingLayout ? category.sites : category.sites.slice(0, previewCount)"
                   :key="site.url"
                   :site="site"
                   :detailed="selectedTopic !== 'all'"
                   @click="recordVisit(site.url)"
                 />
               </div>
-            </section>
-          </div>
+            </SlickItem>
+          </SlickList>
           <div v-if="!visibleSiteCount" class="directory-empty" role="status">
             <Search aria-hidden="true" />
             <h3>暂时没有找到匹配的站点</h3>
@@ -687,6 +818,57 @@ h1 {
   }
 }
 
+.layout-toggle,
+.layout-toolbar button,
+.topic-summary button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.layout-toggle svg,
+.layout-toolbar svg {
+  width: 12px;
+  height: 12px;
+}
+.layout-toggle.selected {
+  background: var(--color-highlight);
+  color: var(--color-on-highlight);
+}
+.layout-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border: 1px dashed var(--color-border-hover);
+  background: var(--color-accent-soft);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+.storage-notice {
+  padding: 4px 0 8px;
+  font-size: 11px;
+  color: var(--color-accent);
+}
+.sort-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .topic-summary {
   display: flex;
   align-items: center;
@@ -715,6 +897,54 @@ h1 {
   line-height: 1.6;
   color: var(--color-text-secondary);
 }
+.drag-handle {
+  user-select: none;
+  -webkit-user-select: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  color: var(--color-accent);
+}
+.drag-handle svg {
+  width: 15px;
+  height: 15px;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.move-controls {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.move-controls button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.move-controls svg {
+  width: 13px;
+  height: 13px;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.is-editing {
+  user-select: none;
+  -webkit-user-select: none;
+}
 .category-detail {
   width: min(760px, calc(100vw - 32px));
   max-height: calc(100dvh - 48px);
@@ -742,9 +972,56 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   padding: 6px;
 }
+.is-editing .category-heading {
+  border-bottom-style: dashed;
+}
+.category-filters button:focus-visible,
+.move-controls button:focus-visible {
+  outline-offset: -1px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .move-controls button:hover:not(:disabled),
+  .layout-toggle:hover,
+  .topic-summary button:hover {
+    background: var(--color-accent-soft);
+    border-color: var(--color-border-hover);
+  }
+}
+@media (pointer: coarse) {
+  .move-controls button,
+  .drag-handle {
+    width: 32px;
+    height: 32px;
+  }
+}
 @container entrance (max-width: 600px) {
-  .directory-heading { flex-wrap: wrap; gap: 6px; }
-  .directory-search { width: 100%; order: 3; }
-  .topic-summary .topic-stats { margin-left: 0; }
+  .directory-heading {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .directory-search {
+    width: 100%;
+    order: 3;
+  }
+  .layout-toggle {
+    margin-left: auto;
+  }
+  .topic-summary .topic-stats {
+    margin-left: 0;
+  }
+}
+</style>
+<style>
+.directory-sort-helper {
+  rotate: none;
+  animation: none !important;
+  writing-mode: horizontal-tb;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  z-index: 2500;
+  outline: 2px solid var(--color-highlight);
+  box-shadow: 0 8px 24px #00000026;
+  cursor: grabbing;
 }
 </style>

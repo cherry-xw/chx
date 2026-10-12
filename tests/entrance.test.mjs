@@ -7,6 +7,11 @@ import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
 import {
+  normalizeDirectoryOrder,
+  mergeVisibleOrder,
+  moveVisibleBlock
+} from '../src/utils/directory-order.ts'
+import {
   HEAT_HALF_LIFE_MS,
   MIN_ACTIVE_SCORE,
   heatScore,
@@ -329,6 +334,44 @@ test('each topic contains multiple useful blocks and substantial site coverage',
       assert(site.name.trim() && site.description.trim() && site.mark.trim())
     })
   })
+})
+
+test('saved directory order discards stale IDs, deduplicates and appends new blocks', () => {
+  assert.deepEqual(
+    normalizeDirectoryOrder(['c', 'removed', 'a', 'c', 42], ['a', 'b', 'c', 'new']),
+    ['c', 'a', 'b', 'new']
+  )
+  for (const invalid of [null, {}, 'a,b', 42]) {
+    assert.deepEqual(normalizeDirectoryOrder(invalid, ['a', 'b']), ['a', 'b'])
+  }
+})
+
+test('filtered reordering preserves every hidden slot and composes across topics', () => {
+  const current = ['a', 'hidden-1', 'b', 'hidden-2', 'c']
+  const reordered = mergeVisibleOrder(current, ['a', 'b', 'c'], ['c', 'a', 'b'])
+  assert.deepEqual(reordered, ['c', 'hidden-1', 'a', 'hidden-2', 'b'])
+  assert.deepEqual(
+    mergeVisibleOrder(reordered, ['hidden-1', 'hidden-2'], ['hidden-2', 'hidden-1']),
+    ['c', 'hidden-2', 'a', 'hidden-1', 'b']
+  )
+  assert.deepEqual(current, ['a', 'hidden-1', 'b', 'hidden-2', 'c'])
+})
+
+test('stale or incomplete drag results cannot drop, duplicate or introduce blocks', () => {
+  const current = ['a', 'hidden', 'b']
+  for (const next of [['b'], ['b', 'b'], ['b', 'unknown'], ['b', 'a', 'hidden']]) {
+    assert.deepEqual(mergeVisibleOrder(current, ['a', 'b'], next), current)
+  }
+  assert.deepEqual(mergeVisibleOrder(current, ['a', 'missing'], ['missing', 'a']), current)
+})
+
+test('keyboard block moves respect filtered boundaries and leave hidden blocks untouched', () => {
+  const current = ['a', 'hidden', 'b', 'c']
+  assert.deepEqual(moveVisibleBlock(current, ['a', 'b', 'c'], 'b', -1), ['b', 'hidden', 'a', 'c'])
+  assert.deepEqual(moveVisibleBlock(current, ['a', 'b', 'c'], 'b', 1), ['a', 'hidden', 'c', 'b'])
+  assert.deepEqual(moveVisibleBlock(current, ['a', 'b', 'c'], 'a', -1), current)
+  assert.deepEqual(moveVisibleBlock(current, ['a', 'b', 'c'], 'c', 1), current)
+  assert.deepEqual(moveVisibleBlock(current, ['a', 'b', 'c'], 'unknown', 1), current)
 })
 
 test('all six palette/mode combinations maintain 7:1 contrast on actual surfaces and filled actions', () => {
