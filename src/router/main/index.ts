@@ -7,6 +7,11 @@ const mainRouterConfig: Readonly<RouteRecordRaw> = {
   redirect: '/main/entrance',
   children: [
     {
+      path: 'services',
+      name: 'services',
+      component: () => import('@/pages/main/services/index.vue')
+    },
+    {
       path: 'entrance',
       name: 'entrance',
       component: () => import('@/pages/main/entrance/index.vue')

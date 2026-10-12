@@ -29,6 +29,12 @@ const navOrigin: noKeyNav[] = [
     focus: false
   },
   {
+    label: '个人服务',
+    name: 'services',
+    icon: 'Platform',
+    focus: false
+  },
+  {
     label: 'IOT',
     name: 'iot',
     icon: 'Cpu',
