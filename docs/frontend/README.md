@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 优化首屏或增加 UI 依赖 | [应用入口](../../workspace/frontend/src/main.ts)；[应用配置](../../workspace/frontend/src/App.vue)：`ElConfigProvider`；[导航图标](../../workspace/frontend/src/components/layer/nav-icons.ts)：`navIcons`；[构建配置](../../workspace/frontend/vite.config.ts)：`resolve.alias` | `npm run build:frontend -- --manifest`；按 manifest 的静态依赖递归统计首页、Header 与入口的 JS/CSS，人工检查中文、深浅主题与页签拖拽 |
 | 扩充专题、站点和区块 | [目录数据](../../workspace/frontend/src/data/directory.ts)：`directoryTopics`、`DirectoryCategory.topic`、`directory`；[首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`visibleCategories` | `npm run test:frontend`；专题覆盖、URL 唯一性与搜索人工检查 |
+| 调整区块排序与本机恢复 | [布局状态](../../workspace/frontend/src/stores/directory-layout.ts)：`useDirectoryLayoutStore`；[排序工具](../../workspace/frontend/src/utils/directory-order.ts)：`mergeVisibleOrder` | `npm run test:frontend`；拖拽、键盘移动、刷新恢复和新增区块人工检查 |
 | 调整首页空间利用率、分类密度 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.entrance-overview`、`.category-grid`、`.site-grid` | `npm run build:frontend`；宽屏与侧栏切换人工检查 |
 | 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:frontend`；使用一段时间后刷新或切回页签人工检查排序 |
 | 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build:frontend`；连接区、主题列表、消息详情人工检查 |
@@ -41,6 +42,8 @@
 首页页签始终打开、固定首位且不可关闭，其他页签在其后排序。首页默认专题及区块按 ACG、游戏、媒体、博客、设计、文档、工具、开发排序，ACG 中动画优先；已有用户排序保留，恢复默认采用此顺序。专题内保留全部匹配区块，各区块统一显示前 6 条，“更多”在原生模态详情中显示该区块全部匹配站点，关闭后焦点返回入口。个人服务由项目内路由渲染，服务地址独立维护在服务数据中，不依赖原 80 端口导航页或外部导航站；域名、隧道、局域网入口保留各自网络边界。
 
 区块右上角提供“更多”详情入口，数量展示完整匹配数量。专题内显示区块说明、站点完整用途与域名，全部视图保持紧凑行；长名称通过完整文本提示补充。首页站点条目（含常用入口）默认不展示边框、底色或外链箭头，悬停时显现强调色底，键盘焦点保留可见轮廓。配色使用清透高明度表面与鲜明强调色；`--color-highlight` 用于亮色实心操作和面板标识，`--color-on-highlight` 为对应可读前景，正文与链接使用深色（深色模式使用亮色）令牌。历史持久键 `cobalt`、`terracotta`、`wine` 分别对应 EL 荧光黄、青柠绿、霓虹紫，以兼容已保存偏好；标题、正文、辅助文字和强调色在全部六种深浅组合的实际表面上均需达到 7:1 对比度，实心按钮单独校验前景色。
+
+区块顺序由 `useDirectoryLayoutStore` 的 actions 维护，按稳定区块 ID 存储于 `chery-directory-order`。开启“调整布局”后区块可拖动或使用前移/后移按钮，调整模式展开该区块全部匹配站点。退出调整后每块仅预览前 6 条，完整列表仍可通过“更多”查看。恢复默认重置区块顺序。区块排序立即保存，关闭调整模式不撤销。专题与搜索视图排序仅替换当前可见区块在全局顺序中的位置，隐藏区块相对位置保持不变。未知与重复 ID 被忽略，新增加的区块按默认次序追加；无效存储回退默认。存储不可用时继续本页调整并提示不能持久保存，同源标签页同步布局。恢复默认顺序作用于全部区块。拖拽副本保留在目录容器内，只平移、不旋转；禁用原生文字拖动及选择，松手立即结束拖拽。
 
 自动检查入口遵循 [项目配置](../../AGENTS.md)。页面交互、深浅主题和最终视觉验收边界也由该配置定义。人工检查至少覆盖 390、1440、1920、2560、3440 像素视口及侧栏两种状态，确认：两侧仅有页边距、列数变化合理、筛选后少量卡片不被拉成超宽按钮、详情可滚动、页面无横向溢出。
 
