@@ -5,7 +5,7 @@ import test from 'node:test'
 import { createPinia, setActivePinia } from 'pinia'
 import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
-import { directory, featuredSites } from '../src/data/directory.ts'
+import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
 import {
   HEAT_HALF_LIFE_MS,
   MIN_ACTIVE_SCORE,
@@ -306,6 +306,29 @@ test('expanded directory has unique HTTPS destinations and four existing feature
   assert.equal(featuredSites.length, 4)
   sites.forEach((site) => assert.equal(new URL(site.url).protocol, 'https:'))
   featuredSites.forEach((site) => assert(sites.includes(site)))
+})
+
+test('each topic contains multiple useful blocks and substantial site coverage', () => {
+  assert.equal(new Set(directoryTopics.map((topic) => topic.id)).size, directoryTopics.length)
+  for (const id of ['development', 'design', 'documentation', 'tools', 'blogs', 'media']) {
+    assert(directoryTopics.some((topic) => topic.id === id))
+  }
+  for (const topic of directoryTopics) {
+    const blocks = directory.filter((category) => category.topic === topic.id)
+    assert(blocks.length >= 3, `${topic.id} needs multiple blocks`)
+    assert(
+      blocks.flatMap((category) => category.sites).length >= 18,
+      `${topic.id} needs more sites`
+    )
+  }
+  assert(directory.flatMap((category) => category.sites).length >= 200)
+  directory.forEach((category) => {
+    assert(directoryTopics.some((topic) => topic.id === category.topic))
+    assert(category.caption.trim())
+    category.sites.forEach((site) => {
+      assert(site.name.trim() && site.description.trim() && site.mark.trim())
+    })
+  })
 })
 
 test('all six palette/mode combinations maintain 7:1 contrast on actual surfaces and filled actions', () => {
