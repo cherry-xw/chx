@@ -13,6 +13,7 @@
 | 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:frontend`；使用一段时间后刷新或切回页签人工检查排序 |
 | 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build:frontend`；连接区、主题列表、消息详情人工检查 |
 | 调整应用可用内容区 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.main-column`；[标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`.fill-content` | 展开/收起侧栏，检查横向溢出与键盘顺序 |
+| 维护应用页备案号 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.site-record` | `npm run build:frontend`；检查各应用页、窄屏及键盘访问备案链接 |
 | 调整首页面板与分类聚焦定位 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`showCategoryDetails`；[条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)：`.site-copy` | `npm run test:frontend`；区块详情打开、关闭与焦点恢复人工检查 |
 | 调整固定首页页签 | [标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`sortableTabs` | `npm run build:frontend`；直接进入其他页面、拖动与关闭页签人工检查 |
 | 调整两套主题的层次、文字对比度与交互动效 | [主题令牌](../../workspace/frontend/src/assets/base.css)：`--color-panel-header`、`--color-item-surface`、`--ease-out`；[面板动效](../../workspace/frontend/src/composables/usePanelMotion.ts)：`usePanelMotion`；[条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue) | `npm run test:frontend`；深浅主题、键盘与减少动态效果人工检查 |
@@ -22,7 +23,7 @@
 
 ## 布局边界
 
-各页填满应用内容区，只保留有上限的页边距。响应式依据页面内容宽度进行容器查询，不能只依据屏幕宽度推断页面可用空间。
+各页填满应用内容区，只保留有上限的页边距。应用容器在页签内容区下方固定展示备案链接，切换页面时仍可见。响应式依据页面内容宽度进行容器查询，不能只依据屏幕宽度推断页面可用空间。
 
 布局顺序为：应用侧栏确定剩余空间 → 页面建立 inline-size 查询容器 → 首页分类网格自动分列、工作台按宽度重排 → 单个卡片约束长文本并允许换行。
 
