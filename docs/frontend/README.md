@@ -7,6 +7,7 @@
 | 修改意图 | 代码入口与关键符号 | 验证入口 |
 | --- | --- | --- |
 | 优化首屏或增加 UI 依赖 | [应用入口](../../workspace/frontend/src/main.ts)；[应用配置](../../workspace/frontend/src/App.vue)：`ElConfigProvider`；[导航图标](../../workspace/frontend/src/components/layer/nav-icons.ts)：`navIcons`；[构建配置](../../workspace/frontend/vite.config.ts)：`resolve.alias` | `npm run build:frontend -- --manifest`；按 manifest 的静态依赖递归统计首页、Header 与入口的 JS/CSS，人工检查中文、深浅主题与页签拖拽 |
+| 扩充专题、站点和区块 | [目录数据](../../workspace/frontend/src/data/directory.ts)：`directoryTopics`、`DirectoryCategory.topic`、`directory`；[首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`visibleCategories` | `npm run test:frontend`；专题覆盖、URL 唯一性与搜索人工检查 |
 | 调整首页空间利用率、分类密度 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.entrance-overview`、`.category-grid`、`.site-grid` | `npm run build:frontend`；宽屏与侧栏切换人工检查 |
 | 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:frontend`；使用一段时间后刷新或切回页签人工检查排序 |
 | 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build:frontend`；连接区、主题列表、消息详情人工检查 |
@@ -22,7 +23,7 @@
 
 布局顺序为：应用侧栏确定剩余空间 → 页面建立 inline-size 查询容器 → 首页分类网格自动分列、工作台按宽度重排 → 单个卡片约束长文本并允许换行。
 
-首页在宽屏下并排展示主视觉与常用入口；分类与站点网格随空间增加列数。个人服务采用紧凑面板网格，每个面板集中展示名称、端口、用途与全部访问入口；网络信息收拢为底部横向面板。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。筛选表示配置了相应入口，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
+首页采用“专题 → 区块 → 站点”三级结构：顶部专题页签组织开发、设计、文档、工具、博客、媒体、ACG 与游戏；每个专题保留多个细分区块；媒体专题包含视频、直播、音乐与新闻阅读，默认将直播紧接视频。全部与专题视图保留多面板网格并展示完整说明及域名，不把单个旧区块横向拉满。专题按钮在顶部横向排列，不占用第二条侧栏。个人服务采用紧凑面板网格，每个面板集中展示名称、端口、用途与全部访问入口；网络信息收拢为底部横向面板。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。筛选表示配置了相应入口，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
 
 新增面板或断点时在各页现有查询容器内扩展，不重新引入页面级固定最大宽度。`min-width: 0` 和网格最小宽度负责防止长主题、地址或报文撑破布局。
 
@@ -36,7 +37,7 @@
 
 外观有两个独立维度：配色（EL 荧光黄、青柠绿、霓虹紫，默认 EL 荧光黄）与模式（浅色、深色、跟随系统，默认跟随系统）。`useModeStore` 的 actions 修改设置，分别保存到当前站点的 `localStorage` 键 `chery-palette` 与 `chery-theme`；同源标签页通过 `storage` 事件同步。配色通过根元素 `data-palette` 应用，深色通过 `dark` 类应用；`index.html` 在首次绘制前恢复两者。无效或清除后的配色回退 EL 荧光黄，存储不可用时仍可在当前页面切换。新增配色需同时更新状态注册、CSS 深浅令牌、首屏恢复及六组合对比度测试。
 
-首页页签始终打开、固定首位且不可关闭，其他页签在其后排序。个人服务由项目内路由渲染，服务地址独立维护在服务数据中，不依赖原 80 端口导航页或外部导航站；域名、隧道、局域网入口保留各自网络边界。
+首页页签始终打开、固定首位且不可关闭，其他页签在其后排序。首页默认专题及区块按 ACG、游戏、媒体、博客、设计、文档、工具、开发排序，ACG 中动画优先；已有用户排序保留，恢复默认采用此顺序。个人服务由项目内路由渲染，服务地址独立维护在服务数据中，不依赖原 80 端口导航页或外部导航站；域名、隧道、局域网入口保留各自网络边界。
 
 配色使用清透高明度表面与鲜明强调色；`--color-highlight` 用于亮色实心操作和面板标识，`--color-on-highlight` 为对应可读前景，正文与链接使用深色（深色模式使用亮色）令牌。历史持久键 `cobalt`、`terracotta`、`wine` 分别对应 EL 荧光黄、青柠绿、霓虹紫，以兼容已保存偏好；标题、正文、辅助文字和强调色在全部六种深浅组合的实际表面上均需达到 7:1 对比度，实心按钮单独校验前景色。
 
