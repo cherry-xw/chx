@@ -2,12 +2,18 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { Compass, Monitor, Moon, Sunny, User } from '@element-plus/icons-vue'
+import { Compass, Monitor, Moon, Sunny, User, Setting } from '@element-plus/icons-vue'
 import { ElButton, ElMessage, ElPopover } from 'element-plus'
 import 'element-plus/es/components/button/style/css'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/popover/style/css'
-import { useModeStore, useUserInfoStore, type ThemePreference } from '@/stores/counter'
+import {
+  colorPalettes,
+  isColorPalette,
+  useModeStore,
+  useUserInfoStore,
+  type ThemePreference
+} from '@/stores/counter'
 import { useNavStore } from '@/stores/nav'
 import HeaderSearch from '@/pages/main/entrance/search.vue'
 import serve from '@/api'
@@ -19,13 +25,17 @@ const theme = useModeStore()
 const userStore = useUserInfoStore()
 const { userInfo } = storeToRefs(userStore)
 const { name2Nav } = useNavStore()
-const pageName = computed(() => name2Nav[String(route.name)]?.label ?? '探索首页')
+const pageName = computed(() => name2Nav[String(route.name)]?.label ?? '首页')
 const searchKeyword = ref('')
 const themeOptions: { value: ThemePreference; label: string; icon: typeof Sunny }[] = [
   { value: 'light', label: '浅色模式', icon: Sunny },
   { value: 'dark', label: '深色模式', icon: Moon },
   { value: 'system', label: '跟随系统', icon: Monitor }
 ]
+function changePalette(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  if (isColorPalette(value)) theme.setPalette(value)
+}
 async function logout() {
   try {
     await serve('/logout').sync
@@ -44,20 +54,38 @@ async function logout() {
       <Compass /><span>{{ pageName }}</span>
     </div>
     <HeaderSearch v-model="searchKeyword" class="toolbar-search" />
-    <div class="theme-picker" role="group" aria-label="外观模式">
-      <button
-        v-for="option in themeOptions"
-        :key="option.value"
-        type="button"
-        :class="{ active: theme.preference === option.value }"
-        :aria-label="option.label"
-        :aria-pressed="theme.preference === option.value"
-        :title="option.label"
-        @click="theme.setPreference(option.value)"
-      >
-        <component :is="option.icon" />
-      </button>
-    </div>
+    <el-popover placement="bottom-end" :width="260" trigger="click">
+      <template #reference>
+        <button type="button" class="appearance-button" aria-label="调整外观">
+          <Setting /><span>外观</span>
+        </button>
+      </template>
+      <div class="appearance-panel">
+        <p>让这里更像你</p>
+        <label class="palette-picker">
+          <span class="palette-label">配色</span>
+          <select :value="theme.palette" aria-label="页面配色" @change="changePalette">
+            <option v-for="option in colorPalettes" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <div class="theme-picker" role="group" aria-label="外观模式">
+          <button
+            v-for="option in themeOptions"
+            :key="option.value"
+            type="button"
+            :class="{ active: theme.preference === option.value }"
+            :aria-label="option.label"
+            :aria-pressed="theme.preference === option.value"
+            :title="option.label"
+            @click="theme.setPreference(option.value)"
+          >
+            <component :is="option.icon" />
+          </button>
+        </div>
+      </div>
+    </el-popover>
     <el-popover v-if="userInfo?.name" placement="bottom-end" :width="150" trigger="click">
       <el-button text class="logout-button" @click="logout">登出</el-button>
       <template #reference>
@@ -104,8 +132,30 @@ async function logout() {
   padding: 3px;
   gap: 2px;
   border: 1px solid var(--color-border);
-  border-radius: 9px;
+  border-radius: 3px;
   background: var(--color-background);
+}
+.palette-picker {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.palette-picker select {
+  max-width: 150px;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-background);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.palette-picker option {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 .theme-picker button {
   display: grid;
@@ -113,7 +163,7 @@ async function logout() {
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: 2px;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -179,12 +229,84 @@ async function logout() {
     padding: 2px;
     gap: 0;
   }
+  .palette-label {
+    display: none;
+  }
+  .palette-picker select {
+    max-width: 150px;
+    padding-inline: 3px;
+  }
+  .palette-picker {
+    margin-right: auto;
+  }
+  .toolbar-search {
+    flex: 1;
+    min-width: 0;
+  }
   .theme-picker button {
     width: 26px;
     height: 30px;
   }
   .user-button span {
     display: none;
+  }
+}
+.appearance-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  transition: transform 160ms var(--ease-out);
+}
+.appearance-button svg {
+  width: 16px;
+  height: 16px;
+}
+.appearance-button:active:not(:focus-visible) {
+  transform: scale(0.97);
+}
+.appearance-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 5px;
+}
+.appearance-panel > p {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-heading);
+}
+.appearance-panel .palette-picker {
+  justify-content: space-between;
+}
+.appearance-panel .palette-label {
+  display: inline;
+}
+.appearance-panel .theme-picker {
+  justify-content: space-between;
+}
+.appearance-panel .theme-picker button {
+  width: 64px;
+  height: 34px;
+}
+@media (max-width: 600px) {
+  .appearance-button span {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appearance-button {
+    transform: none !important;
+    transition: none;
   }
 }
 </style>

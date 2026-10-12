@@ -8,8 +8,11 @@
       // Apply the saved preference before styles or the application are loaded.
       ;(() => {
         let preference = 'system'
+        let palette = 'cobalt'
         try {
           preference = localStorage.getItem('chery-theme') || 'system'
+          const savedPalette = localStorage.getItem('chery-palette')
+          if (['cobalt', 'terracotta', 'wine'].includes(savedPalette)) palette = savedPalette
         } catch {
           // Storage may be disabled; the system preference still works.
         }
@@ -18,14 +21,27 @@
           (preference !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.classList.toggle('dark', dark)
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        document.documentElement.dataset.palette = palette
       })()
     </script>
     <style>
       html {
-        background: #f7f7f9;
+        background: #fffff5;
       }
       html.dark {
-        background: #141419;
+        background: #10130a;
+      }
+      html[data-palette='terracotta'] {
+        background: #f8fff0;
+      }
+      html.dark[data-palette='terracotta'] {
+        background: #071407;
+      }
+      html[data-palette='wine'] {
+        background: #fff7ff;
+      }
+      html.dark[data-palette='wine'] {
+        background: #150422;
       }
     </style>
     <title>無良小萬</title>
