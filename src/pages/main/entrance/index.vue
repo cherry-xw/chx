@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onActivated, ref } from 'vue'
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, ref } from 'vue'
 import {
   ChatDotRound,
   Collection,
@@ -44,6 +44,15 @@ defineOptions({ name: 'EntranceView' })
 const selectedTopic = ref<DirectoryTopicId | 'all'>('all')
 const siteQuery = ref('')
 const directorySearch = ref<HTMLInputElement>()
+const previewCount = 6
+const detailDialog = ref<HTMLDialogElement>()
+const detailCategory = ref<DirectoryCategory>()
+onDeactivated(() => detailDialog.value?.close())
+async function showCategoryDetails(category: DirectoryCategory) {
+  detailCategory.value = category
+  await nextTick()
+  detailDialog.value?.showModal()
+}
 const categoryGrid = ref<HTMLElement>()
 const normalizedQuery = computed(() => siteQuery.value.trim().toLocaleLowerCase())
 const siteCount = directory.reduce((count, category) => count + category.sites.length, 0)
@@ -224,11 +233,19 @@ function recordVisit(url: string) {
                     }}<span class="category-count">{{ category.sites.length }}</span>
                   </h2>
                 </div>
+                <button
+                  type="button"
+                  class="category-more"
+                  :aria-label="'查看' + category.name + '全部站点'"
+                  @click="showCategoryDetails(category)"
+                >
+                  更多<ArrowRight aria-hidden="true" />
+                </button>
               </div>
               <p v-if="selectedTopic !== 'all'" class="category-caption">{{ category.caption }}</p>
               <div class="site-grid">
                 <SiteCard
-                  v-for="site in category.sites"
+                  v-for="site in category.sites.slice(0, previewCount)"
                   :key="site.url"
                   :site="site"
                   :detailed="selectedTopic !== 'all'"
@@ -246,6 +263,37 @@ function recordVisit(url: string) {
         </div>
       </div>
     </section>
+    <dialog
+      ref="detailDialog"
+      class="category-detail"
+      aria-labelledby="category-detail-title"
+      @click="
+        (event) => {
+          if (event.target === detailDialog) detailDialog?.close()
+        }
+      "
+    >
+      <template v-if="detailCategory">
+        <header class="category-heading">
+          <h2 id="category-detail-title">
+            {{ detailCategory.name }} · {{ detailCategory.sites.length }} 站点
+          </h2>
+          <button type="button" class="category-more" autofocus @click="detailDialog?.close()">
+            关闭<Close aria-hidden="true" />
+          </button>
+        </header>
+        <p class="category-caption">{{ detailCategory.caption }}</p>
+        <div class="detail-sites">
+          <SiteCard
+            v-for="site in detailCategory.sites"
+            :key="site.url"
+            :site="site"
+            detailed
+            @click="recordVisit(site.url)"
+          />
+        </div>
+      </template>
+    </dialog>
     <footer class="entrance-footer">
       <span>{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span
       ><span>外部站点在新标签页打开</span>
@@ -666,6 +714,33 @@ h1 {
   font-size: 11px;
   line-height: 1.6;
   color: var(--color-text-secondary);
+}
+.category-detail {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+.category-detail::backdrop {
+  background: #0008;
+}
+.category-detail h2 {
+  font-size: 14px;
+}
+.category-detail .category-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.detail-sites {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  padding: 6px;
 }
 @container entrance (max-width: 600px) {
   .directory-heading { flex-wrap: wrap; gap: 6px; }
