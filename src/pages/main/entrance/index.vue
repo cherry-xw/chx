@@ -74,10 +74,13 @@ const visibleCategories = computed(() =>
     .filter((category) => selectedTopic.value === 'all' || category.topic === selectedTopic.value)
     .map((category) => ({
       ...category,
-      sites: category.sites.filter((site) =>
-        `${site.name} ${site.description} ${site.url}`
-          .toLocaleLowerCase()
-          .includes(normalizedQuery.value)
+      sites: layout.orderSites(
+        category.id,
+        category.sites.filter((site) =>
+          `${site.name} ${site.description} ${site.url}`
+            .toLocaleLowerCase()
+            .includes(normalizedQuery.value)
+        )
       )
     }))
     .filter((category) => category.sites.length)
@@ -114,6 +117,60 @@ function startSorting() {
 }
 function finishSorting() {
   sorting.value = false
+}
+let draggedSite: { categoryId: string; url: string } | undefined
+function startSiteDrag(categoryId: string, url: string, event: DragEvent) {
+  if (!editingLayout.value || !event.dataTransfer) return
+  draggedSite = { categoryId, url }
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', url)
+  sorting.value = true
+}
+function dropSite(category: DirectoryCategory, targetUrl: string, event: DragEvent) {
+  event.preventDefault()
+  const source = draggedSite
+  draggedSite = undefined
+  sorting.value = false
+  if (!source || source.categoryId !== category.id || source.url === targetUrl) return
+  const current = category.sites.map((site) => site.url)
+  const sourceIndex = current.indexOf(source.url)
+  const targetIndex = current.indexOf(targetUrl)
+  if (sourceIndex < 0 || targetIndex < 0) return
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const insertAfter = event.clientY > rect.top + rect.height / 2
+  const next = [...current]
+  next.splice(sourceIndex, 1)
+  const adjustedTarget = next.indexOf(targetUrl) + (insertAfter ? 1 : 0)
+  next.splice(adjustedTarget, 0, source.url)
+  layout.reorderSites(category.id, current, next)
+  layoutMessage.value = layout.storageAvailable
+    ? '区块内站点顺序已保存'
+    : '顺序已调整，仅在当前页面生效'
+}
+function cancelSiteDrag() {
+  draggedSite = undefined
+  sorting.value = false
+}
+function moveSite(category: DirectoryCategory, url: string, direction: -1 | 1, event: MouseEvent) {
+  const trigger = event.currentTarget as HTMLButtonElement
+  layout.moveSite(
+    category.id,
+    category.sites.map((site) => site.url),
+    url,
+    direction
+  )
+  const index = category.sites.findIndex((site) => site.url === url) + direction + 1
+  layoutMessage.value = `${category.name}内站点已移至第 ${index} 位`
+  if (event.detail === 0) {
+    nextTick(() => {
+      const row = trigger.closest('.site-row')
+      const focusTarget = trigger.disabled
+        ? row?.querySelector<HTMLButtonElement>('.site-move-controls button:not(:disabled)')
+        : trigger
+      focusTarget?.focus()
+    })
+  }
 }
 function saveSortedPanels(next: DirectoryCategory[]) {
   const currentIds = visibleCategories.value.map((category) => category.id)
@@ -281,7 +338,7 @@ function recordVisit(url: string) {
           <span class="directory-note" role="status">{{ visibleSiteCount }} 个站点</span>
         </aside>
         <div v-if="editingLayout" class="layout-toolbar">
-          <span>拖动区块，也可使用前移 / 后移按钮；调整时显示全部站点，顺序自动保存。</span>
+          <span>拖动区块或站点，也可使用前移 / 后移按钮；调整时显示全部站点，顺序自动保存。</span>
           <button type="button" :disabled="sorting" @click="restoreOrder">
             <RefreshLeft aria-hidden="true" />恢复全部默认顺序
           </button>
@@ -375,13 +432,43 @@ function recordVisit(url: string) {
               </div>
               <p v-if="selectedTopic !== 'all'" class="category-caption">{{ category.caption }}</p>
               <div class="site-grid">
-                <SiteCard
-                  v-for="site in editingLayout ? category.sites : category.sites.slice(0, previewCount)"
+                <div
+                  v-for="(site, siteIndex) in editingLayout
+                    ? category.sites
+                    : category.sites.slice(0, previewCount)"
                   :key="site.url"
-                  :site="site"
-                  :detailed="selectedTopic !== 'all'"
-                  @click="recordVisit(site.url)"
-                />
+                  class="site-row"
+                  :class="{ 'is-site-editing': editingLayout }"
+                  :draggable="editingLayout"
+                  @dragstart.stop="startSiteDrag(category.id, site.url, $event)"
+                  @dragend="cancelSiteDrag"
+                  @dragover.prevent.stop
+                  @drop.stop="dropSite(category, site.url, $event)"
+                >
+                  <SiteCard
+                    :site="site"
+                    :detailed="selectedTopic !== 'all'"
+                    @click="recordVisit(site.url)"
+                  />
+                  <div v-if="editingLayout" class="site-move-controls">
+                    <button
+                      type="button"
+                      :disabled="siteIndex === 0 || sorting"
+                      :aria-label="`前移${site.name}`"
+                      @click="moveSite(category, site.url, -1, $event)"
+                    >
+                      <ArrowUp />
+                    </button>
+                    <button
+                      type="button"
+                      :disabled="siteIndex === category.sites.length - 1 || sorting"
+                      :aria-label="`后移${site.name}`"
+                      @click="moveSite(category, site.url, 1, $event)"
+                    >
+                      <ArrowDown />
+                    </button>
+                  </div>
+                </div>
               </div>
             </SlickItem>
           </SlickList>
@@ -719,6 +806,43 @@ h1 {
   grid-template-columns: minmax(0, 1fr);
   padding: 3px;
 }
+.site-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.site-row > :deep(.site-card) {
+  flex: 1;
+}
+.site-row.is-site-editing {
+  cursor: grab;
+}
+.site-row.is-site-editing:active {
+  cursor: grabbing;
+}
+.site-move-controls {
+  display: flex;
+  flex: 0 0 auto;
+}
+.site-move-controls button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.site-move-controls svg {
+  width: 12px;
+  height: 12px;
+}
+.site-move-controls button:focus-visible {
+  outline-offset: -1px;
+}
+
 .directory-empty {
   display: flex;
   flex-direction: column;
