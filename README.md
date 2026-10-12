@@ -20,11 +20,13 @@ pnpm setup
 
 ## 常用命令
 
+统一命令格式为 `动作:目标`（`dev`/`build`/`test` 等动作 + `frontend`/`backend` 目标）：
+
 ```bash
-pnpm dev           # 前端开发（workspace/frontend）
-pnpm dev:backend   # 后端启动（workspace/backend）
-pnpm build         # 前端构建
-pnpm test          # 前端测试
+pnpm dev:frontend    # 前端开发（workspace/frontend）
+pnpm dev:backend     # 后端启动（workspace/backend）
+pnpm build:frontend  # 前端构建
+pnpm test:frontend   # 前端测试
 ```
 
 ## 仓库结构

@@ -6,9 +6,15 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "setup": "node scripts/setup.mjs",
-    "dev": "pnpm --filter ./workspace/frontend dev",
-    "build": "pnpm --filter ./workspace/frontend build",
-    "test": "pnpm --filter ./workspace/frontend test:entrance",
-    "dev:backend": "pnpm --filter ./workspace/backend serve"
+    "dev:frontend": "pnpm --filter ./workspace/frontend run dev",
+    "dev:backend": "pnpm --filter ./workspace/backend run serve",
+    "build:frontend": "pnpm --filter ./workspace/frontend run build",
+    "type-check:frontend": "pnpm --filter ./workspace/frontend run type-check",
+    "test:frontend": "pnpm --filter ./workspace/frontend run test:entrance",
+    "lint:frontend": "pnpm --filter ./workspace/frontend run lint",
+    "format:frontend": "pnpm --filter ./workspace/frontend run format",
+    "preview:frontend": "pnpm --filter ./workspace/frontend run preview",
+    "deploy:frontend": "pnpm --filter ./workspace/frontend run deploy",
+    "deploy:backend": "pnpm --filter ./workspace/backend run dispose"
   }
 }

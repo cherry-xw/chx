@@ -69,10 +69,10 @@ async function main() {
 
   console.log('\n✅ 初始化完成');
   console.log('\n常用命令：');
-  console.log('  前端开发   pnpm dev            # 进入 workspace/frontend 开发');
+  console.log('  前端开发   pnpm dev:frontend   # 进入 workspace/frontend 开发');
   console.log('  后端开发   pnpm dev:backend    # 进入 workspace/backend 开发');
-  console.log('  前端构建   pnpm build');
-  console.log('  前端测试   pnpm test');
+  console.log('  前端构建   pnpm build:frontend');
+  console.log('  前端测试   pnpm test:frontend');
 }
 
 main().catch((err) => {

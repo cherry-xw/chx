@@ -22,7 +22,7 @@
 
 1. **领域路由**：文档总入口为 [docs/README.md](docs/README.md)；首页与 MQTT 的布局、响应式调整直达 [页面布局](docs/frontend/README.md)。其余业务模块从 [开发与提交规范](#7-项目协作规范) 定位，尚未建立独立领域 README；`docs/superpowers/` 为历史资料，不视为现行领域导航。其他缺失路由按存量项目梳理指南渐进补齐。
 2. **源码与测试根**：业务代码 `src/`（pages、components、composables、stores、api、utils、data、db、router）；共享代码无独立目录，通用逻辑位于 `src/utils` 与 `src/composables`；生成代码：无；测试根 `tests/`（Node 原生测试，如 `tests/entrance.test.mjs`）。
-3. **验证入口**：`npm run test:entrance`（首页与主题回归测试）、`npm run type-check`（vue-tsc）、`npm run build`（类型检查+生产构建）、`npm run lint` / `npm run format`（ESLint / Prettier）。允许自动化范围：上述命令。
+3. **验证入口**：`npm run test:frontend`（首页与主题回归测试）、`npm run type-check:frontend`（vue-tsc）、`npm run build:frontend`（类型检查+生产构建）、`npm run lint:frontend` / `npm run format:frontend`（ESLint / Prettier）。允许自动化范围：上述命令。
 4. **人工验收边界与执行人**：页面交互、深浅主题视觉与对比度（7:1）、多标签页与导航体验、二次确认弹窗等由人工验收；执行人：wan（README 维护者）。
 5. **审批人与审批开关**：保留计划规范的用户审批关口；计划进入验收与最终删除前由 wan 审批。
 6. **计划台账保留政策**：计划完成并验收后从 `docs/plan/` 与计划总入口移除（按计划规范）；运行产物由 `.gitignore` 忽略（如 `dist/`）；任务临时文件放系统临时目录或明确的任务验证目录，结束时清理本任务拥有的文件。

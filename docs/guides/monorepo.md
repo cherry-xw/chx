@@ -46,12 +46,18 @@ pnpm setup
 
 ## 4. 日常开发命令（仓库根执行）
 
+命令统一为 `动作:目标` 命名：`dev`/`build`/`test`/`lint`/`format` 等动作 + `frontend`/`backend` 目标，全部在仓库根执行。
+
 | 命令 | 作用 | 实际执行位置 |
 | --- | --- | --- |
-| `pnpm dev` | 启动前端开发服务器 | `workspace/frontend` |
+| `pnpm dev:frontend` | 启动前端开发服务器 | `workspace/frontend` |
 | `pnpm dev:backend` | 启动后端服务（nodemon） | `workspace/backend` |
-| `pnpm build` | 前端类型检查 + 生产构建 | `workspace/frontend` |
-| `pnpm test` | 前端回归测试 | `workspace/frontend`（`test:entrance`） |
+| `pnpm build:frontend` | 前端类型检查 + 生产构建 | `workspace/frontend` |
+| `pnpm type-check:frontend` | 前端类型检查（vue-tsc） | `workspace/frontend` |
+| `pnpm test:frontend` | 前端回归测试 | `workspace/frontend`（`test:entrance`） |
+| `pnpm lint:frontend` / `pnpm format:frontend` | ESLint / Prettier | `workspace/frontend` |
+| `pnpm preview:frontend` | 预览生产构建 | `workspace/frontend` |
+| `pnpm deploy:frontend` / `pnpm deploy:backend` | 前端 rsync 部署 / 后端 pm2 部署 | `workspace/frontend` / `workspace/backend` |
 
 ### 子项目内单独操作
 
