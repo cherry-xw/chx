@@ -37,6 +37,7 @@
 9. **生成文档和外部来源镜像**：无。
 10. **计划静态检查入口**：`npm run plan:lint`（`node docs/standards/documentation/tools/lint.mjs --plan-dir=docs/plan`），查看器 `npm run plan:viewer`（`node docs/standards/documentation/tools/plan-viewer.mjs --plan-dir=docs/plan`）。脚本阻断错误（退出码 1），待核对项由人工核对；页面仅展示同一报告，不代替命令行合入限制。
 11. **文档元信息**：无。
+12. **服务启动边界**：只有用户明确要求启动服务时才可启动，包括开发服务器、预览服务、后端服务及文档查看器。代码修改、构建、测试或人工验收准备不构成启动授权；不得为截图、验证或方便用户查看而自行开启服务。用户要求关闭后不得自动重启。
 
 业务和工具专有规则放在项目配置或模块文档，不能写入通用规则包。生成文档、外部来源镜像和兼容跳转页必须先在项目配置中声明，再接入自动检查。
 
