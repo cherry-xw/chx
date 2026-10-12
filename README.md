@@ -10,6 +10,15 @@
 - 站点配置位于 `src/data/directory.ts`，搜索引擎配置位于 `src/data/search-engines.ts`。
 - `npm run test:entrance` 运行首页与主题回归测试（Node.js 24）；`npm run build` 执行类型检查与生产构建。
 
+## 部署
+
+`npm run deploy` 一键部署到服务器：本地构建（`npm run build`）后通过 rsync 将 `dist/` 同步到服务器（`--delete` 全量镜像）。
+
+- 服务器连接信息在 `.env` 中配置（模板 `.env.example`，已 git 忽略不提交）：`DEPLOY_HOST / DEPLOY_USER / DEPLOY_PORT / DEPLOY_PASSWORD / DEPLOY_REMOTE_DIR`。
+- 认证：`.env` 不填 `DEPLOY_PASSWORD` 时使用 SSH 密钥 / ssh-agent（推荐，需先配置免密登录）；填写密码则走 `sshpass`，本机需安装 sshpass。
+- 首次连接会自动接受服务器指纹；如服务器为固定 IP 建议改用 `ssh-keyscan` 预置 known_hosts。
+- ⚠️ 部署目标必须是公网服务器（本项目部署到 www.xcherry.top）。脚本内置安全校验，会拦截本机/局域网地址（127.x / 10.x / 172.16-31.x / 192.168.x / 169.254.x）——本地 10.2.3.6:80 是独立项目的专门页面，与本项目互不相关，且 `--delete` 会清空目标目录，切勿指向。
+
 This template should help get you started developing with Vue 3 in Vite.
 
 ## Recommended IDE Setup

@@ -14,6 +14,9 @@ dist-ssr
 coverage
 *.local
 
+# 部署凭据（不提交；模板见 .env.example）
+.env
+
 /cypress/videos/
 /cypress/screenshots/
 
