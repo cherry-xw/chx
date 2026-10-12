@@ -77,11 +77,11 @@ onMounted(() => {
 
 <template>
   <!-- https://segmentfault.com/a/1190000039916159 修改ui -->
-  <RouterLink class="base-logo" :to="{ name: 'entrance' }" aria-label="chery 探索首页"
-    ><span class="brand-symbol">c</span>chery<span class="brand-dot">.</span></RouterLink
+  <RouterLink class="base-logo" :to="{ name: 'entrance' }" aria-label="chery 首页"
+    ><span aria-hidden="true">▸</span> chery<span class="brand-suffix"> / web</span></RouterLink
   >
   <el-tree
-    class="flex-1 scrollbar-hover-toggle"
+    class="navigation-tree flex-1 scrollbar-hover-toggle"
     :data="data"
     ref="treeRef"
     node-key="key"
@@ -112,95 +112,77 @@ onMounted(() => {
 </template>
 
 <style lang="less" scoped>
-:deep(.el-tree-node__content) {
-  height: 36px;
-}
-@keyframes move {
-  0% {
-    offset-rotate: 0deg;
-    offset-distance: 0%;
-  }
-  100% {
-    offset-rotate: 180deg;
-    offset-distance: 100%;
-  }
-}
 .base-logo {
   display: flex;
   align-items: center;
-  height: 72px;
+  gap: 5px;
+  height: 42px;
+  padding: 0 12px;
   flex-shrink: 0;
-  padding: 0 21px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-heading);
   text-decoration: none;
-  cursor: pointer;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -1px;
-  color: var(--el-text-color-primary);
+  font:
+    600 14px ui-monospace,
+    monospace;
 }
-.brand-symbol {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-right: 9px;
-  border-radius: 9px;
-  background: var(--color-accent);
-  color: var(--color-surface);
-  font-size: 24px;
-  font-weight: 700;
-}
-.brand-dot {
+.base-logo > span:first-child {
   color: var(--color-accent);
-  font-weight: 700;
 }
-:deep(.el-tree) {
-  padding: 16px 10px;
-  --el-tree-node-hover-bg-color: var(--color-background-soft);
+.brand-suffix {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.navigation-tree {
+  padding: 7px 4px 40px;
+  --el-tree-node-hover-bg-color: var(--color-accent-soft);
+  background: transparent;
 }
 :deep(.el-tree-node__content) {
-  height: 40px;
-  border-radius: 7px;
+  height: 29px;
+  padding-right: 4px;
+  border-radius: 2px;
   font-size: 12px;
+  margin-bottom: 1px;
 }
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
-  background: var(--color-accent-soft);
+  background: var(--color-highlight);
+  color: var(--color-on-highlight);
+  box-shadow: inset 2px 0 var(--color-accent);
+}
+:deep(.el-tree-node.is-current > .el-tree-node__content) .lable-active,
+:deep(.el-tree-node.is-current > .el-tree-node__content) .nav-node-icon {
+  color: var(--color-on-highlight) !important;
 }
 .lable-active {
-  color: var(--el-color-primary);
+  font-weight: 600;
 }
-
 .arrow-down {
-  font-size: 12px;
-  margin-right: 18px;
-  text-align: right;
-  height: 12px;
+  font-size: 10px;
+  margin-right: 6px;
+  height: 10px;
   display: block;
-  transition: all 0.3s ease;
-
+  transition: transform 160ms var(--ease-out);
   &.active-rotate {
     transform: rotate(180deg);
   }
 }
-
-:deep(.el-tree-node__content) {
-  .el-icon {
-    &:first-child {
-      display: none;
-    }
-  }
+:deep(.el-tree-node__expand-icon) {
+  display: none;
 }
 .nav-node-icon {
-  width: 18px;
-  height: 18px;
-  margin: 0 6px;
+  width: 14px;
+  height: 14px;
+  margin: 0 7px 0 5px;
 }
-:deep(.el-tree-node) {
-  &.is-current {
-    position: relative;
-    &::before {
-      content: '';
-    }
+@media (pointer: coarse) {
+  :deep(.el-tree-node__content) {
+    height: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrow-down {
+    transition: none;
   }
 }
 </style>

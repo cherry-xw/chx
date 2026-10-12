@@ -101,10 +101,10 @@ async function logout() {
 .page-header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  height: 72px;
+  gap: 10px;
+  height: 42px;
   flex-shrink: 0;
-  padding: 0 32px;
+  padding: 0 12px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -209,8 +209,8 @@ async function logout() {
 }
 @media (max-width: 1050px) {
   .page-header {
-    padding: 0 24px;
-    gap: 14px;
+    padding: 0 10px;
+    gap: 8px;
   }
   .page-location {
     display: none;
@@ -221,8 +221,10 @@ async function logout() {
 }
 @media (max-width: 600px) {
   .page-header {
-    padding: 0 12px;
-    height: 64px;
+    padding: 4px 8px;
+    height: auto;
+    min-height: 42px;
+    flex-wrap: wrap;
     gap: 8px;
   }
   .theme-picker {

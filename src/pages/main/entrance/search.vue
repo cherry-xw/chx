@@ -6,7 +6,14 @@ import 'element-plus/es/components/option/style/css'
 import 'element-plus/es/components/option-group/style/css'
 import 'element-plus/es/components/select/style/css'
 import { buildSearchURL, searchEngines } from '@/data/search-engines'
-import { maxHeat, MIN_ACTIVE_SCORE, rankByHeat, readHeat, recordHeat, writeHeat } from '@/utils/usage-heat'
+import {
+  maxHeat,
+  MIN_ACTIVE_SCORE,
+  rankByHeat,
+  readHeat,
+  recordHeat,
+  writeHeat
+} from '@/utils/usage-heat'
 
 defineOptions({ name: 'SearchView' })
 const keyword = defineModel<string>({ default: '' })
@@ -120,7 +127,7 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   height: 40px;
   padding: 4px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 3px;
   background: var(--color-background);
 }
 .header-search:focus-within {
@@ -168,7 +175,7 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   padding: 4px 9px;
   background: transparent;
   box-shadow: none;
-  font-size: 14px;
+  font-size: 12px;
 }
 .engine-select :deep(.el-select__selected-item) {
   color: var(--color-text);
@@ -185,7 +192,7 @@ input {
   border: 0;
   background: transparent;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 12px;
   outline: none;
 }
 input::placeholder {
@@ -198,7 +205,7 @@ button {
   width: 30px;
   height: 30px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 2px;
   cursor: pointer;
 }
 button svg {
@@ -222,7 +229,7 @@ button svg {
 .shortcut {
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0 5px;
   margin-right: 7px;
   font-size: 12px;
@@ -273,7 +280,7 @@ button svg {
   padding-inline: 10px;
   border-radius: 6px;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 36px;
 }
 .search-engine-menu .el-select-dropdown__item.is-hovering {

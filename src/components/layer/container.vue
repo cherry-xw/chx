@@ -47,7 +47,7 @@ const collapseState = ref(window.matchMedia('(max-width: 760px)').matches)
     min-height: 0;
   }
   .nav {
-    width: 176px;
+    width: 154px;
     flex-shrink: 0;
     background: var(--color-surface);
     border-right: 1px solid var(--color-border);
@@ -59,14 +59,14 @@ const collapseState = ref(window.matchMedia('(max-width: 760px)').matches)
   }
   .collpase-btn {
     position: absolute;
-    left: 12px;
-    bottom: 12px;
+    left: 6px;
+    bottom: 6px;
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 3px;
     background: var(--color-surface);
     color: var(--color-text-secondary);
     cursor: pointer;
