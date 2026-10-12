@@ -34,6 +34,11 @@ const collapseState = ref(window.matchMedia('(max-width: 760px)').matches)
     <div class="main-column flex-1 flex flex-col">
       <RouterView name="header"></RouterView>
       <RouterView />
+      <footer class="site-record">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+          苏ICP备18035382号
+        </a>
+      </footer>
     </div>
   </div>
 </template>
@@ -45,6 +50,21 @@ const collapseState = ref(window.matchMedia('(max-width: 760px)').matches)
   .main-column {
     min-width: 0;
     min-height: 0;
+  }
+  .site-record {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
   }
   .nav {
     width: 154px;
