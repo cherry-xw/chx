@@ -22,6 +22,9 @@
 </template>
 
 <script setup lang="ts">
+import { ElCollapse, ElCollapseItem } from 'element-plus'
+import 'element-plus/es/components/collapse/style/css'
+import 'element-plus/es/components/collapse-item/style/css'
 import { ref } from 'vue'
 
 interface NodeItem {

@@ -2,6 +2,9 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { Close, Search } from '@element-plus/icons-vue'
 import { ElOption, ElOptionGroup, ElSelect } from 'element-plus'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/option-group/style/css'
+import 'element-plus/es/components/select/style/css'
 import { buildSearchURL, searchEngines } from '@/data/search-engines'
 import { maxHeat, MIN_ACTIVE_SCORE, rankByHeat, readHeat, recordHeat, writeHeat } from '@/utils/usage-heat'
 

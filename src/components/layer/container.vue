@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ElIcon } from 'element-plus'
+import 'element-plus/es/components/icon/style/css'
+import { CaretLeft } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { RouterView } from 'vue-router'
 import { useNavStore } from '@/stores/nav'

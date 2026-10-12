@@ -12,12 +12,12 @@
         :model-value="modelValue[index]"
         :min="itemSchema.min"
         :max="itemSchema.max"
-        @update:model-value="(val: number) => updateItem(index, val)"
+        @update:model-value="(val: number | undefined) => updateItem(index, val)"
       />
       <el-switch
         v-else-if="itemSchema.type === 'boolean'"
         :model-value="modelValue[index]"
-        @update:model-value="(val: boolean) => updateItem(index, val)"
+        @update:model-value="(val: string | number | boolean) => updateItem(index, val)"
       />
       <component
         v-else-if="itemSchema.component"
@@ -42,6 +42,11 @@
 </template>
 
 <script setup lang="ts">
+import { ElButton, ElInput, ElInputNumber, ElSwitch } from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/input-number/style/css'
+import 'element-plus/es/components/switch/style/css'
 interface ItemSchema {
   type?: 'string' | 'number' | 'boolean'
   placeholder?: string

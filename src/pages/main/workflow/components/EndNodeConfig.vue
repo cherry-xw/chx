@@ -21,6 +21,12 @@
 </template>
 
 <script setup lang="ts">
+import { ElForm, ElFormItem, ElInput, ElOption, ElSelect } from 'element-plus'
+import 'element-plus/es/components/form/style/css'
+import 'element-plus/es/components/form-item/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/select/style/css'
 import { watch } from 'vue'
 import type { Node } from '@vue-flow/core'
 

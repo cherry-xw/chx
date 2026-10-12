@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { ElButton, ElCollapseTransition, ElIcon, ElInput, ElOption, ElSelect } from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/collapse-transition/style/css'
+import 'element-plus/es/components/icon/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/select/style/css'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Connection, Refresh, ArrowDown, Lock, Cpu } from '@element-plus/icons-vue'
 import { requestDeviceList, type DeviceListResponse } from '@/api/devices'

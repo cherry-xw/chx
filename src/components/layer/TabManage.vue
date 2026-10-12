@@ -21,6 +21,9 @@ type Tab = {
 </script>
 
 <script setup lang="ts">
+import { ElIcon } from 'element-plus'
+import 'element-plus/es/components/icon/style/css'
+import { Close } from '@element-plus/icons-vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 // ---------------------------- config -------------------------------
 const route = useRoute()

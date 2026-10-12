@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import serve from '@/api'
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElButton, ElInput, ElMessage } from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/message/style/css'
 import { aesEncrypt } from '@/utils/hashers'
 import { useRouter } from 'vue-router'
 import { resetToken } from '@/api/middleware/token'

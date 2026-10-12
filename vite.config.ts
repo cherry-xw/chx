@@ -10,7 +10,9 @@ export default defineConfig({
   plugins: [vue(), vueJsx(), vueDevTools()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // The package's browser entry is UMD and pulls in Vue's runtime compiler.
+      'vue-slicksort': 'vue-slicksort/dist/vue-slicksort.esm.js'
     }
   },
   optimizeDeps: {

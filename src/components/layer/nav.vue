@@ -1,5 +1,10 @@
 <!-- 左侧目录树 -->
 <script setup lang="ts">
+import { ElIcon, ElTree } from 'element-plus'
+import 'element-plus/es/components/icon/style/css'
+import 'element-plus/es/components/tree/style/css'
+import { ArrowDown } from '@element-plus/icons-vue'
+import { navIcons } from './nav-icons'
 import { type NavTreeSingleNode } from '@/stores/nav'
 import { recursion } from '@/utils/common'
 import { ref, onMounted, computed, watch } from 'vue'
@@ -88,7 +93,7 @@ onMounted(() => {
         :color="data.focus ? 'var(--el-color-primary)' : 'var(--color-text)'"
         class="nav-node-icon"
       >
-        <component :is="data.icon" />
+        <component :is="navIcons[data.icon]" />
       </el-icon>
       <div class="leading-[18px]" :class="{ 'lable-active': data.focus }">
         <span v-if="!collapse">{{ node.label }}</span>

@@ -7,6 +7,7 @@ import { npClose, npStart } from '@/components/layer/progress'
 import main from './main'
 import practice from './practice'
 import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
 
 export let router: Router
 function createRouterIns() {

@@ -1,5 +1,6 @@
 <!-- @AIGC-BEGIN: -->
 <script setup lang="ts">
+import 'animate.css'
 import { computed, ref, watch } from 'vue'
 
 // --------------------------- config -------------------------------

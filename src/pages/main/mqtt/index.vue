@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ElIcon } from 'element-plus'
+import 'element-plus/es/components/icon/style/css'
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { Connection, Share, Download, Timer } from '@element-plus/icons-vue'
 import Connect from './connect.vue'

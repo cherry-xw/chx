@@ -82,6 +82,24 @@
 </template>
 
 <script setup lang="ts">
+import {
+  ElButton,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElInputNumber,
+  ElOption,
+  ElSelect,
+  ElSwitch
+} from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/form/style/css'
+import 'element-plus/es/components/form-item/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/input-number/style/css'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/select/style/css'
+import 'element-plus/es/components/switch/style/css'
 import { ref, watch } from 'vue'
 import ArrayEditor from './ArrayEditor.vue'
 

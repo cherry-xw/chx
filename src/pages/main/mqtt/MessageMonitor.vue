@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { ElButton, ElIcon, ElInput, ElSwitch } from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/icon/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/switch/style/css'
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import {
   Search,

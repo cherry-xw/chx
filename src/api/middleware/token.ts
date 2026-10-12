@@ -4,6 +4,7 @@
 
 import { core, Middleware, ServeCreator } from 'chery-fetch'
 import { ElNotification } from 'element-plus'
+import 'element-plus/es/components/notification/style/css'
 import { router } from '@/router'
 import { encode } from '@/utils/common'
 

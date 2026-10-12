@@ -15,6 +15,8 @@
 </template>
 
 <script setup lang="ts">
+import { ElIcon } from 'element-plus'
+import 'element-plus/es/components/icon/style/css'
 import { Handle, Position } from '@vue-flow/core'
 import { Grid } from '@element-plus/icons-vue'
 

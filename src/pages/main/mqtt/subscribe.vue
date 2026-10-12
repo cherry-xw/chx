@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { ElButton, ElIcon, ElInput, ElOption, ElSelect } from 'element-plus'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/icon/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/select/style/css'
 import { computed, ref } from 'vue'
 import { Plus, Close, Share } from '@element-plus/icons-vue'
 import { topicError, type Subscription, type QoS } from './useMqttSession'
