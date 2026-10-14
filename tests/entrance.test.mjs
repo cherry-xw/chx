@@ -4,6 +4,7 @@ import vm from 'node:vm'
 import test from 'node:test'
 import { createPinia, setActivePinia } from 'pinia'
 import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
+import { personalServices, serviceLinks } from '../src/data/personal-services.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
 import {
@@ -34,6 +35,23 @@ function memoryStorage() {
     }
   }
 }
+
+test('manager and NapCat QQ expose the confirmed tunnel and LAN URLs without an invented domain', () => {
+  for (const [name, port] of [
+    ['manager', 39980],
+    ['NapCat QQ', 6099]
+  ]) {
+    const matches = personalServices.filter((service) => service.name === name)
+    assert.equal(matches.length, 1)
+    assert.equal(matches[0].port, port)
+    assert.deepEqual(serviceLinks(matches[0]), [
+      { label: '隧道打开', url: `http://10.2.3.6:${port}/` },
+      { label: '局域网打开', url: `http://192.168.68.164:${port}/` }
+    ])
+  }
+  const urls = personalServices.flatMap(serviceLinks).map((link) => link.url)
+  assert.equal(new Set(urls).size, urls.length)
+})
 
 function browser(t, { saved = null, palette = null, dark = false, storageDisabled = false } = {}) {
   const values = new Map(saved ? [['chery-theme', saved]] : [])

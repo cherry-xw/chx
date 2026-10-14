@@ -88,6 +88,22 @@ export const personalServices: PersonalService[] = [
     domainUrl: 'https://www.xcherry.top:9119/'
   },
   {
+    name: 'manager',
+    icon: 'Monitor',
+    description: 'manager Web 管理面板',
+    port: 39980,
+    lan: true,
+    vpn: true
+  },
+  {
+    name: 'NapCat QQ',
+    icon: 'Connection',
+    description: 'NapCat QQ Web 管理面板',
+    port: 6099,
+    lan: true,
+    vpn: true
+  },
+  {
     name: 'mihomo 面板',
     icon: 'Connection',
     description: 'Clash 内核管理面板（metacubexd）',
