@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DirectorySite } from '@/data/directory'
+import { useLinkOpeningStore } from '@/stores/link-opening'
 
 const props = defineProps<{ site: DirectorySite; featured?: boolean; detailed?: boolean }>()
 const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./, ''))
+const opening = useLinkOpeningStore()
 </script>
 
 <template>
@@ -12,9 +14,9 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
     :class="{ featured, detailed }"
     draggable="false"
     :href="site.url"
-    target="_blank"
+    :target="opening.target"
     rel="noopener noreferrer"
-    :aria-label="site.name + '（在新标签页打开）'"
+    :aria-label="site.name + '（' + opening.description + '）'"
   >
     <span
       class="site-mark"

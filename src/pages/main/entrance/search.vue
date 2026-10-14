@@ -6,6 +6,7 @@ import 'element-plus/es/components/option/style/css'
 import 'element-plus/es/components/option-group/style/css'
 import 'element-plus/es/components/select/style/css'
 import { buildSearchURL, searchEngines } from '@/data/search-engines'
+import { useLinkOpeningStore } from '@/stores/link-opening'
 import {
   maxHeat,
   MIN_ACTIVE_SCORE,
@@ -36,6 +37,7 @@ function readEngine() {
   return 'bing'
 }
 const engineId = ref(readEngine())
+const opening = useLinkOpeningStore()
 const shortcutLabel = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘ K' : 'Ctrl K'
 
 function saveEngine() {
@@ -49,13 +51,24 @@ function search() {
   const url = buildSearchURL(engineId.value, keyword.value)
   if (!url) return
   writeHeat(engineHeatKey, recordHeat(readHeat(engineHeatKey), engineId.value))
-  window.open(url, '_blank', 'noopener,noreferrer')
+  opening.openURL(url)
 }
 function onEnter(event: KeyboardEvent) {
   if (event.isComposing || event.keyCode === 229) event.preventDefault()
 }
 function focusSearch(event: KeyboardEvent) {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && !event.altKey) {
+  if (
+    event.defaultPrevented ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    document.querySelector('dialog[open]')
+  ) return
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    event.key.toLowerCase() === 'k' &&
+    !event.altKey &&
+    !event.shiftKey
+  ) {
     event.preventDefault()
     input.value?.focus()
     input.value?.select()
@@ -64,6 +77,12 @@ function focusSearch(event: KeyboardEvent) {
 function clear() {
   keyword.value = ''
   input.value?.focus()
+}
+function clearWithEscape(event: KeyboardEvent) {
+  if (event.isComposing || event.keyCode === 229) return
+  event.preventDefault()
+  event.stopPropagation()
+  clear()
 }
 onMounted(() => window.addEventListener('keydown', focusSearch))
 onUnmounted(() => window.removeEventListener('keydown', focusSearch))
@@ -97,23 +116,26 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
       v-model="keyword"
       type="text"
       aria-label="搜索关键词"
+      aria-keyshortcuts="Control+K Meta+K Escape Enter"
       placeholder="搜索你感兴趣的内容…"
       autocomplete="off"
       @keydown.enter="onEnter"
+      @keydown.esc="clearWithEscape"
     />
-    <button v-if="keyword" class="clear-search" type="button" aria-label="清空搜索" @click="clear">
-      <Close />
+    <button v-if="keyword" class="clear-search" type="button" aria-label="清空搜索（Esc）" @click="clear">
+      <Close aria-hidden="true" /><kbd class="shortcut" aria-hidden="true">Esc</kbd>
     </button>
-    <kbd v-else class="shortcut" aria-hidden="true">{{ shortcutLabel }}</kbd>
+    <kbd class="shortcut" aria-hidden="true">{{ shortcutLabel }}</kbd>
     <button
       class="submit-search"
       type="submit"
-      aria-label="搜索（在新标签页打开）"
+      :aria-label="'搜索（' + opening.description + '）'"
       :disabled="!keyword.trim()"
-      title="搜索（在新标签页打开）"
+      :title="'搜索（' + opening.description + '）'"
     >
-      <Search />
+      <Search aria-hidden="true" />
     </button>
+    <kbd class="shortcut" aria-hidden="true">Enter</kbd>
   </form>
 </template>
 
@@ -222,9 +244,15 @@ button svg {
   cursor: default;
 }
 .clear-search {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   background: transparent;
   color: var(--color-text-secondary);
-  width: 26px;
+  width: auto;
+}
+.clear-search .shortcut {
+  margin-right: 3px;
 }
 .shortcut {
   color: var(--color-text-muted);
@@ -238,10 +266,12 @@ button svg {
 }
 @media (max-width: 600px) {
   .shortcut {
-    display: none;
+    padding: 0 2px;
+    margin-right: 3px;
+    font-size: 9px;
   }
   .engine-picker {
-    flex-basis: 76px;
+    flex-basis: 64px;
   }
   .engine-select :deep(.el-select__wrapper) {
     padding-inline: 5px;

@@ -32,6 +32,7 @@ import {
 } from '@/data/directory'
 import { DragHandle, SlickItem, SlickList } from 'vue-slicksort'
 import { useDirectoryLayoutStore } from '@/stores/directory-layout'
+import { useLinkOpeningStore } from '@/stores/link-opening'
 import SiteCard from './SiteCard.vue'
 import { usePanelMotion } from '@/composables/usePanelMotion'
 import {
@@ -46,6 +47,7 @@ import {
 defineOptions({ name: 'EntranceView' })
 const selectedTopic = ref<DirectoryTopicId | 'all'>('all')
 const layout = useDirectoryLayoutStore()
+const opening = useLinkOpeningStore()
 const editingLayout = ref(false)
 const sorting = ref(false)
 const layoutMessage = ref('')
@@ -58,6 +60,36 @@ motionQuery.addEventListener('change', syncMotion)
 onBeforeUnmount(() => motionQuery.removeEventListener('change', syncMotion))
 const siteQuery = ref('')
 const directorySearch = ref<HTMLInputElement>()
+const searchShortcutLabel = /Mac|iPhone|iPad/.test(navigator.platform)
+  ? '⌘ ⇧ K'
+  : 'Ctrl Shift K'
+function focusDirectorySearch(event: KeyboardEvent) {
+  if (
+    event.defaultPrevented ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    sorting.value ||
+    document.querySelector('dialog[open]') ||
+    event.altKey ||
+    !event.shiftKey ||
+    !(event.ctrlKey || event.metaKey) ||
+    event.key.toLowerCase() !== 'k'
+  ) {
+    return
+  }
+  event.preventDefault()
+  directorySearch.value?.focus()
+  directorySearch.value?.select()
+}
+function clearSearchWithEscape(event: KeyboardEvent) {
+  if (event.isComposing || event.keyCode === 229) return
+  event.preventDefault()
+  event.stopPropagation()
+  clearSiteQuery()
+}
+onActivated(() => window.addEventListener('keydown', focusDirectorySearch))
+onDeactivated(() => window.removeEventListener('keydown', focusDirectorySearch))
+onBeforeUnmount(() => window.removeEventListener('keydown', focusDirectorySearch))
 const previewCount = 6
 const detailDialog = ref<HTMLDialogElement>()
 const detailCategory = ref<DirectoryCategory>()
@@ -267,6 +299,19 @@ function recordVisit(url: string) {
         >{{ directoryTopics.length }} 专题 / {{ directory.length }} 区块 /
         {{ siteCount }} 站点</span
       >
+      <div class="opening-mode" role="group" aria-label="外部站点与搜索打开方式">
+        <span>打开方式</span>
+        <button
+          type="button"
+          :aria-pressed="opening.mode === 'same-tab'"
+          @click="opening.setMode('same-tab')"
+        >替换本页</button>
+        <button
+          type="button"
+          :aria-pressed="opening.mode === 'new-tab'"
+          @click="opening.setMode('new-tab')"
+        >新页打开</button>
+      </div>
       <nav class="portal-links" aria-label="应用快捷入口">
         <RouterLink to="/main/services"
           ><Collection aria-hidden="true" />个人服务<ArrowRight aria-hidden="true"
@@ -313,12 +358,20 @@ function recordVisit(url: string) {
             v-model="siteQuery"
             type="search"
             aria-label="筛选本站收录的网站"
+            aria-keyshortcuts="Control+Shift+K Meta+Shift+K Escape"
             placeholder="查找站点、内容或网址…"
             @input="cancelCategoryAnimation"
-            @keydown.esc="siteQuery = ''"
+            @keydown.esc="clearSearchWithEscape"
           />
-          <button v-if="siteQuery" type="button" aria-label="清空站点筛选" @click="clearSiteQuery">
-            <Close />
+          <kbd class="shortcut-key" aria-hidden="true">{{ searchShortcutLabel }}</kbd>
+          <button
+            v-if="siteQuery"
+            type="button"
+            class="search-clear"
+            aria-label="清空站点筛选（Esc）"
+            @click="clearSiteQuery"
+          >
+            <Close aria-hidden="true" /><kbd class="shortcut-key" aria-hidden="true">Esc</kbd>
           </button>
         </div>
       </div>
@@ -510,8 +563,14 @@ function recordVisit(url: string) {
           <h2 id="category-detail-title">
             {{ detailCategory.name }} · {{ detailCategory.sites.length }} 站点
           </h2>
-          <button type="button" class="category-more" autofocus @click="detailDialog?.close()">
-            关闭<Close aria-hidden="true" />
+          <button
+            type="button"
+            class="category-more"
+            aria-keyshortcuts="Escape"
+            autofocus
+            @click="detailDialog?.close()"
+          >
+            关闭<kbd class="shortcut-key" aria-hidden="true">Esc</kbd><Close aria-hidden="true" />
           </button>
         </header>
         <p class="category-caption">{{ detailCategory.caption }}</p>
@@ -529,7 +588,7 @@ function recordVisit(url: string) {
     <footer class="entrance-footer">
       <span>{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span>
       <span class="entrance-footer-meta">
-        外部站点在新标签页打开 ·
+        外部站点{{ opening.description }} ·
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
           苏ICP备18035382号
         </a>
@@ -569,6 +628,32 @@ h1 {
   display: flex;
   gap: 6px;
   margin-left: auto;
+}
+.opening-mode {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+.opening-mode > span {
+  margin-right: 3px;
+  color: var(--color-text-muted);
+}
+.opening-mode button {
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+.opening-mode button[aria-pressed='true'] {
+  border-color: var(--color-border-hover);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 .portal-links a {
   display: inline-flex;
@@ -689,6 +774,23 @@ h1 {
 .directory-search button svg {
   width: 12px;
   height: 12px;
+}
+.shortcut-key {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  color: var(--color-text-muted);
+  font:
+    10px/18px ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+.directory-search .search-clear {
+  display: flex;
+  gap: 3px;
+  width: auto;
+  padding: 0 3px;
 }
 .directory-toolbar {
   display: flex;

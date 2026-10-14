@@ -4,6 +4,7 @@ import vm from 'node:vm'
 import test from 'node:test'
 import { createPinia, setActivePinia } from 'pinia'
 import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
+import { useLinkOpeningStore } from '../src/stores/link-opening.ts'
 import { personalServices, serviceLinks } from '../src/data/personal-services.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
@@ -113,6 +114,17 @@ function browser(t, { saved = null, palette = null, dark = false, storageDisable
   })
   return {
     createStore,
+    createOpeningStore() {
+      setActivePinia(createPinia())
+      const store = useLinkOpeningStore()
+      stores.push(store)
+      return store
+    },
+    openingStorageChange(value) {
+      if (value === null) values.delete('chery-link-opening')
+      else values.set('chery-link-opening', value)
+      storageListeners.get('storage')?.({ key: value === null ? null : 'chery-link-opening' })
+    },
     values,
     classes,
     globals,
@@ -135,6 +147,46 @@ function browser(t, { saved = null, palette = null, dark = false, storageDisable
     }
   }
 }
+
+test('opening preference persists, restores and follows storage changes', (t) => {
+  const env = browser(t)
+  const opening = env.createOpeningStore()
+  assert.equal(opening.target, '_blank')
+  opening.setMode('same-tab')
+  assert.equal(opening.target, '_self')
+  assert.equal(env.values.get('chery-link-opening'), 'same-tab')
+  const restored = env.createOpeningStore()
+  assert.equal(restored.mode, 'same-tab')
+  env.openingStorageChange('invalid')
+  assert.equal(restored.mode, 'new-tab')
+  env.openingStorageChange('same-tab')
+  assert.equal(restored.target, '_self')
+  env.openingStorageChange(null)
+  assert.equal(restored.mode, 'new-tab')
+})
+
+test('opening preference remains usable when storage is unavailable', (t) => {
+  const env = browser(t, { storageDisabled: true })
+  const opening = env.createOpeningStore()
+  assert.equal(opening.mode, 'new-tab')
+  opening.setMode('same-tab')
+  assert.equal(opening.target, '_self')
+})
+
+test('search navigation uses the same target preference as site links', (t) => {
+  const env = browser(t)
+  const calls = []
+  env.globals.window.open = (...args) => calls.push(['open', ...args])
+  env.globals.window.location = { assign: (url) => calls.push(['assign', url]) }
+  const opening = env.createOpeningStore()
+  opening.openURL('https://example.com/')
+  opening.setMode('same-tab')
+  opening.openURL('https://example.com/search')
+  assert.deepEqual(calls, [
+    ['open', 'https://example.com/', '_blank', 'noopener,noreferrer'],
+    ['assign', 'https://example.com/search']
+  ])
+})
 
 test('first visit follows the system, including later system changes', (t) => {
   const env = browser(t)
