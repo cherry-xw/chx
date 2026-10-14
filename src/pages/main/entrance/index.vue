@@ -375,7 +375,7 @@ function recordVisit(url: string) {
             class="category-grid"
             :class="{ 'is-topic': selectedTopic !== 'all', 'is-editing': editingLayout }"
             :list="visibleCategories"
-            axis="xy"
+            :axis="selectedTopic === 'all' ? 'xy' : 'y'"
             :use-drag-handle="true"
             :distance="6"
             :transition-duration="reducedMotion ? 0 : 200"
@@ -415,6 +415,7 @@ function recordVisit(url: string) {
                     }}<span class="category-count">{{ category.sites.length }}</span>
                   </h2>
                 </div>
+                <span v-if="activeTopic" class="category-divider" aria-hidden="true"></span>
                 <div v-if="editingLayout" class="move-controls">
                   <button
                     type="button"
@@ -526,8 +527,13 @@ function recordVisit(url: string) {
       </template>
     </dialog>
     <footer class="entrance-footer">
-      <span>{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span
-      ><span>外部站点在新标签页打开</span>
+      <span>{{ visibleCategories.length }} 个区块 · {{ visibleSiteCount }} 个站点</span>
+      <span class="entrance-footer-meta">
+        外部站点在新标签页打开 ·
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+          苏ICP备18035382号
+        </a>
+      </span>
     </footer>
   </main>
 </template>
@@ -755,7 +761,60 @@ h1 {
   align-items: start;
 }
 .category-grid.is-topic {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+.is-topic .category-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.is-topic .category-heading {
+  gap: 10px;
+  min-height: 36px;
+  padding: 3px 0;
+  border-bottom: 0;
+  background: transparent;
+}
+.is-topic .category-title {
+  min-width: 0;
+}
+.is-topic .category-title h2 {
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.category-divider {
+  position: relative;
+  flex: 1;
+  min-width: 16px;
+  height: 1px;
+  background: var(--color-border);
+}
+.category-divider::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0 0;
+  background: var(--color-accent);
+  opacity: 0;
+  transform: scaleX(0.04);
+  transform-origin: left center;
+  transition:
+    transform 200ms var(--ease-out),
+    opacity 200ms var(--ease-out);
+}
+.is-topic .category-panel:has(:focus-visible) .category-divider::after {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: none;
+}
+.is-topic .category-caption {
+  padding: 0 0 6px;
+  border-bottom: 0;
+}
+.is-topic .site-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 4px 12px;
+  padding: 0;
 }
 .category-panel {
   min-width: 0;
@@ -886,19 +945,33 @@ h1 {
 .entrance-footer {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   justify-content: space-between;
   gap: 6px;
   margin-top: 10px;
   padding-top: 6px;
   border-top: 1px solid var(--color-border);
-  font-size: 10px;
+  font-size: 12px;
+  line-height: 18px;
   color: var(--color-text-muted);
+}
+.entrance-footer-meta {
+  white-space: nowrap;
+}
+.entrance-footer a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .portal-links a:active:not(:focus-visible),
 .category-filters button:active:not(:focus-visible) {
   transform: scale(0.97);
 }
 @media (hover: hover) and (pointer: fine) {
+  .is-topic .category-panel:hover .category-divider::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
   .portal-links a:hover,
   .category-more:hover {
     color: var(--color-accent);
@@ -946,6 +1019,10 @@ h1 {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .category-divider::after {
+    transform: none;
+    transition: none;
+  }
   .portal-links a,
   .portal-links svg,
   .category-more svg,

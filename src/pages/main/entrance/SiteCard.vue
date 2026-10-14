@@ -16,9 +16,13 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
     rel="noopener noreferrer"
     :aria-label="site.name + '（在新标签页打开）'"
   >
-    <span class="site-mark" :style="{ '--site-color': site.color }" aria-hidden="true">{{
-      site.mark
-    }}</span>
+    <span
+      class="site-mark"
+      :class="{ 'is-single': site.mark.length === 1, 'is-long': site.mark.length > 2 }"
+      :style="{ '--site-color': site.color }"
+      aria-hidden="true"
+      >{{ site.mark }}</span
+    >
     <span class="site-copy">
       <span class="site-name" :title="site.name">{{ site.name }}</span>
       <span v-if="detailed" class="site-domain">{{ domain }}</span>
@@ -63,6 +67,13 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
   font:
     650 11px Arial,
     sans-serif;
+  transition: transform 160ms var(--ease-out);
+}
+.site-mark.is-single {
+  font-size: 11px;
+}
+.site-mark.is-long {
+  font-size: 8px;
 }
 .site-copy {
   display: grid;
@@ -100,8 +111,18 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
   height: 24px;
   font-size: 12px;
 }
+.featured .site-mark.is-long {
+  font-size: 9px;
+}
 .site-card:focus-visible {
   outline-offset: -1px;
+}
+.site-card:focus-visible::before {
+  opacity: 1;
+  transition: none;
+}
+.site-card:focus-visible .site-name {
+  color: var(--color-accent);
 }
 .site-card:active:not(:focus-visible) {
   transform: scale(0.985);
@@ -110,6 +131,15 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
   .site-card:hover::before {
     opacity: 1;
   }
+  .site-card:hover .site-mark {
+    transform: scale(1.06);
+  }
+  .site-card:hover .site-name {
+    color: var(--color-accent);
+  }
+  .site-card:active .site-mark {
+    transform: none;
+  }
 }
 @media (pointer: coarse) {
   .site-card {
@@ -117,27 +147,38 @@ const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./,
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .site-card {
+  .site-card,
+  .site-mark {
     transform: none !important;
     transition: none;
   }
 }
 .detailed {
-  align-items: start;
+  gap: 10px;
   padding: 7px 6px;
 }
 .detailed .site-mark {
-  margin-top: 2px;
+  flex-basis: 36px;
+  height: 36px;
+  font-size: 16px;
+}
+.detailed .site-mark.is-single {
+  font-size: 20px;
+}
+.detailed .site-mark.is-long {
+  font-size: 11px;
 }
 .detailed .site-copy {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
   gap: 2px 7px;
 }
 .detailed .site-name {
   font-weight: 600;
 }
 .site-domain {
-  max-width: 160px;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: end;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
