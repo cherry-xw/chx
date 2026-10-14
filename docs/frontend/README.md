@@ -11,31 +11,50 @@
 | 调整区块排序与本机恢复 | [布局状态](../../workspace/frontend/src/stores/directory-layout.ts)：`useDirectoryLayoutStore`；[排序工具](../../workspace/frontend/src/utils/directory-order.ts)：`mergeVisibleOrder` | `npm run test:frontend`；拖拽、键盘移动、刷新恢复和新增区块人工检查 |
 | 调整首页空间利用率、分类密度 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.entrance-overview`、`.category-grid`、`.site-grid` | `npm run build:frontend`；宽屏与侧栏切换人工检查 |
 | 调整「常用入口」为本地热度驱动 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`computeFeaturedSites`、`recordVisit`；[热度工具](../../workspace/frontend/src/utils/usage-heat.ts)：`readHeat`、`recordHeat` | `npm run test:frontend`；使用一段时间后刷新或切回页签人工检查排序 |
+| 调整外部站点与搜索打开方式 | [打开方式状态](../../workspace/frontend/src/stores/link-opening.ts)：`useLinkOpeningStore`；[首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.opening-mode`；[站点条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)；[顶部搜索](../../workspace/frontend/src/pages/main/entrance/search.vue)：`search` | `npm run test:frontend`；两种打开方式、刷新恢复、跨标签同步与键盘操作人工检查 |
 | 调整工作台分栏、报文详情位置 | [工作台样式](../../workspace/frontend/src/pages/main/mqtt/workspace.css)：`.workspace-grid`、`.data-column`、`.monitor-panel.has-selection`；[消息视图](../../workspace/frontend/src/pages/main/mqtt/MessageMonitor.vue) | `npm run build:frontend`；连接区、主题列表、消息详情人工检查 |
 | 调整应用可用内容区 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.main-column`；[标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`.fill-content` | 展开/收起侧栏，检查横向溢出与键盘顺序 |
-| 维护应用页备案号 | [应用容器](../../workspace/frontend/src/components/layer/container.vue)：`.site-record` | `npm run build:frontend`；检查各应用页、窄屏及键盘访问备案链接 |
+| 维护首页备案号 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`.entrance-footer` | `npm run build:frontend`；检查备案号与页脚提示同行及键盘访问 |
 | 调整首页面板与分类聚焦定位 | [首页](../../workspace/frontend/src/pages/main/entrance/index.vue)：`showCategoryDetails`；[条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)：`.site-copy` | `npm run test:frontend`；区块详情打开、关闭与焦点恢复人工检查 |
 | 调整固定首页页签 | [标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`sortableTabs` | `npm run build:frontend`；直接进入其他页面、拖动与关闭页签人工检查 |
 | 调整两套主题的层次、文字对比度与交互动效 | [主题令牌](../../workspace/frontend/src/assets/base.css)：`--color-panel-header`、`--color-item-surface`、`--ease-out`；[面板动效](../../workspace/frontend/src/composables/usePanelMotion.ts)：`usePanelMotion`；[条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue) | `npm run test:frontend`；深浅主题、键盘与减少动态效果人工检查 |
 | 扩展配色、外观偏好与本机恢复 | [外观状态](../../workspace/frontend/src/stores/counter.ts)：`colorPalettes`、`useModeStore`、`setPalette`；[顶部外观弹层](../../workspace/frontend/src/components/layer/Header.vue)：`appearance-panel`；[首屏恢复](../../workspace/frontend/index.html)；[主题令牌](../../workspace/frontend/src/assets/base.css)：`data-palette` | `npm run test:frontend`；刷新、跨标签同步、六组合与窄屏选择人工检查 |
 | 调整服务检索与访问方式筛选 | [个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)：`filteredServices`、`accessFilter`、`serviceIcons` | `npm run build:frontend`；关键词与访问方式组合、空结果、服务图标和原始地址人工检查 |
 | 维护内置个人服务及访问方式 | [服务数据](../../workspace/frontend/src/data/personal-services.ts)：`personalServices`、`serviceLinks`；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)；[路由](../../workspace/frontend/src/router/main/index.ts)：`services` | `npm run build:frontend`；深浅主题、各网络入口人工检查 |
+| 调整重点编排、流光与文字反馈 | [重点编排](../../workspace/frontend/src/composables/useAmbientFocus.ts)：`useAmbientFocus`；[边框光效](../../workspace/frontend/src/components/motion/MotionGlow.vue)；[文字反馈](../../workspace/frontend/src/components/motion/MotionText.vue)；[分类图形](../../workspace/frontend/src/components/motion/TopicPulse.vue) | `npm run test:frontend`；静置主次、快速悬浮、长名称与深浅主题人工检查 |
+| 调整动效启停与不可见暂停 | [可见性门控](../../workspace/frontend/src/composables/useMotionPresence.ts)：`useMotionPresence`；[动效状态](../../workspace/frontend/src/stores/activity-motion.ts)：`useActivityMotionStore`；[公共页头](../../workspace/frontend/src/components/layer/Header.vue) | `npm run test:frontend`；统一开关、减少动态效果、滚动与页签切换人工检查 |
 
 ## 布局边界
 
-各页填满应用内容区，只保留有上限的页边距。应用容器在页签内容区下方固定展示备案链接，切换页面时仍可见。响应式依据页面内容宽度进行容器查询，不能只依据屏幕宽度推断页面可用空间。
+各页填满应用内容区，只保留有上限的页边距。响应式依据页面内容宽度进行容器查询，不能只依据屏幕宽度推断页面可用空间。
 
 布局顺序为：应用侧栏确定剩余空间 → 页面建立 inline-size 查询容器 → 首页分类网格自动分列、工作台按宽度重排 → 单个卡片约束长文本并允许换行。
 
-首页采用“专题 → 区块 → 站点”三级结构：顶部专题页签组织开发、设计、文档、工具、博客、媒体、ACG 与游戏；每个专题保留多个细分区块；媒体专题包含视频、直播、音乐与新闻阅读，默认将直播紧接视频。全部与专题视图每区块默认最多显示 6 条站点，完整列表由区块“更多”打开详情查看（搜索结果不足 6 条时按实际数量显示），专题视图保留多面板网格并展示完整说明及域名，不把单个旧区块横向拉满。专题按钮在顶部横向排列，不占用第二条侧栏。个人服务采用紧凑面板网格，每个面板集中展示名称、端口、用途与全部访问入口；网络信息收拢为底部横向面板。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。筛选表示配置了相应入口，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
+首页采用“专题 → 区块 → 站点”三级结构：顶部专题页签组织开发、设计、文档、工具、博客、媒体、ACG 与游戏；每个专题保留多个细分区块；媒体专题包含视频、直播、音乐与新闻阅读，默认将直播紧接视频。全部与专题视图每区块默认最多显示 6 条站点，完整列表由区块“更多”打开详情查看（搜索结果不足 6 条时按实际数量显示）。全部视图采用紧凑面板网格；专题视图采用纵向排列的横向分区，标题与贯穿剩余宽度的分割线构成区块边界，区块内站点按从左到右、从上到下自适应多列平铺，并展示完整说明及域名；窄屏降为单列，少量站点保留正常列宽。专题按钮在顶部横向排列，不占用第二条侧栏。个人服务采用紧凑面板网格，每个面板集中展示名称、端口、用途与全部访问入口；网络信息收拢为底部横向面板。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。筛选表示配置了相应入口，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
+
+AI 专题追加在开发专题之后，包含 AI 服务、AI 测评、AI 对比与 AI 工具四个区块，复用目录的搜索、详情与本机排序能力。服务优先收录国内对话助手及官方模型/API 平台，工具涵盖国内编程代理、工作智能体以及国内外生成式与发现类工具，国内产品优先排列，同时保留常用海外和开源入口；测评收录基准测试与能力榜单，对比收录竞技场及性能、价格对比入口。
 
 新增面板或断点时在各页现有查询容器内扩展，不重新引入页面级固定最大宽度。`min-width: 0` 和网格最小宽度负责防止长主题、地址或报文撑破布局。
+
+专题分区的分割线在鼠标悬停时以 200ms transform/opacity 过渡展开强调色，移出时收回，复用 `--ease-out`；键盘焦点进入区块时即时显示强调线，减少动态效果时仅显示静态强调线。
+
+动效按信息层次分工，而非为每个面板复制同一装饰：常用入口是主要焦点；分类区块使用播放光环、音乐波形、节点、扫描、光标等与内容对应的图形；个人服务使用边框光效与图标反馈。静置时 GSAP 编排同一页面最多一个可见目标的底光、文字高光和分类图形，首页以两次常用入口、一次分类区块的节奏轮换，不改变站点热度、排序或服务状态。鼠标进入内容区块或键盘聚焦时停止自动轮换，让主动交互优先。边框流光仅在悬浮当前数据条目时播放，限定到该条目直接拥有的光效层，父区块不联动、不扩散到其他条目；移开即隐藏并暂停，自动轮换不播放边框流光。悬浮文字逐字轻抬、字重叠层及高光只播放一次；静置文字高光仅作用于目标自身的标题或名称。字重叠层预留宽度，不靠字号、布局位移或移除内容突出重点；用途与域名保持静止，正文始终可读。
+
+页头“动效”按钮统一开关本次应用会话的重点编排、持续装饰和文字反馈，不改变原有筛选、主题等交互动效，也不保存到本地。浏览器页面隐藏、应用页签停用或元素离开视口时暂停；首页调整布局、搜索及详情聚焦期间停止自动轮换。系统启用减少动态效果或缺少 IntersectionObserver 时使用静态反馈。所有光效均为装饰，不表示 CPU/内存实测值或服务在线状态。键盘始终保留即时、稳定的焦点轮廓与文字强调，不播放逐字弹跳。
+
+全部站点保留 20px 文字标识及名称、用途同行的紧凑布局，常用入口保留 24px 标识；仅专题与详情条目使用 36px 方形文字标识，配合右侧上下排列的名称与用途，形成两行高度的视觉锚点。专题与详情中的域名占受限列宽，避免挤压标题。标识优先采用可识别的字母或完整常用缩写，三至四字符使用较小字号。鼠标悬停时底色淡入、标识以 160ms transform 过渡放大至 1.06 倍、名称使用强调色；按下时标识复位，移出时平滑恢复。键盘焦点即时显示底色和强调文字，减少动态效果时关闭缩放并保留颜色反馈。
+
+顶部站外搜索使用 Ctrl/⌘ K 聚焦并选中关键词，Enter 提交；首页站点筛选使用 Ctrl/⌘ Shift K 聚焦并选中关键词，仅在首页激活且未拖拽时生效。Esc 清空当前搜索框内容，详情弹窗中的 Esc 使用原生关闭行为。对应控件直接显示按键提示并声明 `aria-keyshortcuts`，搜索聚焦提示持续可见。快捷键忽略输入法组合输入及其他弹层已处理的事件，原生模态弹窗打开时不把焦点移出弹窗。
+
+“站点导航”顶部的打开方式提供“替换本页 / 新页打开”，默认新页打开。常用入口、全部站点、专题、详情与顶部站外搜索共用 `useLinkOpeningStore`，分别采用 `_self` / `_blank`；搜索替换本页使用当前浏览器标签页导航。选项通过 action 保存到本地键 `chery-link-opening`，同源标签页同步；未知值、清除存储时回退新页打开，存储不可用时本次页面仍可切换。入口、搜索辅助文本与页脚提示同步当前方式。原生链接保留 Ctrl/⌘ 点击、中键及右键菜单的浏览器行为。
 
 ## 首屏依赖边界
 
 业务页面保持路由动态导入。Element Plus 组件与对应 `element-plus/es/components/<组件>/style/css` 在使用方显式导入，消息和通知服务同样在调用模块导入样式；不在应用入口全量安装组件库或导入完整样式。中文配置由 `App.vue` 的 `ElConfigProvider` 统一提供，基础样式与暗色变量由应用入口加载。
 
 图标由使用方显式导入；导航元数据中的字符串图标通过 `navIcons` 有限映射解析，新增导航图标需同步映射。Slicksort 固定使用 ESM 入口，避免 UMD 的 CommonJS Vue 依赖引入浏览器不需要的模板编译器。首屏体积以入口、Header、首页及其全部静态依赖的去重总量为准，不能只比较入口文件大小。
+
+GSAP 核心通过 [动效加载器](../../workspace/frontend/src/utils/motion-engine.ts) 的 `loadMotionEngine` 动态加载，仅在动效允许且有可见目标时请求；不全量引入插件，也不让首页静态依赖携带动画引擎。加载失败保留内容与原生交互。GSAP context 限定组件作用域，卸载时 revert；文字仅在首次鼠标交互时拆字，避免对整个目录预先扩张 DOM。边框与图形优先动画 transform/opacity；文字高光仅对当前重点或悬浮名称执行小范围 background-position 绘制，不对正文或全列表持续重绘。
 
 ## 验证
 
