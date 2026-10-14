@@ -34,6 +34,9 @@ import { DragHandle, SlickItem, SlickList } from 'vue-slicksort'
 import { useDirectoryLayoutStore } from '@/stores/directory-layout'
 import { useLinkOpeningStore } from '@/stores/link-opening'
 import SiteCard from './SiteCard.vue'
+import MotionText from '@/components/motion/MotionText.vue'
+import TopicPulse from '@/components/motion/TopicPulse.vue'
+import { useAmbientFocus } from '@/composables/useAmbientFocus'
 import { usePanelMotion } from '@/composables/usePanelMotion'
 import {
   maxHeat,
@@ -289,10 +292,16 @@ onActivated(() => {
 function recordVisit(url: string) {
   writeHeat(SITE_HEAT_KEY, recordHeat(readHeat(SITE_HEAT_KEY), url))
 }
+const entranceRoot = ref<HTMLElement>()
+const { running: pageMotion } = useAmbientFocus(
+  entranceRoot,
+  () => `${visibleCategories.value.map((category) => category.id).join('|')}/${personalizedFeatured.value.map((site) => site.url).join('|')}`,
+  () => editingLayout.value || sorting.value || !!normalizedQuery.value
+)
 </script>
 
 <template>
-  <main class="entrance">
+  <main ref="entranceRoot" class="entrance" :data-motion-active="pageMotion">
     <header class="entrance-overview">
       <h1>站点导航</h1>
       <span class="overview-count"
@@ -323,7 +332,9 @@ function recordVisit(url: string) {
     </header>
     <section class="featured-section" aria-labelledby="featured-title">
       <div class="section-heading">
-        <h2 id="featured-title"><Star aria-hidden="true" />常用入口</h2>
+        <h2 id="featured-title">
+          <Star class="featured-star" aria-hidden="true" />常用入口
+        </h2>
         <span>按使用热度排序</span>
       </div>
       <div class="featured-grid">
@@ -332,6 +343,7 @@ function recordVisit(url: string) {
           :key="site.url"
           :site="site"
           featured
+          :motion-paused="editingLayout"
           @click="recordVisit(site.url)"
         />
       </div>
@@ -446,8 +458,10 @@ function recordVisit(url: string) {
               :index="index"
               :disabled="!editingLayout"
               tag="section"
-              class="category-panel"
+              class="category-panel motion-focus-target"
               :data-panel-key="category.id"
+              :data-focus-key="category.id"
+              data-focus-kind="category"
               :aria-labelledby="'category-' + category.id"
             >
               <div class="category-heading">
@@ -459,13 +473,13 @@ function recordVisit(url: string) {
                   aria-hidden="true"
                   ><Rank
                 /></DragHandle>
-                <span v-else class="category-icon"
-                  ><component :is="categoryIcons[category.icon]"
-                /></span>
+                <span v-else class="category-icon">
+                  <TopicPulse :topic="category.topic" :icon="category.icon" :paused="editingLayout" />
+                </span>
                 <div class="category-title">
                   <h2 :id="'category-' + category.id">
-                    {{ category.name
-                    }}<span class="category-count">{{ category.sites.length }}</span>
+                    <MotionText :text="category.name" :paused="editingLayout" />
+                    <span class="category-count">{{ category.sites.length }}</span>
                   </h2>
                 </div>
                 <span v-if="activeTopic" class="category-divider" aria-hidden="true"></span>
@@ -515,6 +529,7 @@ function recordVisit(url: string) {
                   <SiteCard
                     :site="site"
                     :detailed="selectedTopic !== 'all'"
+                    :motion-paused="editingLayout"
                     @click="recordVisit(site.url)"
                   />
                   <div v-if="editingLayout" class="site-move-controls">
@@ -677,6 +692,7 @@ h1 {
   transition: transform 160ms var(--ease-out);
 }
 .featured-section {
+  position: relative;
   border: 1px solid var(--color-border);
   border-radius: 3px;
   background: var(--color-surface);
@@ -919,6 +935,8 @@ h1 {
   padding: 0;
 }
 .category-panel {
+  position: relative;
+  isolation: isolate;
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 3px;
@@ -949,6 +967,33 @@ h1 {
   font-size: 12px;
   font-weight: 650;
   color: var(--color-heading);
+}
+.category-title { min-width: 0; }
+.category-title :deep(.motion-text) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-accent-soft);
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+.category-panel[data-ambient='true']::before { opacity: 0.45; }
+.category-panel[data-ambient='true'] .category-heading { background: var(--color-accent-soft); }
+.category-panel[data-ambient='true'] .category-title h2 { color: var(--color-accent); }
+.is-topic .category-panel[data-ambient='true'] .category-heading { background: transparent; }
+.is-topic .category-panel[data-ambient='true'] .category-divider::after {
+  opacity: 0.65;
+  transform: scaleX(1);
+}
+.entrance[data-motion-active='true'] .featured-star {
+  animation: featured-breath 5s linear infinite;
+}
+@keyframes featured-breath {
+  0%, 100% { opacity: 0.6; transform: rotate(-8deg); }
+  50% { opacity: 1; transform: rotate(8deg); }
 }
 .category-count {
   font:

@@ -18,6 +18,9 @@ import {
   Printer
 } from '@element-plus/icons-vue'
 import { usePanelMotion } from '@/composables/usePanelMotion'
+import MotionGlow from '@/components/motion/MotionGlow.vue'
+import MotionText from '@/components/motion/MotionText.vue'
+import { useAmbientFocus } from '@/composables/useAmbientFocus'
 import { LAN_HOST, VPN_HOST, personalServices, serviceLinks } from '@/data/personal-services'
 
 defineOptions({ name: 'PersonalServicesView' })
@@ -77,6 +80,12 @@ const filteredServices = computed(() => {
       return { ...service, primary, alternatives: service.links.filter((link) => link !== primary) }
     })
 })
+const servicesRoot = ref<HTMLElement>()
+const { running: pageMotion } = useAmbientFocus(
+  servicesRoot,
+  () => filteredServices.value.map((service) => service.name).join('|'),
+  () => !!query.value.trim()
+)
 async function selectAccess(value: AccessFilter, event: MouseEvent) {
   if (accessFilter.value === value) return
   await updatePanels(() => {
@@ -97,7 +106,7 @@ function clearQuery() {
 </script>
 
 <template>
-  <main class="personal-services">
+  <main ref="servicesRoot" class="personal-services" :data-motion-active="pageMotion">
     <header class="services-header">
       <h1>个人服务</h1>
       <span>{{ services.length }} 个服务</span
@@ -146,14 +155,17 @@ function clearQuery() {
             <article
               v-for="service in filteredServices"
               :key="service.name"
-              class="service-card"
+              class="service-card motion-focus-target motion-row"
               :data-panel-key="service.name"
+              :data-focus-key="service.name"
+              data-focus-kind="service"
             >
+              <MotionGlow />
               <div class="service-heading">
                 <span class="service-icon" aria-hidden="true"
                   ><component :is="serviceIcons[service.icon] || Platform"
                 /></span>
-                <h3>{{ service.name }}</h3>
+                <h3><MotionText :text="service.name" /></h3>
                 <span class="service-port" :aria-label="'端口 ' + service.port"
                   >:{{ service.port }}</span
                 >
@@ -453,6 +465,7 @@ h1 {
 .service-icon svg {
   width: 15px;
   height: 15px;
+  animation: service-icon-drift 2600ms var(--ease-out) infinite alternate paused;
 }
 .service-card h3 {
   min-width: 0;
@@ -468,6 +481,14 @@ h1 {
     11px ui-monospace,
     monospace;
   color: var(--color-text-muted);
+}
+.service-card[data-ambient='true'] .service-heading { background: var(--color-accent-soft); }
+.service-card[data-ambient='true'] h3 { color: var(--color-accent); }
+.personal-services[data-motion-active='true'] .service-card[data-ambient='true'] .service-icon svg {
+  animation-play-state: running;
+}
+@keyframes service-icon-drift {
+  to { transform: translateY(-1px) rotate(-8deg); }
 }
 .service-description {
   padding: 8px;
@@ -645,6 +666,9 @@ footer svg {
   opacity: 1;
 }
 @media (hover: hover) and (pointer: fine) {
+  .personal-services[data-motion-active='true'] .service-card:hover .service-icon svg {
+    animation-play-state: running;
+  }
   .service-card:hover::before {
     transform: scaleX(1);
   }

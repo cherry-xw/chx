@@ -2,10 +2,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
 import test from 'node:test'
+import { registerHooks } from 'node:module'
+import { createRenderer, defineComponent, h, KeepAlive, nextTick, ref } from 'vue'
+import { compileStyle, parse } from 'vue/compiler-sfc'
 import { createPinia, setActivePinia } from 'pinia'
 import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
 import { useLinkOpeningStore } from '../src/stores/link-opening.ts'
+import { useActivityMotionStore } from '../src/stores/activity-motion.ts'
 import { personalServices, serviceLinks } from '../src/data/personal-services.ts'
+import { nextSpotlightKey } from '../src/utils/motion-focus.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
 import {
@@ -52,6 +57,213 @@ test('manager and NapCat QQ expose the confirmed tunnel and LAN URLs without an 
   }
   const urls = personalServices.flatMap(serviceLinks).map((link) => link.url)
   assert.equal(new Set(urls).size, urls.length)
+})
+
+test('decorative motion has one shared toggle and resets for a new app session', () => {
+  const pinia = createPinia()
+  const motion = useActivityMotionStore(pinia)
+  assert.equal(motion.enabled, true)
+  motion.toggle()
+  assert.equal(useActivityMotionStore(pinia).enabled, false)
+  motion.toggle()
+  assert.equal(motion.enabled, true)
+  assert.equal(useActivityMotionStore(createPinia()).enabled, true)
+})
+
+test('spotlight rotation follows the supplied visible order and recovers after filtering', () => {
+  assert.equal(nextSpotlightKey([], 'a'), undefined)
+  assert.equal(nextSpotlightKey(['a', 'b', 'c'], undefined), 'a')
+  assert.equal(nextSpotlightKey(['a', 'b', 'c'], 'a'), 'b')
+  assert.equal(nextSpotlightKey(['a', 'b', 'c'], 'c'), 'a')
+  assert.equal(nextSpotlightKey(['b', 'c'], 'a'), 'b')
+  assert.equal(nextSpotlightKey(['b'], 'b'), 'b')
+})
+
+test('compiled glow selectors target decorative children rather than styling whole panels', () => {
+  for (const [file, target] of [
+    ['MotionText', 'text-shine'], ['TopicPulse', 'motif-moving']
+  ]) {
+    const source = readFileSync(new URL(`../src/components/motion/${file}.vue`, import.meta.url), 'utf8')
+    const { descriptor } = parse(source)
+    const css = compileStyle({ source: descriptor.styles[0].content, filename: `${file}.vue`, id: 'data-v-test', scoped: true })
+    assert.deepEqual(css.errors, [])
+    assert.match(css.code, new RegExp(`\\.motion-focus-target\\[data-ambient='true'\\][^{]*\\.${target}\\[data-v-test\\]`))
+    assert.match(css.code, /prefers-reduced-motion: reduce/)
+    assert.match(source, /aria-hidden="true"/)
+    assert.doesNotMatch(source, /:global\(/)
+  }
+})
+
+test('hover border light belongs only to the direct data row and disappears when hover ends', () => {
+  const source = readFileSync(new URL('../src/components/motion/MotionGlow.vue', import.meta.url), 'utf8')
+  const { descriptor } = parse(source)
+  const css = compileStyle({ source: descriptor.styles[0].content, filename: 'MotionGlow.vue', id: 'data-v-test', scoped: true }).code
+  assert.doesNotMatch(css, /data-ambient|motion-focus-target:hover/)
+  assert.match(css, /\.motion-row:hover\s*>\s*\.motion-glow\.is-running\[data-v-test\]/)
+  assert.match(css, /\.motion-row:hover\s*>\s*\.is-running\s*>\s*\.motion-beam\[data-v-test\]/)
+  assert.match(source, /opacity: 0;[\s\S]*transition: none;/)
+  assert.match(source, /infinite paused/)
+  const text = readFileSync(new URL('../src/components/motion/MotionText.vue', import.meta.url), 'utf8')
+  assert.match(text, /closest\('\.motion-row'\)/)
+  assert.match(text, /data-ambient='true'\] > :is\(\.site-copy, \.category-heading, \.service-heading\)/)
+  assert.match(text, /function pointerLeave\(\) \{\s*hovered = false\s*reset\(\)/)
+  const topic = readFileSync(new URL('../src/components/motion/TopicPulse.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(topic, /motion-focus-target:hover/)
+  const home = readFileSync(new URL('../src/pages/main/entrance/index.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(home, /<MotionGlow/)
+})
+
+test('layered motion is integrated without repeated bars or eagerly fragmented directory text', () => {
+  const header = readFileSync(new URL('../src/components/layer/Header.vue', import.meta.url), 'utf8')
+  assert.match(header, /aria-label="装饰动效"/)
+  assert.match(header, /:aria-pressed="activityMotion\.enabled"/)
+  assert.match(header, /@click="activityMotion\.toggle"/)
+  for (const path of ['entrance', 'services']) {
+    const page = readFileSync(new URL(`../src/pages/main/${path}/index.vue`, import.meta.url), 'utf8')
+    assert.doesNotMatch(page, /ActivityGlyph/)
+    assert.match(page, /useAmbientFocus/)
+    assert.match(page, /<MotionText/)
+  }
+  const card = readFileSync(new URL('../src/pages/main/entrance/SiteCard.vue', import.meta.url), 'utf8')
+  assert.match(card, /site-card motion-focus-target motion-row/)
+  assert.match(card, /<MotionGlow/)
+  const motif = readFileSync(new URL('../src/components/motion/TopicPulse.vue', import.meta.url), 'utf8')
+  for (const effect of ['wave', 'play', 'nodes', 'scan', 'code', 'keys', 'spark', 'writing']) {
+    assert.match(motif, new RegExp(`return '${effect}'`))
+  }
+  const text = readFileSync(new URL('../src/components/motion/MotionText.vue', import.meta.url), 'utf8')
+  assert.match(text, /const split = ref\(false\)/)
+  assert.match(text, /v-if="split"/)
+  assert.match(text, /Intl\.Segmenter/)
+  assert.match(text, /request !== generation/)
+  assert.match(text, /context\?\.revert\(\)/)
+  assert.match(text, /context\.kill\(false\)/)
+  assert.match(text, /clearProps: 'transform,opacity'/)
+  assert.match(text, /matches\(':focus-visible'\)/)
+  const loader = readFileSync(new URL('../src/utils/motion-engine.ts', import.meta.url), 'utf8')
+  assert.match(loader, /import\('gsap'\)/)
+  assert.match(loader, /catch\(\(\) => undefined\)/)
+})
+
+test('motion presence reacts to visibility, reduced motion, pause and KeepAlive, with cleanup', async (t) => {
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      if (specifier.startsWith('@/')) {
+        return nextResolve(new URL(`../src/${specifier.slice(2)}.ts`, import.meta.url).href, context)
+      }
+      return nextResolve(specifier, context)
+    }
+  })
+  const { useMotionPresence } = await import('../src/composables/useMotionPresence.ts')
+  hooks.deregister()
+  const listeners = new Map()
+  const mediaListeners = new Map()
+  const doc = {
+    hidden: false,
+    addEventListener: (name, listener) => listeners.set(name, listener),
+    removeEventListener: (name) => listeners.delete(name)
+  }
+  const media = {
+    matches: false,
+    addEventListener: (name, listener) => mediaListeners.set(name, listener),
+    removeEventListener: (name) => mediaListeners.delete(name)
+  }
+  const observers = []
+  class Observer {
+    constructor(callback) { this.callback = callback; observers.push(this) }
+    observe(element) { this.element = element }
+    disconnect() { this.disconnected = true }
+    emit(isIntersecting) { this.callback([{ isIntersecting, target: this.element }]) }
+  }
+  const globals = { document: doc, window: { matchMedia: () => media }, IntersectionObserver: Observer }
+  const previous = Object.fromEntries(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
+  for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { value, writable: true, configurable: true })
+  t.after(() => {
+    for (const key of Object.keys(globals)) {
+      if (previous[key]) Object.defineProperty(globalThis, key, previous[key])
+      else delete globalThis[key]
+    }
+  })
+  function node(tag) { return { tag, children: [], props: {}, parent: null } }
+  const renderer = createRenderer({
+    createElement: node,
+    createText: (text) => ({ ...node('#text'), text }),
+    createComment: (text) => ({ ...node('#comment'), text }),
+    insert(child, parent, anchor = null) {
+      if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1)
+      const index = anchor ? parent.children.indexOf(anchor) : -1
+      parent.children.splice(index < 0 ? parent.children.length : index, 0, child)
+      child.parent = parent
+    },
+    remove(child) {
+      if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1)
+      child.parent = null
+    },
+    setText: (element, text) => { element.text = text },
+    setElementText: (element, text) => { element.text = text },
+    parentNode: (element) => element.parent,
+    nextSibling: (element) => element.parent?.children[element.parent.children.indexOf(element) + 1],
+    patchProp: (element, key, previous, next) => { element.props[key] = next }
+  })
+  const paused = ref(false)
+  const show = ref(true)
+  let presence
+  const Child = defineComponent({ setup() {
+    const target = ref()
+    presence = useMotionPresence(target, paused)
+    return () => h('span', { ref: target })
+  } })
+  const pinia = createPinia()
+  const app = renderer.createApp({ render: () => h(KeepAlive, null, { default: () => show.value ? h(Child) : null }) })
+  app.use(pinia)
+  app.mount(node('root'))
+  const motion = useActivityMotionStore(pinia)
+  let mounted = true
+  t.after(() => {
+    if (mounted) { app.unmount(); motion.$dispose() }
+  })
+  assert.equal(presence.running.value, false)
+  observers[0].emit(true)
+  assert.equal(presence.running.value, true)
+  paused.value = true
+  assert.equal(presence.running.value, false)
+  paused.value = false
+  motion.toggle()
+  assert.equal(presence.running.value, false)
+  motion.toggle()
+  assert.equal(presence.running.value, true)
+  doc.hidden = true
+  listeners.get('visibilitychange')()
+  assert.equal(presence.running.value, false)
+  doc.hidden = false
+  listeners.get('visibilitychange')()
+  mediaListeners.get('change')({ matches: true })
+  assert.equal(presence.running.value, false)
+  mediaListeners.get('change')({ matches: false })
+  assert.equal(presence.running.value, true)
+  show.value = false
+  await nextTick()
+  assert.equal(presence.running.value, false)
+  show.value = true
+  await nextTick()
+  assert.equal(presence.running.value, true)
+  observers[0].emit(false)
+  assert.equal(presence.running.value, false)
+  app.unmount()
+  motion.$dispose()
+  mounted = false
+  assert.equal(observers[0].disconnected, true)
+  assert.equal(listeners.size, 0)
+  assert.equal(mediaListeners.size, 0)
+
+  globalThis.IntersectionObserver = undefined
+  const fallbackApp = renderer.createApp(Child)
+  const fallbackPinia = createPinia()
+  fallbackApp.use(fallbackPinia)
+  fallbackApp.mount(node('fallback'))
+  assert.equal(presence.running.value, false)
+  fallbackApp.unmount()
+  useActivityMotionStore(fallbackPinia).$dispose()
 })
 
 function browser(t, { saved = null, palette = null, dark = false, storageDisabled = false } = {}) {

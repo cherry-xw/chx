@@ -2,22 +2,27 @@
 import { computed } from 'vue'
 import type { DirectorySite } from '@/data/directory'
 import { useLinkOpeningStore } from '@/stores/link-opening'
+import MotionText from '@/components/motion/MotionText.vue'
+import MotionGlow from '@/components/motion/MotionGlow.vue'
 
-const props = defineProps<{ site: DirectorySite; featured?: boolean; detailed?: boolean }>()
+const props = defineProps<{ site: DirectorySite; featured?: boolean; detailed?: boolean; motionPaused?: boolean }>()
 const domain = computed(() => new URL(props.site.url).hostname.replace(/^www\./, ''))
 const opening = useLinkOpeningStore()
 </script>
 
 <template>
   <a
-    class="site-card"
+    class="site-card motion-focus-target motion-row"
     :class="{ featured, detailed }"
     draggable="false"
     :href="site.url"
     :target="opening.target"
     rel="noopener noreferrer"
     :aria-label="site.name + '（' + opening.description + '）'"
+    :data-focus-key="featured ? site.url : undefined"
+    :data-focus-kind="featured ? 'featured' : undefined"
   >
+    <MotionGlow :paused="motionPaused" />
     <span
       class="site-mark"
       :class="{ 'is-single': site.mark.length === 1, 'is-long': site.mark.length > 2 }"
@@ -26,7 +31,9 @@ const opening = useLinkOpeningStore()
       >{{ site.mark }}</span
     >
     <span class="site-copy">
-      <span class="site-name" :title="site.name">{{ site.name }}</span>
+      <span class="site-name" :title="site.name">
+        <MotionText :text="site.name" :paused="motionPaused" />
+      </span>
       <span v-if="detailed" class="site-domain">{{ domain }}</span>
       <span class="site-description" :title="site.description">{{ site.description }}</span>
     </span>
@@ -116,6 +123,29 @@ const opening = useLinkOpeningStore()
 .featured .site-mark.is-long {
   font-size: 9px;
 }
+.featured[data-ambient='true']::before {
+  opacity: 1;
+}
+.featured[data-ambient='true'] .site-name {
+  color: var(--color-accent);
+}
+.featured .site-mark {
+  position: relative;
+}
+.featured .site-mark::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid var(--color-accent);
+  border-radius: 5px;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.featured[data-ambient='true'] .site-mark::after {
+  opacity: 0.6;
+  transform: scale(1);
+}
 .site-card:focus-visible {
   outline-offset: -1px;
 }
@@ -154,6 +184,7 @@ const opening = useLinkOpeningStore()
     transform: none !important;
     transition: none;
   }
+  .site-mark::after { transition: none; }
 }
 .detailed {
   gap: 10px;

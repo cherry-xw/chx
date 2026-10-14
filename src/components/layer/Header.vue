@@ -17,11 +17,14 @@ import {
 import { useNavStore } from '@/stores/nav'
 import HeaderSearch from '@/pages/main/entrance/search.vue'
 import serve from '@/api'
+import ActivityGlyph from '@/components/ActivityGlyph.vue'
+import { useActivityMotionStore } from '@/stores/activity-motion'
 
 defineOptions({ name: 'HeaderView' })
 const route = useRoute()
 const router = useRouter()
 const theme = useModeStore()
+const activityMotion = useActivityMotionStore()
 const userStore = useUserInfoStore()
 const { userInfo } = storeToRefs(userStore)
 const { name2Nav } = useNavStore()
@@ -74,6 +77,16 @@ async function logout() {
       <Compass /><span>{{ pageName }}</span>
     </div>
     <HeaderSearch v-model="searchKeyword" class="toolbar-search" />
+    <button
+      type="button"
+      class="activity-toggle"
+      aria-label="装饰动效"
+      :aria-pressed="activityMotion.enabled"
+      :title="activityMotion.enabled ? '暂停装饰动效（非实时监控）' : '播放装饰动效（非实时监控）'"
+      @click="activityMotion.toggle"
+    >
+      <ActivityGlyph seed="header" /><span>动效</span>
+    </button>
     <el-popover placement="bottom-end" :width="260" trigger="click">
       <template #reference>
         <button type="button" class="appearance-button" aria-label="调整外观">
@@ -289,6 +302,30 @@ async function logout() {
   font-size: 12px;
   transition: transform 160ms var(--ease-out);
 }
+.activity-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px 7px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.activity-toggle[aria-pressed='true'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+.activity-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .appearance-button svg {
   width: 16px;
   height: 16px;
@@ -321,7 +358,8 @@ async function logout() {
   height: 34px;
 }
 @media (max-width: 600px) {
-  .appearance-button span {
+  .appearance-button span,
+  .activity-toggle > span:not(.activity-glyph) {
     display: none;
   }
 }
