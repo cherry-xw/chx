@@ -26,7 +26,8 @@ export const directoryTopics = [
   { id: 'design', name: '设计', caption: '界面灵感、素材与创作', icon: 'art' },
   { id: 'documentation', name: '文档', caption: '语言、框架与工程手册', icon: 'manga' },
   { id: 'tools', name: '工具', caption: '检索、转换与日常效率', icon: 'search' },
-  { id: 'development', name: '开发', caption: '代码托管、调试与交付', icon: 'directory' }
+  { id: 'development', name: '开发', caption: '代码托管、调试与交付', icon: 'directory' },
+  { id: 'ai', name: 'AI', caption: 'AI 服务、测评、对比与工具', icon: 'community' }
 ] as const satisfies ReadonlyArray<{
   id: string
   name: string
@@ -46,6 +47,511 @@ export interface DirectoryCategory {
 }
 
 const directoryEntries: DirectoryCategory[] = [
+  {
+    id: 'ai-services',
+    topic: 'ai',
+    name: 'AI 服务',
+    caption: '国内优先的对话助手、模型与 API 平台',
+    icon: 'community',
+    sites: [
+      {
+        name: '智谱清言 · GLM',
+        description: '智谱 GLM 对话助手、推理与文档分析',
+        url: 'https://www.chatglm.cn/',
+        mark: 'GLM',
+        color: '#ffe600'
+      },
+      {
+        name: 'MiniMax Agent',
+        description: 'MiniMax 智能助手、研究与多步骤任务执行',
+        url: 'https://agent.minimaxi.com/',
+        mark: 'MM',
+        color: '#44d9ff'
+      },
+      {
+        name: 'Kimi',
+        description: '月之暗面长文阅读、联网研究与智能助手',
+        url: 'https://www.kimi.com/',
+        mark: 'Ki',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'DeepSeek',
+        description: '深度求索对话、推理与代码助手',
+        url: 'https://chat.deepseek.com/',
+        mark: 'DS',
+        color: '#ff83cf'
+      },
+      {
+        name: '豆包',
+        description: '中文对话、内容创作与日常问答',
+        url: 'https://www.doubao.com/',
+        mark: '豆',
+        color: '#bc9aff'
+      },
+      {
+        name: '通义千问',
+        description: '通义模型对话、写作与多模态问答',
+        url: 'https://www.qianwen.com/',
+        mark: 'Qw',
+        color: '#ffb747'
+      },
+      {
+        name: '腾讯元宝',
+        description: '腾讯 AI 助手、联网搜索与文档总结',
+        url: 'https://yuanbao.tencent.com/',
+        mark: '元',
+        color: '#5effc1'
+      },
+      {
+        name: '文心',
+        description: '百度文心对话助手、中文创作与知识问答',
+        url: 'https://yiyan.baidu.com/',
+        mark: '文',
+        color: '#ffe600'
+      },
+      {
+        name: '讯飞星火',
+        description: '科大讯飞中文问答、写作与学习助手',
+        url: 'https://xinghuo.xfyun.cn/',
+        mark: '星',
+        color: '#44d9ff'
+      },
+      {
+        name: '阶跃 AI',
+        description: '阶跃星辰多模态对话与任务助手',
+        url: 'https://www.stepfun.com/chats/new',
+        mark: 'Step',
+        color: '#b3ff3b'
+      },
+      {
+        name: '商量',
+        description: '商汤多模态问答、联网检索与文档理解',
+        url: 'https://chat.sensetime.com/',
+        mark: '商',
+        color: '#ff83cf'
+      },
+      {
+        name: '智谱开放平台 · GLM',
+        description: 'GLM 官方模型 API、开发文档与 Coding Plan',
+        url: 'https://bigmodel.cn/',
+        mark: 'GLM',
+        color: '#bc9aff'
+      },
+      {
+        name: 'MiniMax 开放平台',
+        description: 'MiniMax 官方模型 API、语音服务与编程套餐',
+        url: 'https://platform.minimaxi.com/',
+        mark: 'MM',
+        color: '#ffb747'
+      },
+      {
+        name: 'DeepSeek 开放平台',
+        description: 'DeepSeek 官方 API、调用文档与用量管理',
+        url: 'https://platform.deepseek.com/',
+        mark: 'DS',
+        color: '#5effc1'
+      },
+      {
+        name: '月之暗面开放平台',
+        description: 'Kimi 官方模型 API、开发文档与控制台',
+        url: 'https://platform.moonshot.cn/',
+        mark: 'Ki',
+        color: '#ff8c7c'
+      },
+      {
+        name: '阿里云百炼',
+        description: '通义千问与多模型 API、应用构建及编程套餐',
+        url: 'https://www.aliyun.com/product/bailian',
+        mark: '百',
+        color: '#ffe600'
+      },
+      {
+        name: '火山方舟',
+        description: '豆包与多模型 API、推理服务及应用开发',
+        url: 'https://www.volcengine.com/product/ark',
+        mark: 'Ark',
+        color: '#44d9ff'
+      },
+      {
+        name: '硅基流动',
+        description: '国内多模型 API 服务与开源模型推理平台',
+        url: 'https://siliconflow.cn/',
+        mark: 'SF',
+        color: '#b3ff3b'
+      },
+      {
+        name: '阶跃星辰开放平台',
+        description: 'Step 系列官方模型 API 与多模态开发文档',
+        url: 'https://platform.stepfun.com/',
+        mark: 'Step',
+        color: '#ff83cf'
+      },
+      {
+        name: 'ChatGPT',
+        description: 'OpenAI 对话助手、写作与资料分析',
+        url: 'https://chatgpt.com/',
+        mark: 'GPT',
+        color: '#ffe600'
+      },
+      {
+        name: 'Claude',
+        description: 'Anthropic 对话助手、长文分析与编程',
+        url: 'https://claude.ai/',
+        mark: 'Cl',
+        color: '#44d9ff'
+      },
+      {
+        name: 'Gemini',
+        description: 'Google 多模态助手与资料研究',
+        url: 'https://gemini.google.com/',
+        mark: 'Ge',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'Perplexity',
+        description: '带来源引用的 AI 联网搜索与问答',
+        url: 'https://www.perplexity.ai/',
+        mark: 'Px',
+        color: '#ff8c7c'
+      },
+      {
+        name: 'Poe',
+        description: '集中体验多种 AI 模型与自定义机器人',
+        url: 'https://poe.com/',
+        mark: 'Poe',
+        color: '#ffe600'
+      }
+    ]
+  },
+  {
+    id: 'ai-evaluations',
+    topic: 'ai',
+    name: 'AI 测评',
+    caption: '模型能力榜单、基准测试与评估报告',
+    icon: 'news',
+    sites: [
+      {
+        name: 'OpenCompass 司南',
+        description: '上海人工智能实验室多维度大模型能力榜单',
+        url: 'https://rank.opencompass.org.cn/',
+        mark: 'OC',
+        color: '#ffe600'
+      },
+      {
+        name: 'FlagEval 天秤',
+        description: '北京智源大模型评测、能力分析与榜单',
+        url: 'https://flageval.baai.ac.cn/',
+        mark: 'FE',
+        color: '#44d9ff'
+      },
+      {
+        name: 'SuperCLUE',
+        description: '中文大模型能力测评、榜单与报告',
+        url: 'https://www.superclueai.com/',
+        mark: 'SC',
+        color: '#ffb747'
+      },
+      {
+        name: 'Artificial Analysis',
+        description: 'AI 模型能力、速度与成本的独立评估',
+        url: 'https://artificialanalysis.ai/',
+        mark: 'AA',
+        color: '#ffe600'
+      },
+      {
+        name: 'LiveBench',
+        description: '持续更新的语言模型多任务基准榜单',
+        url: 'https://livebench.ai/',
+        mark: 'LB',
+        color: '#44d9ff'
+      },
+      {
+        name: 'SWE-bench',
+        description: '真实 GitHub 问题上的代码修复能力评测',
+        url: 'https://www.swebench.com/',
+        mark: 'SWE',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'HELM',
+        description: '斯坦福语言模型多维度评估与报告',
+        url: 'https://crfm.stanford.edu/helm/',
+        mark: 'HE',
+        color: '#ff83cf'
+      },
+      {
+        name: 'Open LLM Leaderboard',
+        description: 'Hugging Face 开放语言模型基准榜单',
+        url: 'https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard',
+        mark: 'HF',
+        color: '#bc9aff'
+      }
+    ]
+  },
+  {
+    id: 'ai-comparisons',
+    topic: 'ai',
+    name: 'AI 对比',
+    caption: '模型竞技场、回答对照与价格比较',
+    icon: 'directory',
+    sites: [
+      {
+        name: 'Compass Arena 司南竞技场',
+        description: '国内大模型匿名对战、自选对比与多模态评估',
+        url: 'https://arena.opencompass.org.cn/',
+        mark: 'CA',
+        color: '#ffe600'
+      },
+      {
+        name: 'LMArena',
+        description: '匿名对比模型回答并查看用户投票榜单',
+        url: 'https://lmarena.ai/',
+        mark: 'LM',
+        color: '#ffe600'
+      },
+      {
+        name: 'OpenRouter',
+        description: '比较模型规格、价格与供应商并统一调用',
+        url: 'https://openrouter.ai/',
+        mark: 'OR',
+        color: '#44d9ff'
+      },
+      {
+        name: 'Image Arena',
+        description: 'Artificial Analysis 图像模型盲测与生成效果对比',
+        url: 'https://artificialanalysis.ai/image/arena',
+        mark: 'IA',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'LLM Price Check',
+        description: '比较语言模型 API 输入、输出与调用价格',
+        url: 'https://llmpricecheck.com/',
+        mark: 'LP',
+        color: '#ff83cf'
+      },
+      {
+        name: 'Vellum 模型对比',
+        description: '语言模型性能、上下文窗口与价格对照',
+        url: 'https://www.vellum.ai/llm-leaderboard',
+        mark: 'Ve',
+        color: '#bc9aff'
+      },
+      {
+        name: '模型排行榜',
+        description: 'OpenRouter 模型使用趋势与分类排名',
+        url: 'https://openrouter.ai/rankings',
+        mark: '榜',
+        color: '#ffb747'
+      }
+    ]
+  },
+  {
+    id: 'ai-tools',
+    topic: 'ai',
+    name: 'AI 工具',
+    caption: '编程代理、工作助手与生成式创作工具',
+    icon: 'directory',
+    sites: [
+      {
+        name: 'WorkBuddy',
+        description: '腾讯工作智能体，执行文档、表格与办公任务',
+        url: 'https://www.workbuddy.ai/',
+        mark: 'WB',
+        color: '#ffe600'
+      },
+      {
+        name: 'TRAE 国内版',
+        description: '字节 AI 开发工具，辅助编码与端到端任务执行',
+        url: 'https://www.trae.cn/',
+        mark: 'TR',
+        color: '#44d9ff'
+      },
+      {
+        name: 'CodeBuddy',
+        description: '腾讯编程智能体、代码补全与工程开发助手',
+        url: 'https://www.codebuddy.cn/',
+        mark: 'CB',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'Qoder',
+        description: '智能体开发平台、项目理解与自主编程',
+        url: 'https://qoder.com/zh',
+        mark: 'Qo',
+        color: '#ff83cf'
+      },
+      {
+        name: 'Qwen Code',
+        description: '通义千问开源终端编程代理与编辑器集成',
+        url: 'https://qwen.ai/qwencode',
+        mark: 'Qw',
+        color: '#bc9aff'
+      },
+      {
+        name: 'Kimi Code',
+        description: '月之暗面终端编程助手、代码修改与任务执行',
+        url: 'https://www.kimi.com/code/docs/',
+        mark: 'Ki',
+        color: '#ffb747'
+      },
+      {
+        name: 'MiniMax Code',
+        description: 'MiniMax 桌面编程与办公助手，连接本地工具',
+        url: 'https://agent.minimaxi.com/download',
+        mark: 'MM',
+        color: '#5effc1'
+      },
+      {
+        name: 'ZCode',
+        description: '智谱 GLM 编程智能体与多智能体任务协作',
+        url: 'https://zcode.z.ai/',
+        mark: 'ZC',
+        color: '#ff8c7c'
+      },
+      {
+        name: '通义灵码',
+        description: '阿里云代码补全、智能问答与多文件修改助手',
+        url: 'https://lingma.aliyun.com/',
+        mark: '灵',
+        color: '#ffe600'
+      },
+      {
+        name: '文心快码 · Comate',
+        description: '百度 AI 编程助手、代码生成与工程辅助',
+        url: 'https://comate.baidu.com/',
+        mark: 'Co',
+        color: '#44d9ff'
+      },
+      {
+        name: 'CodeGeeX',
+        description: '智谱智能编程助手、代码补全与代码解释',
+        url: 'https://codegeex.cn/',
+        mark: 'CG',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'Fitten Code',
+        description: '国内 AI 编程插件、代码补全与测试生成',
+        url: 'https://code.fittentech.com/',
+        mark: 'FC',
+        color: '#ff83cf'
+      },
+      {
+        name: '腾讯 ima',
+        description: '知识库工作助手、资料问答与文档写作',
+        url: 'https://ima.qq.com/',
+        mark: 'ima',
+        color: '#bc9aff'
+      },
+      {
+        name: 'OpenCode',
+        description: '开源多模型编程代理，支持终端与桌面工作流',
+        url: 'https://opencode.ai/',
+        mark: 'OC',
+        color: '#ffe600'
+      },
+      {
+        name: 'Codex',
+        description: 'OpenAI 编程代理，官方 CLI 安装与使用入口',
+        url: 'https://github.com/openai/codex',
+        mark: 'Cx',
+        color: '#44d9ff'
+      },
+      {
+        name: 'Pi',
+        description: '轻量可扩展的开源终端编程代理',
+        url: 'https://pi.dev/',
+        mark: 'Pi',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'Claude Code',
+        description: 'Anthropic 编程代理、代码库理解与终端任务执行',
+        url: 'https://claude.com/product/claude-code',
+        mark: 'CC',
+        color: '#ff83cf'
+      },
+      {
+        name: 'Cline',
+        description: '开源编程代理，自选模型并连接开发工具',
+        url: 'https://cline.bot/',
+        mark: 'Cl',
+        color: '#bc9aff'
+      },
+      {
+        name: 'Cursor',
+        description: '集成 AI 对话、代码补全与代理的编辑器',
+        url: 'https://cursor.com/',
+        mark: 'Cu',
+        color: '#ffe600'
+      },
+      {
+        name: 'GitHub Copilot',
+        description: '代码补全、编程问答与 AI 开发辅助',
+        url: 'https://github.com/features/copilot',
+        mark: 'Co',
+        color: '#44d9ff'
+      },
+      {
+        name: 'Midjourney',
+        description: 'AI 图像生成、风格探索与视觉创作',
+        url: 'https://www.midjourney.com/',
+        mark: 'MJ',
+        color: '#b3ff3b'
+      },
+      {
+        name: 'Adobe Firefly',
+        description: '生成式图像创作、编辑与设计素材',
+        url: 'https://firefly.adobe.com/',
+        mark: 'FF',
+        color: '#ff83cf'
+      },
+      {
+        name: 'Runway',
+        description: 'AI 视频生成、编辑与创意制作',
+        url: 'https://runwayml.com/',
+        mark: 'Rw',
+        color: '#bc9aff'
+      },
+      {
+        name: '可灵 AI',
+        description: '文本、图像驱动的视频生成与创作',
+        url: 'https://app.klingai.com/',
+        mark: 'KL',
+        color: '#ffb747'
+      },
+      {
+        name: 'ElevenLabs',
+        description: 'AI 语音合成、配音与声音创作',
+        url: 'https://elevenlabs.io/',
+        mark: 'EL',
+        color: '#5effc1'
+      },
+      {
+        name: 'Suno',
+        description: '通过文字描述生成歌曲与音乐',
+        url: 'https://suno.com/',
+        mark: 'Su',
+        color: '#ff8c7c'
+      },
+      {
+        name: 'Futurepedia',
+        description: '按用途发现与检索 AI 工具',
+        url: 'https://www.futurepedia.io/',
+        mark: 'FP',
+        color: '#ffe600'
+      },
+      {
+        name: 'AI 工具集',
+        description: '中文 AI 工具导航、应用分类与使用资讯',
+        url: 'https://ai-bot.cn/',
+        mark: 'AI',
+        color: '#44d9ff'
+      }
+    ]
+  },
   {
     id: 'code-hosting',
     topic: 'development',
@@ -454,7 +960,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'MDN Web Docs',
         description: 'HTML、CSS 与 JavaScript 参考文档',
         url: 'https://developer.mozilla.org/',
-        mark: 'MD',
+        mark: 'MDN',
         color: '#ffe600'
       },
       {
@@ -519,7 +1025,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'Vue 文档',
         description: '渐进式 JavaScript 框架指南',
         url: 'https://vuejs.org/',
-        mark: 'Vu',
+        mark: 'V',
         color: '#ffe600'
       },
       {
@@ -626,7 +1132,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'PHP 手册',
         description: 'PHP 语言语法与函数参考',
         url: 'https://www.php.net/manual/zh/',
-        mark: 'PH',
+        mark: 'PHP',
         color: '#5effc1'
       },
       {
@@ -684,7 +1190,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'Kubernetes 文档',
         description: '容器编排、集群与工作负载',
         url: 'https://kubernetes.io/docs/',
-        mark: 'K8',
+        mark: 'K8s',
         color: '#ffb747'
       },
       {
@@ -807,7 +1313,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'JWT.io',
         description: 'JWT 结构查看与令牌调试',
         url: 'https://jwt.io/',
-        mark: 'JW',
+        mark: 'JWT',
         color: '#bc9aff'
       },
       {
@@ -1176,7 +1682,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'GOG',
         description: 'PC 游戏商店与经典游戏',
         url: 'https://www.gog.com/',
-        mark: 'GG',
+        mark: 'GOG',
         color: '#44d9ff'
       },
       {
@@ -1568,7 +2074,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'Anime News Network',
         description: '动画行业新闻、评论与访谈',
         url: 'https://www.animenewsnetwork.com/',
-        mark: 'AN',
+        mark: 'ANN',
         color: '#6684c7'
       },
       {
@@ -1786,7 +2292,7 @@ const directoryEntries: DirectoryCategory[] = [
         name: 'VNDB',
         description: '视觉小说作品与发行信息数据库',
         url: 'https://vndb.org/',
-        mark: 'VN',
+        mark: 'VNDB',
         color: '#c18b42'
       },
       {
