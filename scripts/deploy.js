@@ -156,11 +156,45 @@ async function main() {
   }
 
   console.log(`\n[deploy] 后端发布包已推送至：${user}@${host}:${remoteDir}`);
-  console.log('[deploy] 请登录服务器在目标目录下执行以下命令启动或重启服务：');
-  console.log(`  cd ${remoteDir}`);
-  console.log('  npm install --omit=dev --registry=https://registry.npmmirror.com  # 首次部署或依赖变更时执行');
-  console.log('  cp -n .env.example .env                                           # 首次部署时初始化并修改环境变量');
-  console.log('  npm run dispose                                                   # 启动 PM2 并开启代码监听（已启动后再次推送会自动重启）');
+
+  // 4. 请求线上 /api/version 自动校验版本与上线状态
+  const localPkg = require(path.join(ROOT, 'package.json'));
+  await verifyOnlineVersion({ host, targetVersion: localPkg.version });
+}
+
+async function verifyOnlineVersion({ host, targetVersion, maxAttempts = 6, intervalMs = 2000 }) {
+  const verifyUrl = process.env.DEPLOY_VERIFY_URL || `https://${host}/api/version`;
+  console.log(`[deploy] 正在请求验证线上版本：${verifyUrl}（期望版本：v${targetVersion}）...`);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(verifyUrl, {
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.status && json.data && json.data.version === targetVersion) {
+          console.log(`[deploy] ✅ 线上版本自动校验通过（第 ${attempt} 次尝试）：${verifyUrl} 返回 v${json.data.version}，服务正常在线`);
+          return;
+        } else {
+          const currentVersion = json?.data?.version || '未知';
+          console.log(`[deploy] [尝试 ${attempt}/${maxAttempts}] 线上版本暂未同步（当前: v${currentVersion}，期望: v${targetVersion}），等待服务重载...`);
+        }
+      } else {
+        console.log(`[deploy] [尝试 ${attempt}/${maxAttempts}] 接口返回 HTTP ${res.status}，等待服务重载...`);
+      }
+    } catch (err) {
+      console.log(`[deploy] [尝试 ${attempt}/${maxAttempts}] 请求暂未连通（${err.message}），等待服务重载...`);
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+  }
+
+  console.error(`\n[deploy] ❌ 线上版本校验未通过：重试 ${maxAttempts} 次后，${verifyUrl} 未能返回期望版本 v${targetVersion}`);
+  console.error('[deploy] 请检查服务器上的 PM2 进程状态（pm2 status / pm2 logs chery）。');
+  process.exit(1);
 }
 
 main();
