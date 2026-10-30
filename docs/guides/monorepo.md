@@ -53,11 +53,12 @@ pnpm setup
 | `pnpm dev:frontend` | 启动前端开发服务器 | `workspace/frontend` |
 | `pnpm dev:backend` | 启动后端服务（nodemon） | `workspace/backend` |
 | `pnpm build:frontend` | 前端类型检查 + 生产构建 | `workspace/frontend` |
+| `pnpm build:backend` | 后端生产发布包构建（生成 `dist/`） | `workspace/backend` |
 | `pnpm type-check:frontend` | 前端类型检查（vue-tsc） | `workspace/frontend` |
 | `pnpm test:frontend` | 前端回归测试 | `workspace/frontend`（`test:entrance`） |
 | `pnpm lint:frontend` / `pnpm format:frontend` | ESLint / Prettier | `workspace/frontend` |
 | `pnpm preview:frontend` | 预览生产构建 | `workspace/frontend` |
-| `pnpm deploy:frontend` / `pnpm deploy:backend` | 前端 rsync 部署 / 后端 pm2 部署 | `workspace/frontend` / `workspace/backend` |
+| `pnpm deploy:frontend` / `pnpm deploy:backend` | 前端构建并 rsync 部署 / 后端构建并 rsync 推送至 `/var/www/chery-backend/` | `workspace/frontend` / `workspace/backend` |
 
 ### 子项目内单独操作
 
@@ -73,8 +74,28 @@ npm run format     # Prettier
 
 cd workspace/backend
 npm run serve      # 启动后端（nodemon ./bin/www）
-npm run dispose    # pm2 部署
+npm run build      # 构建后端生产包到 dist/
+npm run deploy     # 构建并 rsync 推送 dist/ 到服务器（/var/www/chery-backend/）
+npm run dispose    # 在服务器端通过本地 pm2 启动并开启代码监听（ecosystem.config.js）
 ```
+
+### 后端构建、推送与服务端自动重启
+
+后端构建与推送由 [`workspace/backend/scripts/build.js`](../../workspace/backend/scripts/build.js)、[`workspace/backend/scripts/deploy.js`](../../workspace/backend/scripts/deploy.js) 与 [`workspace/backend/ecosystem.config.js`](../../workspace/backend/ecosystem.config.js) 配合完成：
+
+1. **本地构建与推送（`pnpm deploy:backend`）**：
+   - 读取 `workspace/backend/.env` 中的 `DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_PORT`、`DEPLOY_REMOTE_DIR`（默认约定为 `/var/www/chery-backend/`），并校验目标为公网地址。
+   - 调用 `build.js` 将运行时代码（`bin/`、`db/`、`routes/`、`utils/`、`app.js`、`config.js`、`ecosystem.config.js`、`.env.example`）与生产版 `package.json`（含 `pm2` 依赖，不含 `nodemon` 及旧锁文件）输出到 `workspace/backend/dist/`。
+   - 通过 `rsync -az --delete` 将 `dist/` 同步至 `/var/www/chery-backend/`，同时通过 `--exclude` 保护服务端的 `.env`、`data/`、`*.db*` 与 `node_modules/`。
+2. **服务端首次启动与监听自启**：
+   ```bash
+   cd /var/www/chery-backend/
+   npm install --omit=dev --registry=https://registry.npmmirror.com
+   cp -n .env.example .env
+   npm run dispose        # 等价于 pm2 startOrRestart ecosystem.config.js
+   ```
+   - `ecosystem.config.js` 默认开启 `watch`（仅监听 `bin`、`db`、`routes`、`utils`、`app.js`、`config.js`，`watch_delay: 2000`），并忽略 `data/`、`*.db*`、`node_modules/`、`.env`。
+   - 服务端首次启动后（`watching: enabled`），后续本地执行 `pnpm deploy:backend` 推送更新，服务端 PM2 会在同步完成后自动重启为最新服务；日常可使用 `npx pm2 status`、`npx pm2 logs chery` 查看状态与日志。
 
 ## 5. 各分支开发流程
 
