@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, ref } from 'vue'
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  ref
+} from 'vue'
 import {
   ChatDotRound,
   Collection,
@@ -48,6 +56,26 @@ import {
 } from '@/utils/usage-heat'
 
 defineOptions({ name: 'EntranceView' })
+const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
+let servicesPrefetch: Promise<unknown> | undefined
+let prefetchIdleHandle: number | undefined
+function prefetchServices() {
+  servicesPrefetch ??= import('@/pages/main/services/index.vue').catch(() => {
+    servicesPrefetch = undefined
+  })
+}
+onMounted(() => {
+  if (typeof window.requestIdleCallback === 'function') {
+    prefetchIdleHandle = window.requestIdleCallback(prefetchServices, { timeout: 3000 })
+  } else {
+    prefetchIdleHandle = window.setTimeout(prefetchServices, 2500)
+  }
+})
+onBeforeUnmount(() => {
+  if (prefetchIdleHandle === undefined) return
+  if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(prefetchIdleHandle)
+  else window.clearTimeout(prefetchIdleHandle)
+})
 const selectedTopic = ref<DirectoryTopicId | 'all'>('all')
 const layout = useDirectoryLayoutStore()
 const opening = useLinkOpeningStore()
@@ -63,9 +91,7 @@ motionQuery.addEventListener('change', syncMotion)
 onBeforeUnmount(() => motionQuery.removeEventListener('change', syncMotion))
 const siteQuery = ref('')
 const directorySearch = ref<HTMLInputElement>()
-const searchShortcutLabel = /Mac|iPhone|iPad/.test(navigator.platform)
-  ? '⌘ ⇧ K'
-  : 'Ctrl Shift K'
+const searchShortcutLabel = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘ ⇧ K' : 'Ctrl Shift K'
 function focusDirectorySearch(event: KeyboardEvent) {
   if (
     event.defaultPrevented ||
@@ -295,7 +321,8 @@ function recordVisit(url: string) {
 const entranceRoot = ref<HTMLElement>()
 const { running: pageMotion } = useAmbientFocus(
   entranceRoot,
-  () => `${visibleCategories.value.map((category) => category.id).join('|')}/${personalizedFeatured.value.map((site) => site.url).join('|')}`,
+  () =>
+    `${visibleCategories.value.map((category) => category.id).join('|')}/${personalizedFeatured.value.map((site) => site.url).join('|')}`,
   () => editingLayout.value || sorting.value || !!normalizedQuery.value
 )
 </script>
@@ -314,15 +341,19 @@ const { running: pageMotion } = useAmbientFocus(
           type="button"
           :aria-pressed="opening.mode === 'same-tab'"
           @click="opening.setMode('same-tab')"
-        >替换本页</button>
+        >
+          替换本页
+        </button>
         <button
           type="button"
           :aria-pressed="opening.mode === 'new-tab'"
           @click="opening.setMode('new-tab')"
-        >新页打开</button>
+        >
+          新页打开
+        </button>
       </div>
       <nav class="portal-links" aria-label="应用快捷入口">
-        <RouterLink to="/main/services"
+        <RouterLink to="/main/services" @pointerenter="prefetchServices" @focus="prefetchServices"
           ><Collection aria-hidden="true" />个人服务<ArrowRight aria-hidden="true"
         /></RouterLink>
         <RouterLink to="/main/mqtt"
@@ -332,9 +363,7 @@ const { running: pageMotion } = useAmbientFocus(
     </header>
     <section class="featured-section" aria-labelledby="featured-title">
       <div class="section-heading">
-        <h2 id="featured-title">
-          <Star class="featured-star" aria-hidden="true" />常用入口
-        </h2>
+        <h2 id="featured-title"><Star class="featured-star" aria-hidden="true" />常用入口</h2>
         <span>按使用热度排序</span>
       </div>
       <div class="featured-grid">
@@ -474,7 +503,11 @@ const { running: pageMotion } = useAmbientFocus(
                   ><Rank
                 /></DragHandle>
                 <span v-else class="category-icon">
-                  <TopicPulse :topic="category.topic" :icon="category.icon" :paused="editingLayout" />
+                  <TopicPulse
+                    :topic="category.topic"
+                    :icon="category.icon"
+                    :paused="editingLayout"
+                  />
                 </span>
                 <div class="category-title">
                   <h2 :id="'category-' + category.id">
@@ -607,6 +640,7 @@ const { running: pageMotion } = useAmbientFocus(
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
           苏ICP备18035382号
         </a>
+        <span class="entrance-footer-version"> · v{{ appVersion }}</span>
       </span>
     </footer>
   </main>
@@ -940,7 +974,6 @@ h1 {
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 3px;
-  background: var(--color-surface);
 }
 .category-heading {
   display: flex;
@@ -968,8 +1001,14 @@ h1 {
   font-weight: 650;
   color: var(--color-heading);
 }
-.category-title { min-width: 0; }
-.category-title :deep(.motion-text) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-title {
+  min-width: 0;
+}
+.category-title :deep(.motion-text) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .category-panel::before {
   content: '';
   position: absolute;
@@ -980,10 +1019,18 @@ h1 {
   opacity: 0;
   transition: opacity 200ms var(--ease-out);
 }
-.category-panel[data-ambient='true']::before { opacity: 0.45; }
-.category-panel[data-ambient='true'] .category-heading { background: var(--color-accent-soft); }
-.category-panel[data-ambient='true'] .category-title h2 { color: var(--color-accent); }
-.is-topic .category-panel[data-ambient='true'] .category-heading { background: transparent; }
+.category-panel[data-ambient='true']::before {
+  opacity: 0.45;
+}
+.category-panel[data-ambient='true'] .category-heading {
+  background: var(--color-accent-soft);
+}
+.category-panel[data-ambient='true'] .category-title h2 {
+  color: var(--color-accent);
+}
+.is-topic .category-panel[data-ambient='true'] .category-heading {
+  background: transparent;
+}
 .is-topic .category-panel[data-ambient='true'] .category-divider::after {
   opacity: 0.65;
   transform: scaleX(1);
@@ -992,8 +1039,15 @@ h1 {
   animation: featured-breath 5s linear infinite;
 }
 @keyframes featured-breath {
-  0%, 100% { opacity: 0.6; transform: rotate(-8deg); }
-  50% { opacity: 1; transform: rotate(8deg); }
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: rotate(-8deg);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(8deg);
+  }
 }
 .category-count {
   font:
@@ -1023,7 +1077,8 @@ h1 {
 .site-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  padding: 3px;
+  gap: 4px;
+  padding: 4px;
 }
 .site-row {
   display: flex;
@@ -1032,6 +1087,8 @@ h1 {
 }
 .site-row > :deep(.site-card) {
   flex: 1;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 .site-row.is-site-editing {
   cursor: grab;

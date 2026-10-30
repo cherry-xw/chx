@@ -96,57 +96,152 @@ test('spotlight rotation follows the supplied visible order and recovers after f
 
 test('compiled glow selectors target decorative children rather than styling whole panels', () => {
   for (const [file, target] of [
-    ['MotionText', 'text-shine'], ['TopicPulse', 'motif-moving']
+    ['MotionText', 'text-shine'],
+    ['TopicPulse', 'motif-moving']
   ]) {
-    const source = readFileSync(new URL(`../src/components/motion/${file}.vue`, import.meta.url), 'utf8')
+    const source = readFileSync(
+      new URL(`../src/components/motion/${file}.vue`, import.meta.url),
+      'utf8'
+    )
     const { descriptor } = parse(source)
-    const css = compileStyle({ source: descriptor.styles[0].content, filename: `${file}.vue`, id: 'data-v-test', scoped: true })
+    const css = compileStyle({
+      source: descriptor.styles[0].content,
+      filename: `${file}.vue`,
+      id: 'data-v-test',
+      scoped: true
+    })
     assert.deepEqual(css.errors, [])
-    assert.match(css.code, new RegExp(`\\.motion-focus-target\\[data-ambient='true'\\][^{]*\\.${target}\\[data-v-test\\]`))
+    assert.match(
+      css.code,
+      new RegExp(
+        `\\.motion-focus-target\\[data-ambient='true'\\][^{]*\\.${target}\\[data-v-test\\]`
+      )
+    )
     assert.match(css.code, /prefers-reduced-motion: reduce/)
     assert.match(source, /aria-hidden="true"/)
     assert.doesNotMatch(source, /:global\(/)
   }
 })
 
+test('CRT overlay uses random content tears instead of a continuous scan roll', () => {
+  const source = readFileSync(
+    new URL('../src/components/motion/CrtOverlay.vue', import.meta.url),
+    'utf8'
+  )
+  assert.match(source, /Math\.random\(\)/)
+  assert.match(source, /setTimeout/)
+  assert.match(source, /clearTimeout/)
+  assert.match(source, /motion\.allowed/)
+  assert.match(source, /feTurbulence/)
+  assert.match(source, /feDisplacementMap/)
+  assert.match(source, /backdrop-filter: url\(#crt-tear-filter\)/)
+  assert.match(source, /prefers-reduced-motion: reduce/)
+  assert.match(source, /aria-hidden="true"/)
+  assert.doesNotMatch(source, /crt-roll/)
+  assert.doesNotMatch(source, /@keyframes/)
+
+  const tabManage = readFileSync(
+    new URL('../src/components/layer/TabManage.vue', import.meta.url),
+    'utf8'
+  )
+  assert.match(tabManage, /route\.name === 'entrance' \|\| route\.name === 'services'/)
+  assert.match(tabManage, /<CrtOverlay v-if="crtPage" \/>/)
+})
+
+test('service groups and directory categories delegate their fill to cards', () => {
+  const services = readFileSync(
+    new URL('../src/pages/main/services/index.vue', import.meta.url),
+    'utf8'
+  )
+  assert.doesNotMatch(services, /(?:^|\n)\.service-group\s*\{[^}]*background:/)
+  assert.match(services, /(?:^|\n)\.group-heading\s*\{[^}]*background: var\(--color-panel-header\)/)
+  assert.match(services, /(?:^|\n)\.service-card\s*\{[^}]*background: var\(--color-surface\)/)
+
+  const home = readFileSync(
+    new URL('../src/pages/main/entrance/index.vue', import.meta.url),
+    'utf8'
+  )
+  assert.doesNotMatch(home, /(?:^|\n)\.category-panel\s*\{[^}]*background:/)
+  assert.match(home, /(?:^|\n)\.category-heading\s*\{[^}]*background: var\(--color-panel-header\)/)
+  assert.match(
+    home,
+    /\.site-row > :deep\(\.site-card\) \{[^}]*border: 1px solid var\(--color-border\);[^}]*background: var\(--color-surface\);/
+  )
+})
+
 test('hover border light belongs only to the direct data row and disappears when hover ends', () => {
-  const source = readFileSync(new URL('../src/components/motion/MotionGlow.vue', import.meta.url), 'utf8')
+  const source = readFileSync(
+    new URL('../src/components/motion/MotionGlow.vue', import.meta.url),
+    'utf8'
+  )
   const { descriptor } = parse(source)
-  const css = compileStyle({ source: descriptor.styles[0].content, filename: 'MotionGlow.vue', id: 'data-v-test', scoped: true }).code
+  const css = compileStyle({
+    source: descriptor.styles[0].content,
+    filename: 'MotionGlow.vue',
+    id: 'data-v-test',
+    scoped: true
+  }).code
   assert.doesNotMatch(css, /data-ambient|motion-focus-target:hover/)
   assert.match(css, /\.motion-row:hover\s*>\s*\.motion-glow\.is-running\[data-v-test\]/)
   assert.match(css, /\.motion-row:hover\s*>\s*\.is-running\s*>\s*\.motion-beam\[data-v-test\]/)
   assert.match(source, /opacity: 0;[\s\S]*transition: none;/)
   assert.match(source, /infinite paused/)
-  const text = readFileSync(new URL('../src/components/motion/MotionText.vue', import.meta.url), 'utf8')
+  const text = readFileSync(
+    new URL('../src/components/motion/MotionText.vue', import.meta.url),
+    'utf8'
+  )
   assert.match(text, /closest\('\.motion-row'\)/)
-  assert.match(text, /data-ambient='true'\] > :is\(\.site-copy, \.category-heading, \.service-heading\)/)
+  assert.match(
+    text,
+    /data-ambient='true'\] > :is\(\.site-copy, \.category-heading, \.service-heading\)/
+  )
   assert.match(text, /function pointerLeave\(\) \{\s*hovered = false\s*reset\(\)/)
-  const topic = readFileSync(new URL('../src/components/motion/TopicPulse.vue', import.meta.url), 'utf8')
+  const topic = readFileSync(
+    new URL('../src/components/motion/TopicPulse.vue', import.meta.url),
+    'utf8'
+  )
   assert.doesNotMatch(topic, /motion-focus-target:hover/)
-  const home = readFileSync(new URL('../src/pages/main/entrance/index.vue', import.meta.url), 'utf8')
+  const home = readFileSync(
+    new URL('../src/pages/main/entrance/index.vue', import.meta.url),
+    'utf8'
+  )
   assert.doesNotMatch(home, /<MotionGlow/)
 })
 
 test('layered motion is integrated without repeated bars or eagerly fragmented directory text', () => {
-  const header = readFileSync(new URL('../src/components/layer/Header.vue', import.meta.url), 'utf8')
+  const header = readFileSync(
+    new URL('../src/components/layer/Header.vue', import.meta.url),
+    'utf8'
+  )
   assert.match(header, /aria-label="装饰动效"/)
   assert.match(header, /:aria-pressed="activityMotion\.enabled"/)
   assert.match(header, /@click="activityMotion\.toggle"/)
   for (const path of ['entrance', 'services']) {
-    const page = readFileSync(new URL(`../src/pages/main/${path}/index.vue`, import.meta.url), 'utf8')
+    const page = readFileSync(
+      new URL(`../src/pages/main/${path}/index.vue`, import.meta.url),
+      'utf8'
+    )
     assert.doesNotMatch(page, /ActivityGlyph/)
     assert.match(page, /useAmbientFocus/)
     assert.match(page, /<MotionText/)
   }
-  const card = readFileSync(new URL('../src/pages/main/entrance/SiteCard.vue', import.meta.url), 'utf8')
+  const card = readFileSync(
+    new URL('../src/pages/main/entrance/SiteCard.vue', import.meta.url),
+    'utf8'
+  )
   assert.match(card, /site-card motion-focus-target motion-row/)
   assert.match(card, /<MotionGlow/)
-  const motif = readFileSync(new URL('../src/components/motion/TopicPulse.vue', import.meta.url), 'utf8')
+  const motif = readFileSync(
+    new URL('../src/components/motion/TopicPulse.vue', import.meta.url),
+    'utf8'
+  )
   for (const effect of ['wave', 'play', 'nodes', 'scan', 'code', 'keys', 'spark', 'writing']) {
     assert.match(motif, new RegExp(`return '${effect}'`))
   }
-  const text = readFileSync(new URL('../src/components/motion/MotionText.vue', import.meta.url), 'utf8')
+  const text = readFileSync(
+    new URL('../src/components/motion/MotionText.vue', import.meta.url),
+    'utf8'
+  )
   assert.match(text, /const split = ref\(false\)/)
   assert.match(text, /v-if="split"/)
   assert.match(text, /Intl\.Segmenter/)
@@ -164,11 +259,32 @@ test('layered motion is integrated without repeated bars or eagerly fragmented d
   assert.match(loader, /catch\(\(\) => undefined\)/)
 })
 
+test('ambient focus avoids a continuous GSAP timeline and prefetches personal services on intent', () => {
+  const ambient = readFileSync(
+    new URL('../src/composables/useAmbientFocus.ts', import.meta.url),
+    'utf8'
+  )
+  assert.doesNotMatch(ambient, /loadMotionEngine|engine\.timeline|\.to\(\{\}/)
+  assert.match(ambient, /setTimeout/)
+  assert.match(ambient, /clearTimeout/)
+  const home = readFileSync(
+    new URL('../src/pages/main/entrance/index.vue', import.meta.url),
+    'utf8'
+  )
+  assert.match(home, /requestIdleCallback/)
+  assert.match(home, /import\('@\/pages\/main\/services\/index\.vue'\)/)
+  assert.match(home, /@pointerenter="prefetchServices"/)
+  assert.match(home, /@focus="prefetchServices"/)
+})
+
 test('motion presence reacts to visibility, reduced motion, pause and KeepAlive, with cleanup', async (t) => {
   const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
       if (specifier.startsWith('@/')) {
-        return nextResolve(new URL(`../src/${specifier.slice(2)}.ts`, import.meta.url).href, context)
+        return nextResolve(
+          new URL(`../src/${specifier.slice(2)}.ts`, import.meta.url).href,
+          context
+        )
       }
       return nextResolve(specifier, context)
     }
@@ -189,21 +305,39 @@ test('motion presence reacts to visibility, reduced motion, pause and KeepAlive,
   }
   const observers = []
   class Observer {
-    constructor(callback) { this.callback = callback; observers.push(this) }
-    observe(element) { this.element = element }
-    disconnect() { this.disconnected = true }
-    emit(isIntersecting) { this.callback([{ isIntersecting, target: this.element }]) }
+    constructor(callback) {
+      this.callback = callback
+      observers.push(this)
+    }
+    observe(element) {
+      this.element = element
+    }
+    disconnect() {
+      this.disconnected = true
+    }
+    emit(isIntersecting) {
+      this.callback([{ isIntersecting, target: this.element }])
+    }
   }
-  const globals = { document: doc, window: { matchMedia: () => media }, IntersectionObserver: Observer }
-  const previous = Object.fromEntries(Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
-  for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { value, writable: true, configurable: true })
+  const globals = {
+    document: doc,
+    window: { matchMedia: () => media },
+    IntersectionObserver: Observer
+  }
+  const previous = Object.fromEntries(
+    Object.keys(globals).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)])
+  )
+  for (const [key, value] of Object.entries(globals))
+    Object.defineProperty(globalThis, key, { value, writable: true, configurable: true })
   t.after(() => {
     for (const key of Object.keys(globals)) {
       if (previous[key]) Object.defineProperty(globalThis, key, previous[key])
       else delete globalThis[key]
     }
   })
-  function node(tag) { return { tag, children: [], props: {}, parent: null } }
+  function node(tag) {
+    return { tag, children: [], props: {}, parent: null }
+  }
   const renderer = createRenderer({
     createElement: node,
     createText: (text) => ({ ...node('#text'), text }),
@@ -218,28 +352,42 @@ test('motion presence reacts to visibility, reduced motion, pause and KeepAlive,
       if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1)
       child.parent = null
     },
-    setText: (element, text) => { element.text = text },
-    setElementText: (element, text) => { element.text = text },
+    setText: (element, text) => {
+      element.text = text
+    },
+    setElementText: (element, text) => {
+      element.text = text
+    },
     parentNode: (element) => element.parent,
-    nextSibling: (element) => element.parent?.children[element.parent.children.indexOf(element) + 1],
-    patchProp: (element, key, previous, next) => { element.props[key] = next }
+    nextSibling: (element) =>
+      element.parent?.children[element.parent.children.indexOf(element) + 1],
+    patchProp: (element, key, previous, next) => {
+      element.props[key] = next
+    }
   })
   const paused = ref(false)
   const show = ref(true)
   let presence
-  const Child = defineComponent({ setup() {
-    const target = ref()
-    presence = useMotionPresence(target, paused)
-    return () => h('span', { ref: target })
-  } })
+  const Child = defineComponent({
+    setup() {
+      const target = ref()
+      presence = useMotionPresence(target, paused)
+      return () => h('span', { ref: target })
+    }
+  })
   const pinia = createPinia()
-  const app = renderer.createApp({ render: () => h(KeepAlive, null, { default: () => show.value ? h(Child) : null }) })
+  const app = renderer.createApp({
+    render: () => h(KeepAlive, null, { default: () => (show.value ? h(Child) : null) })
+  })
   app.use(pinia)
   app.mount(node('root'))
   const motion = useActivityMotionStore(pinia)
   let mounted = true
   t.after(() => {
-    if (mounted) { app.unmount(); motion.$dispose() }
+    if (mounted) {
+      app.unmount()
+      motion.$dispose()
+    }
   })
   assert.equal(presence.running.value, false)
   observers[0].emit(true)
@@ -894,4 +1042,20 @@ test('readHeat tolerates missing, malformed and unavailable storage', () => {
     }),
     {}
   )
+})
+
+test('entrance footer exposes package version from injected __APP_VERSION__', () => {
+  const home = readFileSync(
+    new URL('../src/pages/main/entrance/index.vue', import.meta.url),
+    'utf8'
+  )
+  assert.match(home, /entrance-footer-version/)
+  assert.match(home, /v\{\{\s*appVersion\s*\}\}/)
+  assert.match(home, /const\s+appVersion\s*=\s*typeof\s+__APP_VERSION__/)
+
+  const viteConfig = readFileSync(
+    new URL('../vite.config.ts', import.meta.url),
+    'utf8'
+  )
+  assert.match(viteConfig, /__APP_VERSION__:\s*JSON\.stringify\(pkg\.version\)/)
 })

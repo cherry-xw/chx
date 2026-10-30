@@ -10,3 +10,5 @@ type DeepRequired<T> = Required<{ [K in keyof T]: DeepRequired<T[K]> }>
 interface Window {
   isLoginNotificationShow: boolean
 }
+
+declare const __APP_VERSION__: string
