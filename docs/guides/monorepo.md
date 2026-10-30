@@ -87,6 +87,7 @@ npm run dispose    # 在服务器端通过本地 pm2 启动并开启代码监听
    - 读取 `workspace/backend/.env` 中的 `DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_PORT`、`DEPLOY_REMOTE_DIR`（默认约定为 `/var/www/chery-backend/`），并校验目标为公网地址。
    - 调用 `build.js` 将运行时代码（`bin/`、`db/`、`routes/`、`utils/`、`app.js`、`config.js`、`ecosystem.config.js`、`.env.example`）与生产版 `package.json`（含 `pm2` 依赖，不含 `nodemon` 及旧锁文件）输出到 `workspace/backend/dist/`。
    - 通过 `rsync -az --delete` 将 `dist/` 同步至 `/var/www/chery-backend/`，同时通过 `--exclude` 保护服务端的 `.env`、`data/`、`*.db*` 与 `node_modules/`。
+   - 推送完成后自动发起请求轮询核验 `https://${host}/api/version`（默认最多尝试 6 次，等待服务端 PM2 重载完毕），确认线上版本号与本地 `package.json` 的 `version` 一致后完成部署闭环。
 2. **服务端首次启动与监听自启**：
    ```bash
    cd /var/www/chery-backend/
