@@ -58,7 +58,7 @@ pnpm setup
 | `pnpm test:frontend` | 前端回归测试 | `workspace/frontend`（`test:entrance`） |
 | `pnpm lint:frontend` / `pnpm format:frontend` | ESLint / Prettier | `workspace/frontend` |
 | `pnpm preview:frontend` | 预览生产构建 | `workspace/frontend` |
-| `pnpm deploy:frontend` / `pnpm deploy:backend` | 前端构建并 rsync 部署 / 后端构建并 rsync 推送至 `/var/www/chery-backend/` | `workspace/frontend` / `workspace/backend` |
+| `pnpm deploy:frontend` / `pnpm deploy:backend` | 自动递增各自 `package.json` 的 patch 版本号后，前端构建并 rsync 部署 / 后端构建并 rsync 推送至 `/var/www/chery-backend/` | `workspace/frontend` / `workspace/backend` |
 
 ### 子项目内单独操作
 
@@ -85,9 +85,10 @@ npm run dispose    # 在服务器端通过本地 pm2 启动并开启代码监听
 
 1. **本地构建与推送（`pnpm deploy:backend`）**：
    - 读取 `workspace/backend/.env` 中的 `DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_PORT`、`DEPLOY_REMOTE_DIR`（默认约定为 `/var/www/chery-backend/`），并校验目标为公网地址。
+   - 自动递增 `workspace/backend/package.json` 的末位修订号（patch：`X.Y.Z` → `X.Y.(Z+1)`；前端 `pnpm deploy:frontend` 同理在构建前自动递增 `workspace/frontend/package.json` 的末位修订号并注入 `__APP_VERSION__`）。
    - 调用 `build.js` 将运行时代码（`bin/`、`db/`、`routes/`、`utils/`、`app.js`、`config.js`、`ecosystem.config.js`、`.env.example`）与生产版 `package.json`（含 `pm2` 依赖，不含 `nodemon` 及旧锁文件）输出到 `workspace/backend/dist/`。
    - 通过 `rsync -az --delete` 将 `dist/` 同步至 `/var/www/chery-backend/`，同时通过 `--exclude` 保护服务端的 `.env`、`data/`、`*.db*` 与 `node_modules/`。
-   - 推送完成后自动发起请求轮询核验 `https://${host}/api/version`（默认最多尝试 6 次，等待服务端 PM2 重载完毕），确认线上版本号与本地 `package.json` 的 `version` 一致后完成部署闭环。
+   - 推送完成后自动发起请求轮询核验 `https://${host}/api/version`（默认最多尝试 6 次，等待服务端 PM2 重载完毕），确认线上版本号与本地递增后的 `package.json` `version` 一致后完成部署闭环。
 2. **服务端首次启动与监听自启**：
    ```bash
    cd /var/www/chery-backend/
@@ -95,7 +96,7 @@ npm run dispose    # 在服务器端通过本地 pm2 启动并开启代码监听
    cp -n .env.example .env
    npm run dispose        # 等价于 pm2 startOrRestart ecosystem.config.js
    ```
-   - `ecosystem.config.js` 默认开启 `watch`（仅监听 `bin`、`db`、`routes`、`utils`、`app.js`、`config.js`，`watch_delay: 2000`），并忽略 `data/`、`*.db*`、`node_modules/`、`.env`。
+   - `ecosystem.config.js` 默认开启 `watch`（监听 `bin`、`db`、`routes`、`utils`、`app.js`、`config.js`、`package.json`，`watch_delay: 2000`），并忽略 `data/`、`*.db*`、`node_modules/`、`.env`。
    - 服务端首次启动后（`watching: enabled`），后续本地执行 `pnpm deploy:backend` 推送更新，服务端 PM2 会在同步完成后自动重启为最新服务；日常可使用 `npx pm2 status`、`npx pm2 logs chery` 查看状态与日志。
 
 ## 5. 各分支开发流程
