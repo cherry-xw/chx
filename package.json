@@ -1,37 +1,30 @@
 {
   "name": "cheryservice",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "serve": "nodemon ./bin/www",
-    "dispose": "pm2 start ./bin/www --name chery"
+    "start": "node ./bin/www",
+    "build": "node scripts/build.js",
+    "deploy": "node scripts/deploy.js",
+    "dispose": "pm2 startOrRestart ecosystem.config.js",
+    "test": "node --test tests/auth.test.js"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.10",
+    "better-sqlite3": "^12.6.2",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
     "debug": "~2.6.9",
-    "errorhandler": "^1.5.1",
     "express": "~4.16.1",
-    "express-jwt": "^6.0.0",
     "http-errors": "~1.6.3",
-    "images": "^3.2.3",
-    "jade": "~1.11.0",
-    "jsdom": "^19.0.0",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.21",
-    "moment-timezone": "^0.5.34",
-    "mongodb": "^4.1.4",
-    "mongoose": "^6.0.12",
     "morgan": "~1.9.1",
-    "multiparty": "^4.2.2",
     "nanoid": "^3.1.23",
-    "nodemon": "^2.0.9",
-    "request": "^2.88.2",
-    "require-directory": "^2.1.1"
+    "pm2": "^7.1.1"
   },
   "devDependencies": {
-    "eslint": "^8.2.0"
+    "eslint": "^8.2.0",
+    "nodemon": "^2.0.9"
   }
 }
