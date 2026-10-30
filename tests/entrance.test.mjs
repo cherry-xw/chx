@@ -1048,7 +1048,7 @@ test('readHeat tolerates missing, malformed and unavailable storage', () => {
   )
 })
 
-test('entrance footer exposes package version from injected __APP_VERSION__', () => {
+test('entrance footer exposes package version from injected __APP_VERSION__', async () => {
   const home = readFileSync(
     new URL('../src/pages/main/entrance/index.vue', import.meta.url),
     'utf8'
@@ -1062,4 +1062,14 @@ test('entrance footer exposes package version from injected __APP_VERSION__', ()
     'utf8'
   )
   assert.match(viteConfig, /__APP_VERSION__:\s*JSON\.stringify\(pkg\.version\)/)
+
+  const pkg = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  )
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/)
+  assert.notEqual(pkg.version, '0.0.0')
+
+  const { bumpPatchVersion } = await import('../scripts/deploy.mjs')
+  assert.equal(bumpPatchVersion('1.0.0'), '1.0.1')
+  assert.equal(bumpPatchVersion('0.0.0'), '1.0.1')
 })
