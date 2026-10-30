@@ -19,8 +19,8 @@
 | 调整固定首页页签 | [标签容器](../../workspace/frontend/src/components/layer/TabManage.vue)：`sortableTabs` | `npm run build:frontend`；直接进入其他页面、拖动与关闭页签人工检查 |
 | 调整两套主题的层次、文字对比度与交互动效 | [主题令牌](../../workspace/frontend/src/assets/base.css)：`--color-panel-header`、`--color-item-surface`、`--ease-out`；[面板动效](../../workspace/frontend/src/composables/usePanelMotion.ts)：`usePanelMotion`；[条目](../../workspace/frontend/src/pages/main/entrance/SiteCard.vue)；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue) | `npm run test:frontend`；深浅主题、键盘与减少动态效果人工检查 |
 | 扩展配色、外观偏好与本机恢复 | [外观状态](../../workspace/frontend/src/stores/counter.ts)：`colorPalettes`、`useModeStore`、`setPalette`；[顶部外观弹层](../../workspace/frontend/src/components/layer/Header.vue)：`appearance-panel`；[首屏恢复](../../workspace/frontend/index.html)；[主题令牌](../../workspace/frontend/src/assets/base.css)：`data-palette` | `npm run test:frontend`；刷新、跨标签同步、六组合与窄屏选择人工检查 |
-| 调整服务检索与访问方式筛选 | [个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)：`filteredServices`、`accessFilter`、`serviceIcons` | `npm run build:frontend`；关键词与访问方式组合、空结果、服务图标和原始地址人工检查 |
-| 维护内置个人服务及访问方式 | [服务数据](../../workspace/frontend/src/data/personal-services.ts)：`personalServices`、`serviceLinks`；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)；[路由](../../workspace/frontend/src/router/main/index.ts)：`services` | `npm run build:frontend`；深浅主题、各网络入口人工检查 |
+| 调整服务检索与业务分类筛选 | [个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)：`filteredServices`、`groupedServices`、`categoryFilter`、`masonryColumns`、`serviceIcons` | `npm run build:frontend`；关键词与业务分类组合、空结果、服务图标和原始地址人工检查 |
+| 维护内置个人服务及业务分类 | [服务数据](../../workspace/frontend/src/data/personal-services.ts)：`serviceCategories`、`personalServices`、`serviceLinks`；[个人服务页](../../workspace/frontend/src/pages/main/services/index.vue)；[路由](../../workspace/frontend/src/router/main/index.ts)：`services` | `npm run build:frontend`；深浅主题、业务分区与各网络入口人工检查 |
 | 调整重点编排、流光与文字反馈 | [重点编排](../../workspace/frontend/src/composables/useAmbientFocus.ts)：`useAmbientFocus`；[边框光效](../../workspace/frontend/src/components/motion/MotionGlow.vue)；[文字反馈](../../workspace/frontend/src/components/motion/MotionText.vue)；[分类图形](../../workspace/frontend/src/components/motion/TopicPulse.vue) | `npm run test:frontend`；静置主次、快速悬浮、长名称与深浅主题人工检查 |
 | 调整动效启停与不可见暂停 | [可见性门控](../../workspace/frontend/src/composables/useMotionPresence.ts)：`useMotionPresence`；[动效状态](../../workspace/frontend/src/stores/activity-motion.ts)：`useActivityMotionStore`；[公共页头](../../workspace/frontend/src/components/layer/Header.vue) | `npm run test:frontend`；统一开关、减少动态效果、滚动与页签切换人工检查 |
 
@@ -30,7 +30,7 @@
 
 布局顺序为：应用侧栏确定剩余空间 → 页面建立 inline-size 查询容器 → 首页分类网格自动分列、工作台按宽度重排 → 单个卡片约束长文本并允许换行。
 
-首页采用“专题 → 区块 → 站点”三级结构：顶部专题页签组织开发、设计、文档、工具、博客、媒体、ACG 与游戏；每个专题保留多个细分区块；媒体专题包含视频、直播、音乐与新闻阅读，默认将直播紧接视频。全部与专题视图每区块默认最多显示 6 条站点，完整列表由区块“更多”打开详情查看（搜索结果不足 6 条时按实际数量显示）。全部视图采用紧凑面板网格；专题视图采用纵向排列的横向分区，标题与贯穿剩余宽度的分割线构成区块边界，区块内站点按从左到右、从上到下自适应多列平铺，并展示完整说明及域名；窄屏降为单列，少量站点保留正常列宽。专题按钮在顶部横向排列，不占用第二条侧栏。个人服务采用紧凑面板网格，每个面板集中展示名称、端口、用途与全部访问入口；网络信息收拢为底部横向面板。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。筛选表示配置了相应入口，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
+首页采用“专题 → 区块 → 站点”三级结构：顶部专题页签组织开发、设计、文档、工具、博客、媒体、ACG 与游戏；每个专题保留多个细分区块；媒体专题包含视频、直播、音乐与新闻阅读，默认将直播紧接视频。全部与专题视图每区块默认最多显示 6 条站点，完整列表由区块“更多”打开详情查看（搜索结果不足 6 条时按实际数量显示）。全部视图采用紧凑面板网格；专题视图采用纵向排列的横向分区，标题与贯穿剩余宽度的分割线构成区块边界，区块内站点按从左到右、从上到下自适应多列平铺，并展示完整说明及域名；窄屏降为单列，少量站点保留正常列宽。专题按钮在顶部横向排列，不占用第二条侧栏。个人服务按业务分类分区并以瀑布流多列排布，每个面板集中展示名称、端口、用途与全部访问入口；网络入口不再单独组织或筛选。两页使用细边框、低圆角、紧凑行距与有限强调色，以内容密度和清晰分区为首要约束，不使用宣传式大标题、装饰口号或大面积空白。网络入口表示已配置对应地址，不代表服务在线或当前网络可达。MQTT 在宽屏下展示连接、订阅、消息三栏；超宽屏选中消息后，列表与详情并排。窄屏按 DOM 顺序堆叠，CSS 布局切换不重建连接或丢弃表单状态。
 
 AI 专题追加在开发专题之后，包含 AI 服务、AI 测评、AI 对比与 AI 工具四个区块，复用目录的搜索、详情与本机排序能力。服务优先收录国内对话助手及官方模型/API 平台，工具涵盖国内编程代理、工作智能体以及国内外生成式与发现类工具，国内产品优先排列，同时保留常用海外和开源入口；测评收录基准测试与能力榜单，对比收录竞技场及性能、价格对比入口。
 
@@ -38,7 +38,7 @@ AI 专题追加在开发专题之后，包含 AI 服务、AI 测评、AI 对比�
 
 专题分区的分割线在鼠标悬停时以 200ms transform/opacity 过渡展开强调色，移出时收回，复用 `--ease-out`；键盘焦点进入区块时即时显示强调线，减少动态效果时仅显示静态强调线。
 
-动效按信息层次分工，而非为每个面板复制同一装饰：常用入口是主要焦点；分类区块使用播放光环、音乐波形、节点、扫描、光标等与内容对应的图形；个人服务使用边框光效与图标反馈。静置时 GSAP 编排同一页面最多一个可见目标的底光、文字高光和分类图形，首页以两次常用入口、一次分类区块的节奏轮换，不改变站点热度、排序或服务状态。鼠标进入内容区块或键盘聚焦时停止自动轮换，让主动交互优先。边框流光仅在悬浮当前数据条目时播放，限定到该条目直接拥有的光效层，父区块不联动、不扩散到其他条目；移开即隐藏并暂停，自动轮换不播放边框流光。悬浮文字逐字轻抬、字重叠层及高光只播放一次；静置文字高光仅作用于目标自身的标题或名称。字重叠层预留宽度，不靠字号、布局位移或移除内容突出重点；用途与域名保持静止，正文始终可读。
+动效按信息层次分工，而非为每个面板复制同一装饰：常用入口是主要焦点；分类区块使用播放光环、音乐波形、节点、扫描、光标等与内容对应的图形；个人服务使用边框光效与图标反馈。静置时 GSAP 编排同一页面最多一个可见目标的底光、文字高光和分类图形，首页以两次常用入口、一次分类区块的节奏轮换，不改变站点热度、排序或服务状态。鼠标进入内容区块或键盘聚焦时停止自动轮换，让主动交互优先。边框流光仅在悬浮当前数据条目时播放，限定到该条目直接拥有的光效层，父区块不联动、不扩散到其他条目；移开即隐藏并暂停，自动轮换不播放边框流光。悬浮文字逐字轻抬、字重叠层及高光只播放一次；静置文字高光仅作用于目标自身的标题或名称。逐字动效在首次拆字时以同一分段布局预留宽高，避免字距与连字差异裁掉末尾字符，不靠字号、布局位移或移除内容突出重点；用途与域名保持静止，正文始终可读。
 
 页头“动效”按钮统一开关本次应用会话的重点编排、持续装饰和文字反馈，不改变原有筛选、主题等交互动效，也不保存到本地。浏览器页面隐藏、应用页签停用或元素离开视口时暂停；首页调整布局、搜索及详情聚焦期间停止自动轮换。系统启用减少动态效果或缺少 IntersectionObserver 时使用静态反馈。所有光效均为装饰，不表示 CPU/内存实测值或服务在线状态。键盘始终保留即时、稳定的焦点轮廓与文字强调，不播放逐字弹跳。
 
