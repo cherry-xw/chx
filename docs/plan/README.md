@@ -5,3 +5,4 @@
 | 任务 | 状态 | 范围 |
 | --- | --- | --- |
 | [页面体验改版](ui-redesign/README.md) | 执行中 | 首页、个人服务及公共框架 |
+| [Pocket ID 多用户认证](pocket-id-sqlite/README.md) | 待综合验证 | 保留现有前端并重建 SQLite + Pocket ID / 本地密码 + 双 Token 认证后端 |
