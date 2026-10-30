@@ -91,33 +91,75 @@ export const useModeStore = defineStore('counter', () => {
   return { mode, preference, palette, setPreference, switchMode, setPalette }
 })
 
+export interface UserInfo {
+  id: string
+  name: string
+  userName: string
+  username?: string
+  email?: string
+  authProvider?: 'local' | 'pocket-id' | string
+  isAdmin?: boolean
+  state?: number
+  createTime?: string
+  updateTime?: string
+}
+
 export const useUserInfoStore = defineStore('userInfo', () => {
-  type UserInfo = {
-    company: string
-    createTime: string
-    department: string
-    email: string
-    id: string
-    isDelete: number
-    mobile: string
-    name: string
-    password: string
-    position: string
-    roleLevel: number
-    state: number
-    token: string
-    updateTime: string
-    userName: string
+  const storageKey = 'backend-ui'
+  function readUserInfo(): UserInfo | undefined {
+    try {
+      const str = localStorage.getItem(storageKey)
+      if (!str) return undefined
+      const parsed = JSON.parse(str) as Partial<UserInfo> | null
+      if (!parsed || typeof parsed !== 'object' || !parsed.id || !parsed.name) {
+        return undefined
+      }
+      const resolvedUsername = String(parsed.username || parsed.userName || parsed.name)
+      const isAdmin =
+        typeof parsed.isAdmin === 'boolean'
+          ? parsed.isAdmin
+          : resolvedUsername.trim().toLowerCase() === 'chery'
+      return {
+        id: String(parsed.id),
+        name: String(parsed.name),
+        userName: String(parsed.userName || parsed.username || parsed.name),
+        username: resolvedUsername,
+        email: parsed.email ? String(parsed.email) : undefined,
+        authProvider: parsed.authProvider ? String(parsed.authProvider) : 'local',
+        isAdmin,
+        state: typeof parsed.state === 'number' ? parsed.state : 1,
+        createTime: parsed.createTime ? String(parsed.createTime) : undefined,
+        updateTime: parsed.updateTime ? String(parsed.updateTime) : undefined
+      }
+    } catch {
+      return undefined
+    }
   }
-  const str = localStorage.getItem('backend-ui') || undefined
-  let ui: UserInfo | undefined = undefined
-  if (str) {
-    ui = JSON.parse(str)
-  }
-  const userInfo = ref<UserInfo | undefined>(ui)
+  const userInfo = ref<UserInfo | undefined>(readUserInfo())
   function updateUserInfo(info?: UserInfo) {
-    userInfo.value = info
-    localStorage.setItem('backend-ui', JSON.stringify(info || {}))
+    const normalized = info && info.id && info.name ? info : undefined
+    userInfo.value = normalized
+    try {
+      if (normalized) {
+        localStorage.setItem(storageKey, JSON.stringify(normalized))
+      } else {
+        localStorage.removeItem(storageKey)
+      }
+    } catch {
+      // Storage unavailable
+    }
   }
-  return { userInfo, updateUserInfo }
+  function clearUserInfo() {
+    updateUserInfo(undefined)
+  }
+  function syncStorage(event: StorageEvent) {
+    if (event.key === storageKey || event.key === null) {
+      userInfo.value = readUserInfo()
+    }
+  }
+  window.addEventListener('storage', syncStorage)
+  onScopeDispose(() => {
+    window.removeEventListener('storage', syncStorage)
+  })
+  return { userInfo, updateUserInfo, clearUserInfo }
 })

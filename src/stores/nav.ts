@@ -108,6 +108,13 @@ const navOrigin: noKeyNav[] = [
         focus: false
       }
     ]
+  },
+  {
+    label: '管理后台',
+    name: 'admin',
+    hidden: true,
+    icon: 'Setting',
+    focus: false
   }
   // {
   //   label: '客户管理',

@@ -9,7 +9,8 @@ import {
   Notebook,
   Picture,
   Platform,
-  Reading
+  Reading,
+  Setting
 } from '@element-plus/icons-vue'
 
 export const navIcons: Readonly<Record<string, Component>> = {
@@ -22,5 +23,6 @@ export const navIcons: Readonly<Record<string, Component>> = {
   Notebook,
   Picture,
   Platform,
-  Reading
+  Reading,
+  Setting
 }

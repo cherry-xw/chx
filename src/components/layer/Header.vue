@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { Compass, Monitor, Moon, Sunny, User, Setting } from '@element-plus/icons-vue'
@@ -16,7 +16,9 @@ import {
 } from '@/stores/counter'
 import { useNavStore } from '@/stores/nav'
 import HeaderSearch from '@/pages/main/entrance/search.vue'
-import serve from '@/api'
+import { clearToken, getRefreshToken, hasTokenPair } from '@/api/middleware/token'
+import { requestCurrentUser, requestLogout } from '@/api/auth'
+import { encode } from '@/utils/common'
 import ActivityGlyph from '@/components/ActivityGlyph.vue'
 import { useActivityMotionStore } from '@/stores/activity-motion'
 
@@ -27,6 +29,13 @@ const theme = useModeStore()
 const activityMotion = useActivityMotionStore()
 const userStore = useUserInfoStore()
 const { userInfo } = storeToRefs(userStore)
+const isAdmin = computed(
+  () =>
+    Boolean(userInfo.value?.isAdmin) ||
+    String(userInfo.value?.username || userInfo.value?.userName || '')
+      .trim()
+      .toLowerCase() === 'chery'
+)
 const { name2Nav } = useNavStore()
 const pageName = computed(() => name2Nav[String(route.name)]?.label ?? '首页')
 const searchKeyword = ref('')
@@ -59,15 +68,48 @@ function changePalette(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   if (isColorPalette(value)) theme.setPalette(value)
 }
+async function hydrateSessionUser() {
+  if (!hasTokenPair()) {
+    if (userInfo.value) {
+      userStore.clearUserInfo()
+    }
+    return
+  }
+  try {
+    const res = await requestCurrentUser().sync
+    if (res.status && res.data) {
+      userStore.updateUserInfo(res.data)
+    } else {
+      clearToken()
+      userStore.clearUserInfo()
+    }
+  } catch {
+    // 若刷新失败，tokenRefreshMiddleware 已清理本地凭据
+    if (!hasTokenPair()) {
+      userStore.clearUserInfo()
+    }
+  }
+}
+onMounted(() => {
+  void hydrateSessionUser()
+})
+function goLogin() {
+  const from = encode(route.fullPath || '/')
+  router.push({ path: '/login', query: { from } })
+}
+function goAdmin() {
+  router.push({ name: 'admin' })
+}
 async function logout() {
   try {
-    await serve('/logout').sync
-    userStore.updateUserInfo()
-    router.push({ path: '/login', query: { from: route.path } })
-    ElMessage.success('登出成功')
+    await requestLogout(getRefreshToken()).sync
   } catch {
-    ElMessage.error('登出失败，请稍后重试')
+    // 即使后端不可达，也确保本机双 Token 清理完毕
   }
+  clearToken()
+  userStore.clearUserInfo()
+  router.push({ path: '/login', query: { from: encode(route.fullPath || '/') } })
+  ElMessage.success('登出成功')
 }
 </script>
 
@@ -120,13 +162,25 @@ async function logout() {
       </div>
     </el-popover>
     <el-popover v-if="userInfo?.name" placement="bottom-end" :width="150" trigger="click">
-      <el-button text class="logout-button" @click="logout">登出</el-button>
+      <div class="user-popover-actions">
+        <el-button v-if="isAdmin" text class="logout-button" @click="goAdmin">管理后台</el-button>
+        <el-button text class="logout-button" @click="logout">登出</el-button>
+      </div>
       <template #reference>
         <button class="user-button" type="button" :aria-label="userInfo.name + '，打开用户菜单'">
           <User /><span>{{ userInfo.name }}</span>
         </button>
       </template>
     </el-popover>
+    <button
+      v-else
+      type="button"
+      class="user-button"
+      aria-label="登录账号"
+      @click="goLogin"
+    >
+      <User /><span>登录</span>
+    </button>
   </header>
 </template>
 
@@ -231,8 +285,14 @@ async function logout() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.user-popover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .logout-button {
   width: 100%;
+  margin-left: 0 !important;
 }
 @media (hover: hover) and (pointer: fine) {
   .theme-picker button:hover {

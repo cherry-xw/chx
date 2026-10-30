@@ -30,6 +30,11 @@ const mainRouterConfig: Readonly<RouteRecordRaw> = {
       path: 'workflow',
       name: 'workflow',
       component: () => import('@/pages/main/workflow/index.vue')
+    },
+    {
+      path: 'admin',
+      name: 'admin',
+      component: () => import('@/pages/main/admin/index.vue')
     }
   ]
 }

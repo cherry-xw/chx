@@ -922,6 +922,10 @@ test('all six palette/mode combinations maintain 7:1 contrast on actual surfaces
       )
     }
   }
+  assert.match(
+    css,
+    /\.el-button--primary:not\(\.is-plain\):not\(\.is-link\):not\(\.is-text\)\s*\{[^}]*--el-button-text-color:\s*var\(--color-on-accent\)/
+  )
 })
 
 test('heat accumulates for repeated use and decays over one half-life', () => {

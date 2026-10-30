@@ -226,6 +226,13 @@ select {
   scrollbar-color: var(--color-scroll-background) transparent;
 }
 
+.el-button--primary:not(.is-plain):not(.is-link):not(.is-text) {
+  --el-button-text-color: var(--color-on-accent);
+  --el-button-hover-text-color: var(--color-on-accent);
+  --el-button-disabled-text-color: var(--color-on-accent);
+  color: var(--color-on-accent);
+}
+
 .frosted-glass {
   background: rgba(255, 255, 255, 0.06);
   border-radius: 10px;

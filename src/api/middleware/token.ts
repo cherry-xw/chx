@@ -1,5 +1,5 @@
 /**
- * 请求无感刷新token封装
+ * 基于 chery-fetch 洋葱模型的双 Token 无感自动刷新中间件
  */
 
 import { core, Middleware, ServeCreator } from 'chery-fetch'
@@ -7,35 +7,90 @@ import { ElNotification } from 'element-plus'
 import 'element-plus/es/components/notification/style/css'
 import { router } from '@/router'
 import { encode } from '@/utils/common'
+import type { UserInfo } from '@/stores/counter'
 
 window.isLoginNotificationShow = false
 
-// 存储token
-let aToken = localStorage.getItem('accessToken')
-let rToken = localStorage.getItem('refreshToken')
+const ACCESS_TOKEN_KEY = 'accessToken'
+const REFRESH_TOKEN_KEY = 'refreshToken'
+const USER_INFO_KEY = 'backend-ui'
 
-export function resetToken({
-  accessToken,
-  refreshToken
-}: {
-  accessToken: string
-  refreshToken: string
-}) {
-  aToken = accessToken
-  rToken = refreshToken
-  localStorage.setItem('accessToken', aToken)
-  localStorage.setItem('refreshToken', rToken)
+function safeGetStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
 }
 
-const addHeader: API.MiddlewareHandle<API.Context<any>> = async function (ctx, next) {
+function safeSetStorage(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function safeRemoveStorage(key: string) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // ignore storage errors
+  }
+}
+
+let aToken = safeGetStorage(ACCESS_TOKEN_KEY)
+let rToken = safeGetStorage(REFRESH_TOKEN_KEY)
+
+export interface TokenPairPayload {
+  accessToken: string
+  refreshToken: string
+  user?: UserInfo
+}
+
+export function resetToken({ accessToken, refreshToken, user }: TokenPairPayload) {
+  aToken = accessToken
+  rToken = refreshToken
+  safeSetStorage(ACCESS_TOKEN_KEY, aToken)
+  safeSetStorage(REFRESH_TOKEN_KEY, rToken)
+  if (user && user.id && user.name) {
+    safeSetStorage(USER_INFO_KEY, JSON.stringify(user))
+  }
+}
+
+export function clearToken() {
+  aToken = null
+  rToken = null
+  safeRemoveStorage(ACCESS_TOKEN_KEY)
+  safeRemoveStorage(REFRESH_TOKEN_KEY)
+  safeRemoveStorage(USER_INFO_KEY)
+}
+
+export function getAccessToken(): string {
+  aToken = safeGetStorage(ACCESS_TOKEN_KEY) || aToken
+  return aToken || ''
+}
+
+export function getRefreshToken(): string {
+  rToken = safeGetStorage(REFRESH_TOKEN_KEY) || rToken
+  return rToken || ''
+}
+
+export function hasTokenPair(): boolean {
+  return Boolean(getAccessToken() && getRefreshToken())
+}
+
+const addHeader: API.MiddlewareHandle<API.Context<unknown>> = async function (ctx, next) {
   ctx.request.options.headers = {
-    Authorization: localStorage.getItem('refreshToken') || ''
+    ...ctx.request.options.headers,
+    Authorization: getRefreshToken()
   }
   await next()
 }
+
 const middleware = new Middleware([addHeader, core])
 
-// token刷新服务
+// token 刷新服务（合并并发重复刷新请求）
 const tokenServe = ServeCreator('/api', 'POST', { middleware })
 
 function showLoginNotification() {
@@ -74,49 +129,65 @@ function showLoginNotification() {
       })
   }, 200)
 }
-// token刷新中间件
-// 定义一个token刷新中间件
-const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<any>> = async function (ctx, next) {
-  // 如果token不存在，则直接返回
-  if (!aToken || !rToken) {
+
+interface RefreshTokenResponse {
+  status: boolean
+  msg: string
+  data: TokenPairPayload | null
+}
+
+// 记录已重试过的请求上下文，避免刷新后依然 401 时无限递归
+const retriedContexts = new WeakSet<object>()
+
+const tokenRefreshMiddleware: API.MiddlewareHandle<API.Context<unknown>> = async function (
+  ctx,
+  next
+) {
+  const currentAccess = getAccessToken()
+  const currentRefresh = getRefreshToken()
+
+  if (!currentAccess || !currentRefresh) {
     ctx.response.error = 'token is not exist'
     showLoginNotification()
     return
   }
-  // 如果请求头不存在，则创建一个空对象
+
   if (!ctx.request.options.headers) {
     ctx.request.options.headers = {}
   }
-  // 将token添加到请求头中
-  ctx.request.options.headers['Authorization'] = aToken
+  ctx.request.options.headers['Authorization'] = currentAccess
 
-  // 执行下一个中间件
   await next()
 
-  // 如果响应状态码为401，则说明token过期，需要刷新token
-  console.log(ctx.response)
-  if (ctx.response.error?.status === 401) {
+  const errStatus = (ctx.response.error as { status?: number } | undefined)?.status
+  if (errStatus === 401) {
+    if (retriedContexts.has(ctx)) {
+      clearToken()
+      ctx.response.error = 'token refresh failed'
+      showLoginNotification()
+      return
+    }
+
+    retriedContexts.add(ctx)
     try {
       delete ctx.response.error
-      // token刷新请求函数，如果同时发起多个相同请求合并只发一个请求
-      // 调用刷新token的promise
-      const res = await tokenServe<{
-        data: { accessToken: string; refreshToken: string }
-      }>('/refreshToken', {}, { useMergeIdenticalRequest: true }).promise()
-      // 如果刷新成功，则更新token并重新执行下一个中间件
-      console.log(res)
-      if (res.status) {
-        aToken = res.data.accessToken
-        rToken = res.data.refreshToken
-        localStorage.setItem('accessToken', aToken)
-        localStorage.setItem('refreshToken', rToken)
-        // 刷新token成功重新发起前面的请求，重新执行当前中间件
+      const res = await tokenServe<RefreshTokenResponse>(
+        '/refreshToken',
+        {},
+        { useMergeIdenticalRequest: true }
+      ).promise()
+
+      if (res?.status && res.data?.accessToken && res.data?.refreshToken) {
+        resetToken(res.data)
+        // 刷新成功，通过 chery-fetch compose 的 resetIndex 重新执行当前中间件链
         await next(true)
       } else {
+        clearToken()
         ctx.response.error = 'token refresh failed'
         showLoginNotification()
       }
     } catch (error) {
+      clearToken()
       ctx.response.error = 'token refresh failed'
       showLoginNotification()
       console.warn(error)
