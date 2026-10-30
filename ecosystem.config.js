@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'chery',
       script: './bin/www',
-      watch: ['bin', 'db', 'routes', 'utils', 'app.js', 'config.js'],
+      watch: ['bin', 'db', 'routes', 'utils', 'app.js', 'config.js', 'package.json'],
       watch_delay: 2000,
       ignore_watch: [
         'node_modules',

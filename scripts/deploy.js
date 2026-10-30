@@ -7,10 +7,11 @@
  * 流程：
  *   1. 读取 .env（不存在则提示复制 .env.example 并填写）
  *   2. 校验 DEPLOY_HOST 为公网地址（拦截本机/局域网地址）
- *   3. 本地执行 npm run build 生成 dist/
- *   4. 确保远端目录 DEPLOY_REMOTE_DIR 存在
- *   5. rsync 将 dist/ 同步到服务器 DEPLOY_REMOTE_DIR（排除服务端 .env、data/、*.db*、node_modules/）
- *   6. 打印服务器端手动启动指引（不在脚本内自动启动服务）
+ *   3. 自动递增 package.json 小版本号（patch：X.Y.Z -> X.Y.(Z+1)）
+ *   4. 本地执行 npm run build 生成 dist/
+ *   5. 确保远端目录 DEPLOY_REMOTE_DIR 存在
+ *   6. rsync 将 dist/ 同步到服务器 DEPLOY_REMOTE_DIR（排除服务端 .env、data/、*.db*、node_modules/）
+ *   7. 请求线上 /api/version 自动校验版本与上线状态
  */
 const { lookup } = require('dns').promises;
 const { isIP } = require('net');
@@ -20,7 +21,37 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const ENV_FILE = path.join(ROOT, '.env');
+const PKG_FILE = path.join(ROOT, 'package.json');
 const REQUIRED = ['DEPLOY_HOST', 'DEPLOY_USER', 'DEPLOY_REMOTE_DIR'];
+
+/**
+ * 递增 SemVer 末位修订号（patch）：X.Y.Z -> X.Y.(Z+1)
+ * 若当前版本为空或 0.0.0，则先对齐到 1.0.0 再递增为 1.0.1
+ */
+function bumpPatchVersion(versionStr) {
+  const normalized = !versionStr || versionStr === '0.0.0' ? '1.0.0' : String(versionStr).trim();
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(normalized);
+  if (!match) {
+    throw new Error(`[deploy] 无法解析版本号 "${versionStr}"，期望格式为 X.Y.Z`);
+  }
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  const patch = Number(match[3]) + 1;
+  return `${major}.${minor}.${patch}`;
+}
+
+/**
+ * 读取并递增指定 package.json 的 version 字段，写回文件并返回 { previousVersion, nextVersion }
+ */
+function bumpPackageVersion(pkgPath = PKG_FILE) {
+  const raw = fs.readFileSync(pkgPath, 'utf8');
+  const pkg = JSON.parse(raw);
+  const previousVersion = pkg.version || '1.0.0';
+  const nextVersion = bumpPatchVersion(previousVersion);
+  pkg.version = nextVersion;
+  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8');
+  return { previousVersion, nextVersion };
+}
 
 function loadEnv(file) {
   if (!fs.existsSync(file)) {
@@ -109,7 +140,11 @@ async function main() {
 
   await assertPublicHost(host);
 
-  // 1. 本地构建后端发布包
+  // 1. 自动递增 package.json 小版本号（patch）
+  const { previousVersion, nextVersion } = bumpPackageVersion(PKG_FILE);
+  console.log(`[deploy] 版本号已自动提升：v${previousVersion} -> v${nextVersion}`);
+
+  // 2. 本地构建后端发布包
   run('npm', ['run', 'build'], { cwd: ROOT });
 
   const sshArgs = ['-p', port, '-o', 'StrictHostKeyChecking=accept-new'];
@@ -157,9 +192,8 @@ async function main() {
 
   console.log(`\n[deploy] 后端发布包已推送至：${user}@${host}:${remoteDir}`);
 
-  // 4. 请求线上 /api/version 自动校验版本与上线状态
-  const localPkg = require(path.join(ROOT, 'package.json'));
-  await verifyOnlineVersion({ host, targetVersion: localPkg.version });
+  // 5. 请求线上 /api/version 自动校验版本与上线状态
+  await verifyOnlineVersion({ host, targetVersion: nextVersion });
 }
 
 async function verifyOnlineVersion({ host, targetVersion, maxAttempts = 6, intervalMs = 2000 }) {
@@ -197,4 +231,11 @@ async function verifyOnlineVersion({ host, targetVersion, maxAttempts = 6, inter
   process.exit(1);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  bumpPatchVersion,
+  bumpPackageVersion
+};

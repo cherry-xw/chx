@@ -113,7 +113,14 @@ function createSignedIdToken({
   return `${encodedHeader}.${encodedPayload}.${base64UrlEncode(sig)}`;
 }
 
-test('GET /api/version 专用接口正常返回 package.json 声明的名称与版本号', async () => {
+test('GET /api/version 专用接口正常返回 package.json 声明的名称与版本号，且部署脚本支持递增小版本', async () => {
+  const pkg = require('../package.json');
+  const { bumpPatchVersion, bumpPackageVersion } = require('../scripts/deploy');
+  const ecosystem = require('../ecosystem.config');
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+
   const app = createApp({
     enableLogger: false,
     config: {
@@ -125,8 +132,28 @@ test('GET /api/version 专用接口正常返回 package.json 声明的名称与�
   assert.equal(res.status, 200);
   assert.equal(res.json.status, true);
   assert.equal(res.json.msg, '服务正常');
-  assert.equal(res.json.data.name, 'cheryservice');
-  assert.equal(res.json.data.version, '1.0.0');
+  assert.equal(res.json.data.name, pkg.name);
+  assert.equal(res.json.data.version, pkg.version);
+
+  // 校验 PM2 watch 包含 package.json，确保版本号变更可触发自动重载
+  assert.ok(ecosystem.apps[0].watch.includes('package.json'));
+
+  // 校验版本号递增逻辑
+  assert.equal(bumpPatchVersion('1.0.0'), '1.0.1');
+  assert.equal(bumpPatchVersion('1.2.9'), '1.2.10');
+  assert.equal(bumpPatchVersion('0.0.0'), '1.0.1');
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chery-backend-ver-'));
+  try {
+    const tmpPkgPath = path.join(tmpDir, 'package.json');
+    fs.writeFileSync(tmpPkgPath, JSON.stringify({ name: 'cheryservice', version: '1.0.0' }, null, 2));
+    const bumped = bumpPackageVersion(tmpPkgPath);
+    assert.deepEqual(bumped, { previousVersion: '1.0.0', nextVersion: '1.0.1' });
+    const updated = JSON.parse(fs.readFileSync(tmpPkgPath, 'utf8'));
+    assert.equal(updated.version, '1.0.1');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 });
 
 test('受控注册与邀请码闭环：禁止无邀请码随意注册，chery 管理员生成邀请码后单次有效', async () => {
