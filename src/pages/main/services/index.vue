@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type Component } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, type Component } from 'vue'
 import {
   TopRight,
   Connection,
@@ -21,7 +21,12 @@ import { usePanelMotion } from '@/composables/usePanelMotion'
 import MotionGlow from '@/components/motion/MotionGlow.vue'
 import MotionText from '@/components/motion/MotionText.vue'
 import { useAmbientFocus } from '@/composables/useAmbientFocus'
-import { LAN_HOST, VPN_HOST, personalServices, serviceLinks } from '@/data/personal-services'
+import {
+  personalServices,
+  serviceCategories,
+  serviceLinks,
+  type ServiceCategoryId
+} from '@/data/personal-services'
 
 defineOptions({ name: 'PersonalServicesView' })
 const currentHost = window.location.hostname
@@ -39,63 +44,79 @@ const serviceIcons: Readonly<Record<string, Component>> = {
   Timer,
   Printer
 }
-type AccessFilter = 'all' | 'domain' | 'vpn' | 'lan'
-const accessFilter = ref<AccessFilter>('all')
+type CategoryFilter = 'all' | ServiceCategoryId
+const categoryFilter = ref<CategoryFilter>('all')
 const query = ref('')
 const searchInput = ref<HTMLInputElement>()
 const results = ref<HTMLElement>()
 const { update: updatePanels, cancel: cancelAnimation } = usePanelMotion(results, '.service-card')
 const services = personalServices.map((service) => ({ ...service, links: serviceLinks(service) }))
-const accessOptions: { value: AccessFilter; label: string; count: number }[] = [
+const categoryOptions: { value: CategoryFilter; label: string; count: number }[] = [
   { value: 'all', label: '全部服务', count: services.length },
-  {
-    value: 'domain',
-    label: '外网直达',
-    count: services.filter((service) => service.domainUrl).length
-  },
-  { value: 'vpn', label: '隧道访问', count: services.filter((service) => service.vpn).length },
-  { value: 'lan', label: '局域网', count: services.filter((service) => service.lan).length }
+  ...serviceCategories.map((category) => ({
+    value: category.id,
+    label: category.name,
+    count: services.filter((service) => service.category === category.id).length
+  }))
 ]
 const filteredServices = computed(() => {
   const term = query.value.trim().toLocaleLowerCase()
   return services
-    .filter((service) => {
-      const matchesAccess =
-        accessFilter.value === 'all' ||
-        (accessFilter.value === 'domain' ? !!service.domainUrl : service[accessFilter.value])
-      return (
-        matchesAccess &&
+    .filter(
+      (service) =>
+        (categoryFilter.value === 'all' || service.category === categoryFilter.value) &&
         `${service.name} ${service.description} ${service.port}`.toLocaleLowerCase().includes(term)
-      )
-    })
-    .map((service) => {
-      const preferredLabel =
-        accessFilter.value === 'lan'
-          ? '局域网打开'
-          : accessFilter.value === 'vpn'
-            ? '隧道打开'
-            : '外网直达'
-      const primary =
-        service.links.find((link) => link.label === preferredLabel) || service.links[0]
-      return { ...service, primary, alternatives: service.links.filter((link) => link !== primary) }
-    })
+    )
+    .map((service) => ({
+      ...service,
+      primary: service.links[0],
+      alternatives: service.links.slice(1)
+    }))
 })
+const groupedServices = computed(() =>
+  serviceCategories
+    .filter((category) => categoryFilter.value === 'all' || category.id === categoryFilter.value)
+    .map((category) => ({
+      ...category,
+      services: filteredServices.value.filter((service) => service.category === category.id)
+    }))
+    .filter((group) => group.services.length > 0)
+)
+const groupsWidth = ref(0)
+const masonryColumns = computed(() => {
+  const groupCount = groupedServices.value.length
+  if (groupCount <= 1) return groupCount
+  if (!groupsWidth.value) return 0
+  const gap = 8
+  const minColumnWidth = 285
+  const maxByWidth = Math.max(1, Math.floor((groupsWidth.value + gap) / (minColumnWidth + gap)))
+  return Math.min(groupCount, maxByWidth, 5)
+})
+let groupsObserver: ResizeObserver | undefined
+onMounted(() => {
+  if (!results.value) return
+  groupsObserver = new ResizeObserver(([entry]) => {
+    groupsWidth.value = entry.contentRect.width
+  })
+  groupsObserver.observe(results.value)
+})
+onBeforeUnmount(() => groupsObserver?.disconnect())
 const servicesRoot = ref<HTMLElement>()
 const { running: pageMotion } = useAmbientFocus(
   servicesRoot,
   () => filteredServices.value.map((service) => service.name).join('|'),
   () => !!query.value.trim()
 )
-async function selectAccess(value: AccessFilter, event: MouseEvent) {
-  if (accessFilter.value === value) return
+async function selectCategory(value: CategoryFilter, event: MouseEvent) {
+  if (categoryFilter.value === value) return
   await updatePanels(() => {
-    accessFilter.value = value
+    categoryFilter.value = value
   }, event)
 }
 function resetFilters() {
   cancelAnimation()
   query.value = ''
-  accessFilter.value = 'all'
+  categoryFilter.value = 'all'
   searchInput.value?.focus()
 }
 function clearQuery() {
@@ -133,14 +154,14 @@ function clearQuery() {
               <Close />
             </button>
           </div>
-          <div class="access-filters" role="group" aria-label="按访问方式筛选">
+          <div class="category-filters" role="group" aria-label="按业务分类筛选">
             <button
-              v-for="option in accessOptions"
+              v-for="option in categoryOptions"
               :key="option.value"
               type="button"
-              :class="{ selected: accessFilter === option.value }"
-              :aria-pressed="accessFilter === option.value"
-              @click="selectAccess(option.value, $event)"
+              :class="{ selected: categoryFilter === option.value }"
+              :aria-pressed="categoryFilter === option.value"
+              @click="selectCategory(option.value, $event)"
             >
               {{ option.label }}<span>{{ option.count }}</span>
             </button>
@@ -151,92 +172,84 @@ function clearQuery() {
           <span role="status">{{ filteredServices.length }} 个匹配服务</span>
         </div>
         <div ref="results">
-          <div v-if="filteredServices.length" class="services-grid">
-            <article
-              v-for="service in filteredServices"
-              :key="service.name"
-              class="service-card motion-focus-target motion-row"
-              :data-panel-key="service.name"
-              :data-focus-key="service.name"
-              data-focus-kind="service"
+          <div
+            v-if="filteredServices.length"
+            class="services-groups"
+            :style="masonryColumns ? { columnCount: masonryColumns } : undefined"
+          >
+            <section
+              v-for="group in groupedServices"
+              :key="group.id"
+              class="service-group"
+              :aria-labelledby="`service-group-${group.id}`"
             >
-              <MotionGlow />
-              <div class="service-heading">
-                <span class="service-icon" aria-hidden="true"
-                  ><component :is="serviceIcons[service.icon] || Platform"
-                /></span>
-                <h3><MotionText :text="service.name" /></h3>
-                <span class="service-port" :aria-label="'端口 ' + service.port"
-                  >:{{ service.port }}</span
-                >
+              <div class="group-heading">
+                <h3 :id="`service-group-${group.id}`">{{ group.name }}</h3>
+                <span>{{ group.caption }}</span>
+                <span class="group-count">{{ group.services.length }}</span>
               </div>
-              <p class="service-description">{{ service.description }}</p>
-              <p v-if="service.primary" class="service-address" :title="service.primary.url">
-                {{ service.primary.url.replace(/^https?:\/\//, '') }}
-              </p>
-              <div class="service-links">
-                <a
-                  v-if="service.primary"
-                  class="primary-link"
-                  :href="service.primary.url"
-                  :title="service.primary.url"
-                  :aria-label="service.name + ' · ' + service.primary.label + '（在新标签页打开）'"
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <div class="services-grid">
+                <article
+                  v-for="service in group.services"
+                  :key="service.name"
+                  class="service-card motion-focus-target motion-row"
+                  :data-panel-key="service.name"
+                  :data-focus-key="service.name"
+                  data-focus-kind="service"
                 >
-                  {{ service.primary.label }}<TopRight aria-hidden="true" />
-                </a>
-                <div v-if="service.alternatives.length" class="alternative-links">
-                  <a
-                    v-for="link in service.alternatives"
-                    :key="link.url"
-                    :href="link.url"
-                    :title="link.url"
-                    :aria-label="service.name + ' · ' + link.label + '（在新标签页打开）'"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >{{ link.label }}<TopRight aria-hidden="true"
-                  /></a>
-                </div>
+                  <MotionGlow />
+                  <div class="service-heading">
+                    <span class="service-icon" aria-hidden="true"
+                      ><component :is="serviceIcons[service.icon] || Platform"
+                    /></span>
+                    <h4><MotionText :text="service.name" /></h4>
+                    <span class="service-port" :aria-label="'端口 ' + service.port"
+                      >:{{ service.port }}</span
+                    >
+                  </div>
+                  <p class="service-description">{{ service.description }}</p>
+                  <p v-if="service.primary" class="service-address" :title="service.primary.url">
+                    {{ service.primary.url.replace(/^https?:\/\//, '') }}
+                  </p>
+                  <div class="service-links">
+                    <a
+                      v-if="service.primary"
+                      class="primary-link"
+                      :href="service.primary.url"
+                      :title="service.primary.url"
+                      :aria-label="
+                        service.name + ' · ' + service.primary.label + '（在新标签页打开）'
+                      "
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ service.primary.label }}<TopRight aria-hidden="true" />
+                    </a>
+                    <div v-if="service.alternatives.length" class="alternative-links">
+                      <a
+                        v-for="link in service.alternatives"
+                        :key="link.url"
+                        :href="link.url"
+                        :title="link.url"
+                        :aria-label="service.name + ' · ' + link.label + '（在新标签页打开）'"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >{{ link.label }}<TopRight aria-hidden="true"
+                      /></a>
+                    </div>
+                  </div>
+                </article>
               </div>
-            </article>
+            </section>
           </div>
           <div v-else class="service-empty" role="status">
             <Search aria-hidden="true" />
             <h3>还没有找到这个服务</h3>
-            <p>换个关键词，或查看其他访问方式。</p>
+            <p>换个关键词，或查看其他业务分类。</p>
             <button type="button" @click="resetFilters">查看全部服务</button>
           </div>
         </div>
       </section>
-
-      <aside class="network-sidebar" aria-label="访问指南">
-        <div class="network-heading">
-          <Connection aria-hidden="true" />
-          <h2>网络入口</h2>
-        </div>
-        <dl class="network-guide">
-          <div>
-            <dt>外网</dt>
-            <dd>专属域名直达</dd>
-          </div>
-          <div>
-            <dt>隧道</dt>
-            <dd>
-              <code>{{ VPN_HOST }}</code
-              ><span>需连接私人隧道</span>
-            </dd>
-          </div>
-          <div>
-            <dt>局域网</dt>
-            <dd>
-              <code>{{ LAN_HOST }}</code
-              ><span>需在同一局域网</span>
-            </dd>
-          </div>
-        </dl>
-        <p class="network-note">按实际网络选择入口；未检测服务在线状态。</p>
-      </aside>
     </div>
     <footer>
       <span>chery / 个人服务</span
@@ -345,12 +358,12 @@ h1 {
   width: 12px;
   height: 12px;
 }
-.access-filters {
+.category-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
 }
-.access-filters button {
+.category-filters button {
   position: relative;
   isolation: isolate;
   display: flex;
@@ -366,7 +379,7 @@ h1 {
   cursor: pointer;
   transition: transform 100ms var(--ease-out);
 }
-.access-filters button::before {
+.category-filters button::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -375,17 +388,17 @@ h1 {
   opacity: 0;
   transition: opacity 125ms ease;
 }
-.access-filters button.selected {
+.category-filters button.selected {
   color: var(--color-accent);
   border-color: var(--color-border-hover);
 }
-.access-filters button.selected::before {
+.category-filters button.selected::before {
   opacity: 1;
 }
-.access-filters button:focus-visible::before {
+.category-filters button:focus-visible::before {
   transition: none;
 }
-.access-filters button span {
+.category-filters button span {
   font:
     10px ui-monospace,
     monospace;
@@ -404,6 +417,47 @@ h1 {
 .results-heading > span {
   font-size: 10px;
   color: var(--color-text-muted);
+}
+.services-groups {
+  columns: 285px 5;
+  column-gap: 8px;
+  column-fill: balance;
+}
+.service-group {
+  min-width: 0;
+  margin-bottom: 12px;
+  padding: 7px;
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-border-hover);
+  border-radius: 2px;
+  break-inside: avoid;
+  break-inside: avoid-column;
+}
+.group-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: -7px -7px 7px;
+  padding: 5px 7px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-panel-header);
+  break-after: avoid;
+}
+.group-heading h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+.group-heading > span {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.group-heading .group-count {
+  margin-left: auto;
+  font:
+    10px ui-monospace,
+    monospace;
 }
 .services-grid {
   display: grid;
@@ -467,7 +521,7 @@ h1 {
   height: 15px;
   animation: service-icon-drift 2600ms var(--ease-out) infinite alternate paused;
 }
-.service-card h3 {
+.service-card h4 {
   min-width: 0;
   font-size: 13px;
   font-weight: 650;
@@ -482,13 +536,19 @@ h1 {
     monospace;
   color: var(--color-text-muted);
 }
-.service-card[data-ambient='true'] .service-heading { background: var(--color-accent-soft); }
-.service-card[data-ambient='true'] h3 { color: var(--color-accent); }
+.service-card[data-ambient='true'] .service-heading {
+  background: var(--color-accent-soft);
+}
+.service-card[data-ambient='true'] h4 {
+  color: var(--color-accent);
+}
 .personal-services[data-motion-active='true'] .service-card[data-ambient='true'] .service-icon svg {
   animation-play-state: running;
 }
 @keyframes service-icon-drift {
-  to { transform: translateY(-1px) rotate(-8deg); }
+  to {
+    transform: translateY(-1px) rotate(-8deg);
+  }
 }
 .service-description {
   padding: 8px;
@@ -553,62 +613,6 @@ h1 {
   width: 10px;
   height: 10px;
 }
-.network-sidebar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 20px;
-  min-width: 0;
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  background: var(--color-surface);
-}
-.network-heading {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.network-heading h2 {
-  font-size: 12px;
-  font-weight: 600;
-}
-.network-heading svg {
-  width: 14px;
-  height: 14px;
-  color: var(--color-accent);
-}
-.network-guide {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-}
-.network-guide > div {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.network-guide dt {
-  font-size: 11px;
-  font-weight: 600;
-}
-.network-guide dd {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-.network-guide code {
-  color: var(--color-accent);
-  font-size: 11px;
-}
-.network-note {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--color-text-muted);
-}
 .service-empty {
   display: flex;
   flex-direction: column;
@@ -659,7 +663,7 @@ footer svg {
   height: 10px;
 }
 .primary-link:active:not(:focus-visible),
-.access-filters button:active:not(:focus-visible) {
+.category-filters button:active:not(:focus-visible) {
   transform: scale(0.97);
 }
 .service-card:focus-within::after {
@@ -683,10 +687,10 @@ footer svg {
     text-decoration: underline;
     text-underline-offset: 3px;
   }
-  .access-filters button:hover::before {
+  .category-filters button:hover::before {
     opacity: 0.6;
   }
-  .access-filters button.selected:hover::before {
+  .category-filters button.selected:hover::before {
     opacity: 1;
   }
 }
@@ -698,17 +702,11 @@ footer svg {
     max-width: none;
     flex-basis: 100%;
   }
-  .network-guide {
-    flex-direction: column;
-  }
-  .network-note {
-    margin-left: 0;
-  }
 }
 @media (pointer: coarse) {
   .primary-link,
   .alternative-links a,
-  .access-filters button {
+  .category-filters button {
     min-height: 34px;
   }
 }
@@ -718,7 +716,7 @@ footer svg {
   }
   .primary-link,
   .primary-link svg,
-  .access-filters button {
+  .category-filters button {
     transform: none !important;
     transition: none;
   }

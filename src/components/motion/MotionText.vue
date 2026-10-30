@@ -112,7 +112,12 @@ defineExpose({ play, reset })
 
 <template>
   <span ref="root" class="motion-text" :class="{ 'is-running': running, 'is-interacting': interacting }">
-    <span class="text-size" aria-hidden="true">{{ text }}</span>
+    <span class="text-size" aria-hidden="true">
+      <template v-if="split"
+        ><span v-for="(char, index) in characters" :key="index" class="size-char">{{ char }}</span></template
+      >
+      <template v-else>{{ text }}</template>
+    </span>
     <span v-if="split" class="motion-letters" aria-hidden="true">
       <span v-for="(char, index) in characters" :key="index" class="motion-char">
         <span class="char-size">{{ char }}</span>
@@ -154,6 +159,11 @@ defineExpose({ play, reset })
 .motion-char {
   position: relative;
   display: inline-block;
+  white-space: pre;
+}
+.size-char {
+  display: inline-block;
+  font-weight: inherit;
   white-space: pre;
 }
 .char-size {

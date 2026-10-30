@@ -9,7 +9,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { colorPalettes, useModeStore } from '../src/stores/counter.ts'
 import { useLinkOpeningStore } from '../src/stores/link-opening.ts'
 import { useActivityMotionStore } from '../src/stores/activity-motion.ts'
-import { personalServices, serviceLinks } from '../src/data/personal-services.ts'
+import { personalServices, serviceCategories, serviceLinks } from '../src/data/personal-services.ts'
 import { nextSpotlightKey } from '../src/utils/motion-focus.ts'
 import { buildSearchURL, searchEngines } from '../src/data/search-engines.ts'
 import { directory, directoryTopics, featuredSites } from '../src/data/directory.ts'
@@ -41,6 +41,21 @@ function memoryStorage() {
     }
   }
 }
+
+test('Hermes and manager are grouped as AI services with the confirmed Hermes URL', () => {
+  assert.ok(serviceCategories.some((category) => category.id === 'ai' && category.name === 'AI 服务'))
+  const hermes = personalServices.find((service) => service.name === 'Hermes Dashboard')
+  const manager = personalServices.find((service) => service.name === 'manager')
+  assert.ok(hermes)
+  assert.ok(manager)
+  assert.equal(hermes.category, 'ai')
+  assert.equal(manager.category, 'ai')
+  assert.deepEqual(serviceLinks(hermes), [
+    { label: '外网直达', url: 'https://hermes.xcherry.top/' },
+    { label: '隧道打开', url: 'http://10.2.3.6:9119/' },
+    { label: '局域网打开', url: 'http://192.168.68.164:9119/' }
+  ])
+})
 
 test('manager and NapCat QQ expose the confirmed tunnel and LAN URLs without an invented domain', () => {
   for (const [name, port] of [
@@ -135,6 +150,10 @@ test('layered motion is integrated without repeated bars or eagerly fragmented d
   assert.match(text, /const split = ref\(false\)/)
   assert.match(text, /v-if="split"/)
   assert.match(text, /Intl\.Segmenter/)
+  assert.match(text, /<span v-for="\(char, index\) in characters"[^>]*class="size-char"/)
+  assert.match(text, /v-if="split"[\s\S]{0,160}class="size-char"/)
+  assert.match(text, /\.size-char\s*\{[^}]*display: inline-block/)
+  assert.match(text, /\.size-char\s*\{[^}]*font-weight: inherit/)
   assert.match(text, /request !== generation/)
   assert.match(text, /context\?\.revert\(\)/)
   assert.match(text, /context\.kill\(false\)/)
