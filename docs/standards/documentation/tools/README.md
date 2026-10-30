@@ -4,7 +4,7 @@
 
 ## 解压后使用
 
-通用 ZIP 保留规则的 `docs/standards/documentation/` 路径、工具源码 `tools/plan-viewer/` 和一个可检查的样例计划。不要用样例覆盖已有项目的计划；采用步骤见[采用指南](../adoption-guide.md)。
+通用 ZIP 保留规则的 `docs/standards/documentation/` 路径、工具源码 `tools/plan-viewer/` 和一个可检查的样例计划，包含[需求调查与设计方法](../requirements-design.md)。不要用样例覆盖已有项目的计划；采用步骤见[采用指南](../adoption-guide.md)。工具只检查明确的结构和记录，不能替代场景、技术适配或需求满足情况的审核。
 
 在解压目录运行：
 
@@ -13,7 +13,7 @@ node docs/standards/documentation/tools/lint.mjs --plan-dir=docs/plan
 node docs/standards/documentation/tools/plan-viewer.mjs --plan-dir=docs/plan
 ```
 
-页面默认 `http://127.0.0.1:4173`，可用 `--port=5000` 更换。也可以只复制两个单文件工具，通过 `--plan-dir` 指向目标项目计划目录。`lint.mjs --json` 输出机器可读差异，`--strict` 也将待核对项作为失败。执行权限、审批、业务测试仍由采用项目配置。
+页面默认 `http://127.0.0.1:4173`，可用 `--port=5000` 更换端口（`--port=0` 随机空闲端口）、`--host=0.0.0.0` 开放局域网访问。也可以只复制两个单文件工具，通过 `--plan-dir` 指向目标项目计划目录。`lint.mjs --json` 输出机器可读差异，`--strict` 也将待核对项作为失败。执行权限、审批、业务测试仍由采用项目配置。
 
 ## 集成与维护
 
