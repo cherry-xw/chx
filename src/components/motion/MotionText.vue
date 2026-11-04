@@ -54,7 +54,10 @@ function reset() {
     engine!.to(root.value!.querySelectorAll('.char-bold'), { opacity: 0, duration: 0.12, overwrite: true })
   })
 }
-function restore() {
+function restore(force = false) {
+  // Idle cards can keep their completed GSAP context. Reverting every hovered
+  // card at once turns route deactivation into a long synchronous task.
+  if (!force && !interacting.value && !hovered) return
   context?.revert()
   context = undefined
   if (!engine || !root.value) return
@@ -66,14 +69,16 @@ watch(running, (value) => {
     if (hovered && host?.matches(':hover')) void play()
     return
   }
+  const wasInteracting = interacting.value
   generation++
   interacting.value = false
-  restore()
+  if (wasInteracting) restore(true)
 })
 watch(() => props.text, () => {
+  const wasInteracting = interacting.value
   generation++
   interacting.value = false
-  restore()
+  if (wasInteracting) restore(true)
   split.value = false
 })
 function pointerEnter(event: Event) {
@@ -88,10 +93,11 @@ function pointerLeave() {
 }
 function focusIn(event: Event) {
   if (!(event.target instanceof Element) || !event.target.matches(':focus-visible')) return
+  const wasInteracting = interacting.value
   hovered = false
   generation++
   interacting.value = false
-  restore()
+  if (wasInteracting) restore(true)
 }
 onMounted(() => {
   host = root.value?.closest('.motion-row') ?? null

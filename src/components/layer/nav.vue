@@ -146,13 +146,12 @@ onMounted(() => {
   margin-bottom: 1px;
 }
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
-  background: var(--color-highlight);
-  color: var(--color-on-highlight);
-  box-shadow: inset 2px 0 var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 :deep(.el-tree-node.is-current > .el-tree-node__content) .lable-active,
 :deep(.el-tree-node.is-current > .el-tree-node__content) .nav-node-icon {
-  color: var(--color-on-highlight) !important;
+  color: var(--color-accent) !important;
 }
 .lable-active {
   font-weight: 600;

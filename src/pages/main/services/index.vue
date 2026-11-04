@@ -9,6 +9,7 @@ import {
   HomeFilled,
   Switch,
   Film,
+  Headset,
   Download,
   Bottom,
   Monitor,
@@ -35,6 +36,7 @@ const serviceIcons: Readonly<Record<string, Component>> = {
   HomeFilled,
   Switch,
   Film,
+  Headset,
   Download,
   Bottom,
   Monitor,
@@ -481,7 +483,7 @@ h1 {
   left: -1px;
   right: -1px;
   height: 2px;
-  background: var(--color-highlight);
+  background: var(--color-accent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 160ms var(--ease-out);
@@ -495,7 +497,7 @@ h1 {
   content: '';
   position: absolute;
   inset: -1px;
-  border: 1px solid var(--color-highlight);
+  border: 1px solid var(--color-border-hover);
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;

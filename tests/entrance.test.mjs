@@ -57,10 +57,11 @@ test('Hermes and manager are grouped as AI services with the confirmed Hermes UR
   ])
 })
 
-test('manager and NapCat QQ expose the confirmed tunnel and LAN URLs without an invented domain', () => {
+test('manager, NapCat QQ, and 音乐播放 expose the confirmed tunnel and LAN URLs without an invented domain', () => {
   for (const [name, port] of [
     ['manager', 39980],
-    ['NapCat QQ', 6099]
+    ['NapCat QQ', 6099],
+    ['音乐播放', 8488]
   ]) {
     const matches = personalServices.filter((service) => service.name === name)
     assert.equal(matches.length, 1)

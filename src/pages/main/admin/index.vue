@@ -458,7 +458,7 @@ onMounted(() => {
 }
 
 .invite-table th {
-  background: var(--color-background);
+  background: var(--color-panel-header);
   color: var(--color-text-secondary);
   font-weight: 500;
 }
@@ -511,14 +511,14 @@ onMounted(() => {
 }
 
 .link-btn.danger {
-  color: #f56c6c;
+  color: var(--el-color-danger, #c42b3b);
 }
 
 .rule-box {
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  background: var(--color-background);
+  background: var(--color-background-soft);
   font-size: 12px;
   color: var(--color-text-secondary);
   line-height: 1.6;

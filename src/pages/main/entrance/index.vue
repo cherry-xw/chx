@@ -1257,6 +1257,7 @@ h1 {
   height: 12px;
 }
 .layout-toggle.selected {
+  border-color: var(--color-border-hover);
   background: var(--color-highlight);
   color: var(--color-on-highlight);
 }
@@ -1438,7 +1439,7 @@ button:disabled {
   -webkit-user-select: none;
   pointer-events: none;
   z-index: 2500;
-  outline: 2px solid var(--color-highlight);
+  outline: 2px solid var(--color-accent);
   box-shadow: 0 8px 24px #00000026;
   cursor: grabbing;
 }

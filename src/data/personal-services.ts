@@ -74,6 +74,15 @@ export const personalServices: PersonalService[] = [
     vpn: true
   },
   {
+    name: '音乐播放',
+    icon: 'Headset',
+    category: 'media',
+    description: '音乐播放服务',
+    port: 8488,
+    lan: true,
+    vpn: true
+  },
+  {
     name: 'qBittorrent',
     icon: 'Download',
     category: 'downloads',

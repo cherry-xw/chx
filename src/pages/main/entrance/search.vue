@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { Close, Search } from '@element-plus/icons-vue'
 import { ElOption, ElOptionGroup, ElSelect } from 'element-plus'
 import 'element-plus/es/components/option/style/css'
@@ -19,6 +19,7 @@ import {
 defineOptions({ name: 'SearchView' })
 const keyword = defineModel<string>({ default: '' })
 const input = ref<HTMLInputElement>()
+let autoFocused = false
 const groups = ['综合搜索', '视频平台', '开发工具'] as const
 const storageKey = 'chery-search-engine'
 const engineHeatKey = 'chery-search-engine-heat'
@@ -62,7 +63,8 @@ function focusSearch(event: KeyboardEvent) {
     event.isComposing ||
     event.keyCode === 229 ||
     document.querySelector('dialog[open]')
-  ) return
+  )
+    return
   if (
     (event.ctrlKey || event.metaKey) &&
     event.key.toLowerCase() === 'k' &&
@@ -84,7 +86,17 @@ function clearWithEscape(event: KeyboardEvent) {
   event.stopPropagation()
   clear()
 }
-onMounted(() => window.addEventListener('keydown', focusSearch))
+onMounted(() => {
+  window.addEventListener('keydown', focusSearch)
+  void nextTick(() => {
+    if (autoFocused) return
+    autoFocused = true
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    if (document.querySelector('dialog[open]')) return
+    if (document.activeElement && document.activeElement !== document.body) return
+    input.value?.focus({ preventScroll: true })
+  })
+})
 onUnmounted(() => window.removeEventListener('keydown', focusSearch))
 </script>
 
@@ -122,7 +134,13 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
       @keydown.enter="onEnter"
       @keydown.esc="clearWithEscape"
     />
-    <button v-if="keyword" class="clear-search" type="button" aria-label="清空搜索（Esc）" @click="clear">
+    <button
+      v-if="keyword"
+      class="clear-search"
+      type="button"
+      aria-label="清空搜索（Esc）"
+      @click="clear"
+    >
       <Close aria-hidden="true" /><kbd class="shortcut" aria-hidden="true">Esc</kbd>
     </button>
     <kbd class="shortcut" aria-hidden="true">{{ shortcutLabel }}</kbd>
@@ -147,14 +165,15 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   width: 100%;
   min-width: 0;
   height: 40px;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  background: var(--color-background);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: inset 0 -1px 0 transparent;
+  transition: box-shadow 160ms var(--ease-out);
 }
 .header-search:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  box-shadow: inset 0 -1px 0 var(--color-accent);
 }
 .header-search button {
   transition: transform 160ms var(--ease-out);
@@ -169,6 +188,9 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   transition: none;
 }
 @media (hover: hover) and (pointer: fine) {
+  .engine-select:hover :deep(.el-select__wrapper) {
+    background: var(--color-background-soft);
+  }
   .submit-search:hover:not(:disabled) svg {
     transform: rotate(-12deg) scale(1.08);
   }
@@ -187,7 +209,7 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   position: relative;
   flex: 0 0 102px;
   min-width: 0;
-  border-right: 1px solid var(--color-border);
+  border-radius: 2px;
 }
 .engine-select {
   width: 100%;
@@ -196,6 +218,7 @@ onUnmounted(() => window.removeEventListener('keydown', focusSearch))
   min-height: 30px;
   padding: 4px 9px;
   background: transparent;
+  border-radius: 2px;
   box-shadow: none;
   font-size: 12px;
 }

@@ -5,7 +5,7 @@ export type ThemePreference = 'light' | 'dark' | 'system'
 // Keep persisted identifiers compatible while updating the visual palettes.
 export const colorPalettes = [
   { value: 'cobalt', label: 'EL 荧光黄' },
-  { value: 'terracotta', label: '青柠绿' },
+  { value: 'terracotta', label: '磷光绿' },
   { value: 'wine', label: '霓虹紫' }
 ] as const
 export type ColorPalette = (typeof colorPalettes)[number]['value']

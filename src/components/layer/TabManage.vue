@@ -11,6 +11,7 @@ import { SlickItem, SlickList } from 'vue-slicksort'
 import { nanoid } from 'nanoid'
 import { removePageCahce } from './keepAliveRouteView.vue'
 import config from './progress'
+import CrtOverlay from '@/components/motion/CrtOverlay.vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
 defineOptions({ name: 'TabManageView' })
@@ -136,6 +137,7 @@ function isDisabled(index: number) {
   return false
 }
 // -------------------------- computed ------------------------------
+const crtPage = computed(() => route.name === 'entrance' || route.name === 'services')
 // ---------------------------- life --------------------------------
 onMounted(() => {
   config('#conteintBox')
@@ -210,6 +212,7 @@ onMounted(() => {
         <RouterView />
         <div class="h12"></div>
       </div>
+      <CrtOverlay v-if="crtPage" />
     </div>
   </div>
 </template>
@@ -241,6 +244,7 @@ onMounted(() => {
     flex-shrink: 0;
     display: flex;
     padding-left: 4px;
+    background: var(--color-surface);
     border-bottom: 1px solid var(--el-border-color);
     overflow-x: auto;
   }
@@ -281,7 +285,7 @@ onMounted(() => {
       left: 14px;
       right: 14px;
       height: 2px;
-      background: var(--color-highlight);
+      background: var(--color-accent);
       border-radius: 2px;
     }
   }
